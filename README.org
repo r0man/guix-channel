@@ -1,0 +1,12 @@
+#+title: My GUIX channel
+
+* Usage
+
+Add this channel to =~/.config/guix/channels.scm=
+
+#+begin_src scheme
+  (cons* (channel
+          (name 'channel-x)
+          (url "https://github.com/r0man/guix-channel"))
+         %default-channels)
+#+end_src
