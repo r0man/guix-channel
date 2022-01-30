@@ -6,7 +6,13 @@ Add this channel to =~/.config/guix/channels.scm=
 
 #+begin_src scheme
   (cons* (channel
-          (name 'channel-x)
-          (url "https://github.com/r0man/guix-channel"))
+          (name 'r0man)
+          (url "https://github.com/r0man/guix-channel")
+          (branch "main")
+          (introduction
+           (make-channel-introduction
+            "b3ae462983b153b6163b4ab410decedd8129499d"
+            (openpgp-fingerprint
+             "D226 A339 D8DF 4481 5DDE  0CA0 3DDA 5252 7D2A C199"))))
          %default-channels)
 #+end_src
