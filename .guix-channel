@@ -1,4 +1,4 @@
 ;; -*- mode: scheme; -*-
 (channel
  (version 0)
- (url "https://github.com/r0man/guix-channel"))
+ (url "https://github.com/r0man/guix-channel.git"))
