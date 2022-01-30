@@ -1,5 +1,5 @@
 ;; -*- mode: scheme; -*-
 (channel
- (directory "r0man")
+ (version 0)
  (url "https://github.com/r0man/guix-channel.git")
- (version 0))
+ (directory "r0man"))
