@@ -1,5 +1,7 @@
 #+title: My GUIX channel
 
+[[https://github.com/r0man/guix-channel/actions/workflows/test.yml][https://github.com/r0man/guix-channel/actions/workflows/test.yml/badge.svg]]
+
 * Usage
 
 Add this channel to =~/.config/guix/channels.scm=
