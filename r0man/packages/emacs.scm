@@ -5,43 +5,37 @@
   #:use-module (guix build-system emacs)
   #:use-module (gnu packages emacs-xyz))
 
-(define-public emacs-docopt
+(define-public emacs-aio
   (package
-    (name "emacs-docopt")
-    (version "20201211.1008")
+    (name "emacs-aio")
+    (version "20200610.1904")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/r0man/docopt.el.git")
-             (commit "2e49c2f4e9ee023d2a143086463bac47db914846")))
+             (url "https://github.com/skeeto/emacs-aio.git")
+             (commit "da93523e235529fa97d6f251319d9e1d6fc24a41")))
        (sha256
-        (base32 "0vkmgfgw8qica21hcqila62ivqxshkay2r2dyy4dxxj3xypk3083"))))
+        (base32 "0hnxbz5pxlrgxhjr5gnhf06qwg67g5pd87xkp0smmagsh18pnf76"))))
     (build-system emacs-build-system)
-    (propagated-inputs
-     (list emacs-dash emacs-f emacs-parsec emacs-s emacs-transient))
     (arguments
-     '(#:include
-       '("^[^/]+.el$"
-         "^[^/]+.el.in$"
-         "^dir$"
-         "^[^/]+.info$"
-         "^[^/]+.texi$"
-         "^[^/]+.texinfo$"
-         "^doc/dir$"
-         "^doc/[^/]+.info$"
-         "^doc/[^/]+.texi$"
-         "^doc/[^/]+.texinfo$"
-         "^src/[^/]+.el$")
-       #:exclude
-       '("^.dir-locals.el$"
-         "^test.el$"
-         "^tests.el$"
-         "^[^/]+-test.el$"
-         "^[^/]+-tests.el$")))
-    (home-page "https://github.com/r0man/docopt.el")
-    (synopsis "A Docopt implementation in Elisp")
-    (description "This package provides a Docopt implementation in Elisp")
+     '(#:include '("^aio.el$" "^README.md$" "^UNLICENSE$") #:exclude '()))
+    (home-page "https://github.com/skeeto/emacs-aio")
+    (synopsis "async/await for Emacs Lisp")
+    (description
+     "`aio` is to Emacs Lisp as [`asyncio`][asyncio] is to Python.  This package
+builds upon Emacs 25 generators to provide functions that pause while they wait
+on asynchronous events.  They do not block any thread while paused.
+
+The main components of this package are `aio-defun' / `aio-lambda' to define
+async function, and `aio-await' to pause these functions while they wait on
+asynchronous events.  When an asynchronous function is paused, the main thread
+is not blocked.  It is no more or less powerful than callbacks, but is nicer to
+use.
+
+This is implementation is based on Emacs 25 generators, and asynchronous
+functions are actually iterators in disguise, operated as stackless, asymmetric
+coroutines.")
     (license #f)))
 
 (define-public emacs-scss-mode
