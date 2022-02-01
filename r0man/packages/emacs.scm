@@ -309,6 +309,39 @@ you can force them to use the \"master\" branch.")
     (description "No description available.")
     (license #f)))
 
+(define-public emacs-jiralib2
+  (package
+    (name "emacs-jiralib2")
+    (version "20200520.2031")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/nyyManni/jiralib2.git")
+             (commit "c21c4e759eff549dbda11099f2f680b78d7f5a01")))
+       (sha256
+        (base32 "0yrcc9yfz9gxkhizy03bpysl1wcdbk0m6fj9hkqw3kbgnsk25h4p"))))
+    (build-system emacs-build-system)
+    (propagated-inputs (list emacs-request emacs-dash))
+    (home-page "https://github.com/nyyManni/jiralib2")
+    (synopsis "JIRA REST API bindings to Elisp")
+    (description
+     "This file provides a programatic interface to JIRA.  It provides access to JIRA
+from other programs, but no user level functionality.
+
+jiralib2 supports three methods of authentication: cookie, basic and token.
+Cookie auth is the same which is used in the browser, and works by requesting a
+session id from the API.  Basic auth works by including the Authorization-header
+in all the requests.  Token authentication is similar to the basic
+authentication, but uses a server-side generated token instead of the password,
+and is only available with JIRA Cloud.  OAuth login is not supported.
+
+Jira References:
+
+Primary reference (on current Jira, only REST is supported):
+https://docs.atlassian.com/jira/REST/cloud/")
+    (license #f)))
+
 (define-public emacs-js2-refactor
   (package
     (name "emacs-js2-refactor")
