@@ -226,6 +226,106 @@ themes.
 \f")
     (license #f)))
 
+(define-public emacs-eval-expr
+  (package
+    (name "emacs-eval-expr")
+    (version "20120619.647")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/jwiegley/eval-expr.git")
+             (commit "a0e69e83de41df8dbccefc1962ab4f02206a3328")))
+       (sha256
+        (base32 "08zw3qrhqmnv2wxmbf74svk2cx5by4831kyw6rx13imkc4x8kngx"))))
+    (build-system emacs-build-system)
+    (home-page "unspecified")
+    (synopsis "enhanced eval-expression command")
+    (description
+     "Updates of this program may be available via the URL
+http://www.splode.com/~friedman/software/emacs-lisp/
+
+To use this package, put this in your .emacs:
+
+   (require 'eval-expr)    (eval-expr-install)
+
+Highlights:
+
+  * When reading the Lisp object interactively from the minibuffer, the
+minibuffer uses the Emacs Lisp Mode syntax table.  (Emacs 19.18 or     later
+only.)
+
+  * If you type an incomplete or otherwise syntactically invalid     expression
+(e.g.  you forget a closing paren), you can fix your     mistake without having
+to type it all over again.
+
+  * Can display the result in a buffer if it is too big to fit in the     echo
+area.  This buffer is placed in Emacs Lisp Mode.      (If you give a prefix arg,
+the result is placed in the current     buffer instead of the echo area or a
+separate temporary buffer.)
+
+  * The variables `eval-expr-print-level' and `eval-expr-print-length'     can
+be used to constrain the attempt to print recursive data     structures.  These
+variables are independent of the global     `print-level' and `print-length'
+variables so that eval-expression     can be used more easily for debugging.
+
+  * Pretty-printing complex results via `pp' function is possible.
+
+This program is loosely based on an earlier implemention written by Joe Wells
+<jbw@cs.bu.edu> called eval-expression-fix.el (last revised 1991-10-12).  That
+version was originally written for Emacs 18 and, while it worked with some
+quirky side effects in Emacs 19, created even more problems in Emacs 20 and
+didn't work in XEmacs at all.
+
+This rewrite should work in Emacs 19.18 or later and any version of XEmacs.
+However it will not work in Emacs 18.")
+    (license #f)))
+
+(define-public emacs-flycheck-clj-kondo
+  (package
+    (name "emacs-flycheck-clj-kondo")
+    (version "20211227.2226")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/borkdude/flycheck-clj-kondo.git")
+             (commit "d8a6ee9a16aa24b5be01f1edf9843d41bdc75555")))
+       (sha256
+        (base32 "010gzxwvr2p2wv358r76ajkn48ilgmkmv7z6bckqbap0cjhrqq43"))))
+    (build-system emacs-build-system)
+    (propagated-inputs (list emacs-flycheck))
+    (home-page "https://github.com/borkdude/flycheck-clj-kondo")
+    (synopsis "Add clj-kondo linter to flycheck")
+    (description
+     "This package integrates clj-kondo with Emacs via flycheck.  To use it, add to
+your init.el:
+
+(require 'flycheck-clj-kondo)
+
+Make sure the clj-kondo binary is on your path.  For installation instructions,
+see https://github.com/borkdude/clj-kondo.")
+    (license #f)))
+
+(define-public emacs-flycheck-elsa
+  (package
+    (name "emacs-flycheck-elsa")
+    (version "20200203.1758")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/emacs-elsa/flycheck-elsa.git")
+             (commit "6274e6d5391bcdca46164b3238b045ca21c353a2")))
+       (sha256
+        (base32 "0dr52dqxsgswswbkdbv0dax57k41j58n5wf3gny6yz52626kv8n8"))))
+    (build-system emacs-build-system)
+    (propagated-inputs (list emacs-flycheck))
+    (home-page "https://github.com/emacs-elsa/flycheck-elsa")
+    (synopsis "Flycheck for Elsa.")
+    (description "Flycheck integration for Elsa.  See README.md")
+    (license #f)))
+
 (define-public emacs-flymd
   (package
     (name "emacs-flymd")
@@ -513,6 +613,52 @@ The process must output one JSON message per line.")
     (description "Run language servers in containers")
     (license #f)))
 
+(define-public emacs-lsp-metals
+  (package
+    (name "emacs-lsp-metals")
+    (version "20220107.1434")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/emacs-lsp/lsp-metals.git")
+             (commit "743db8df15375ff9270424951d2dcc3a7e8e7a0b")))
+       (sha256
+        (base32 "1251hkpjh0s51znpqhfg193c67fcyr9b7i9hfs8xfalivjpnj254"))))
+    (build-system emacs-build-system)
+    (propagated-inputs
+     (list emacs-scala-mode
+           emacs-lsp-mode
+           emacs-lsp-treemacs
+           emacs-dap-mode
+           emacs-dash
+           emacs-f
+           emacs-ht
+           emacs-treemacs))
+    (arguments
+     '(#:include
+       '("^[^/]+.el$"
+         "^[^/]+.el.in$"
+         "^dir$"
+         "^[^/]+.info$"
+         "^[^/]+.texi$"
+         "^[^/]+.texinfo$"
+         "^doc/dir$"
+         "^doc/[^/]+.info$"
+         "^doc/[^/]+.texi$"
+         "^doc/[^/]+.texinfo$"
+         "^icons$")
+       #:exclude
+       '("^.dir-locals.el$"
+         "^test.el$"
+         "^tests.el$"
+         "^[^/]+-test.el$"
+         "^[^/]+-tests.el$")))
+    (home-page "https://github.com/emacs-lsp/lsp-metals")
+    (synopsis "Scala Client settings")
+    (description "lsp-metals client")
+    (license #f)))
+
 (define-public emacs-markdown-preview-eww
   (package
     (name "emacs-markdown-preview-eww")
@@ -554,6 +700,32 @@ The process must output one JSON message per line.")
     (synopsis "Org sync with Google Calendar")
     (description
      " Put the org-gcal.el to your load-path.  Add to .emacs: (require 'org-gcal)")
+    (license #f)))
+
+(define-public emacs-ox-jira
+  (package
+    (name "emacs-ox-jira")
+    (version "20220121.1015")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/stig/ox-jira.el.git")
+             (commit "a8019237a8f5e016a7c952fc2f673a2498a0e779")))
+       (sha256
+        (base32 "0pa7pwk0yjcgak3f9w9jggj3ghlig1azf15ng954r646810j9i4v"))))
+    (build-system emacs-build-system)
+    (propagated-inputs (list emacs-org))
+    (home-page "https://github.com/stig/ox-jira.el")
+    (synopsis "JIRA Backend for Org Export Engine")
+    (description
+     "This module plugs into the regular Org Export Engine and transforms Org files to
+JIRA markup for pasting into JIRA tickets & comments.
+
+In an Org buffer, hit `C-c C-e j j' to bring up *Org Export Dispatcher* and
+export it as a JIRA buffer.  I usually use `C-x h' to mark the whole buffer,
+then `M-w' to save it to the kill ring (and global pasteboard) for pasting into
+JIRA issues.")
     (license #f)))
 
 (define-public emacs-request-deferred
