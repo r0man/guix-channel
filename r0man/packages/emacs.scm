@@ -666,6 +666,31 @@ returns the language of the      current buffer  * language-detection-string
 - Non-interactive function, returns the language of its argument")
     (license #f)))
 
+(define-public emacs-lsp-dart
+  (package
+    (name "emacs-lsp-dart")
+    (version "20220129.1427")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/emacs-lsp/lsp-dart.git")
+             (commit "5cef1b6a34327bf236c8b7b23c44bdd968b4585b")))
+       (sha256
+        (base32 "0kvjkpv0yvahmlkqyzl9ayl3mmmr4gcmi3p5pp8092ah0xgys86p"))))
+    (build-system emacs-build-system)
+    (propagated-inputs
+     (list emacs-lsp-treemacs
+           emacs-lsp-mode
+           emacs-dap-mode
+           emacs-f
+           emacs-dash
+           emacs-dart-mode))
+    (home-page "https://emacs-lsp.github.io/lsp-dart")
+    (synopsis "Dart support lsp-mode")
+    (description "Dart analysis server client for LSP mode")
+    (license #f)))
+
 (define-public emacs-lsp-docker
   (package
     (name "emacs-lsp-docker")
