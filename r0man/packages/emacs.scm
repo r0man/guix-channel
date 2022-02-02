@@ -1034,3 +1034,48 @@ the functionality of Doug Hellmann's
 documentation at https://github.com/porterjamesj/virtualenvwrapper.el for more
 details.")
     (license #f)))
+
+(define-public emacs-x509-mode
+  (package
+    (name "emacs-x509-mode")
+    (version "20210407.627")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/jobbflykt/x509-mode.git")
+             (commit "470769edba111aed8eabce58a3f2a02da0767624")))
+       (sha256
+        (base32 "19xvfzmsnc271a2zhjbnspb269c5mnps4l94ifrdlqn7y886qr4r"))))
+    (build-system emacs-build-system)
+    (arguments
+     '(#:include
+       '("^[^/]+.el$"
+         "^[^/]+.el.in$"
+         "^dir$"
+         "^[^/]+.info$"
+         "^[^/]+.texi$"
+         "^[^/]+.texinfo$"
+         "^doc/dir$"
+         "^doc/[^/]+.info$"
+         "^doc/[^/]+.texi$"
+         "^doc/[^/]+.texinfo$"
+         "^[^/]+.txt$")
+       #:exclude
+       '("^.dir-locals.el$"
+         "^test.el$"
+         "^tests.el$"
+         "^[^/]+-test.el$"
+         "^[^/]+-tests.el$")))
+    (home-page "https://github.com/jobbflykt/x509-mode")
+    (synopsis "View certificates, CRLs and keys using OpenSSL.")
+    (description
+     "Major for viewing certificates, CRLs, keys and DH-parameters.
+
+Uses OpenSSL for viewing PEM and DER encoded PKI entities.
+
+Usage: Open a file containing a certificate, either PEM or DER encode.  Now use
+M-x `x509-viewcert' to create a new buffer that displays the decoded
+certificate.  Use M-x `x509-viewcrl', M-X `x509-viewasn1', M-x `x509-viewkey'
+and M-x `x509-viewdh' in a similar manner.")
+    (license #f)))
