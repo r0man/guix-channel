@@ -1,9 +1,12 @@
 (define-module (r0man packages emacs)
   #:use-module ((guix licenses) #:prefix license:)
-  #:use-module (guix packages)
-  #:use-module (guix git-download)
+  #:use-module (gnu packages emacs)
+  #:use-module (gnu packages emacs-xyz)
+  #:use-module (gnu packages sqlite)
   #:use-module (guix build-system emacs)
-  #:use-module (gnu packages emacs-xyz))
+  #:use-module (guix gexp)
+  #:use-module (guix git-download)
+  #:use-module (guix packages))
 
 (define-public emacs-aio
   (package
@@ -960,6 +963,58 @@ Next steps...  - customize your name (in defs.tex) and logo (in logo.pdf).  -
 update some time entries.
 
 Example key bindings  see example.emacs.d/foo/bindings.el")
+    (license #f)))
+
+(define-public emacs-paimon
+  (package
+    (name "emacs-paimon")
+    (version "20220214.2145")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/r0man/paimon.el.git")
+             (commit "e13bbd4d58d31d34e4c8edfd34b095529d02ec73")))
+       (sha256
+        (base32 "0733lb96hmvlm1437chrhgy6hdh5pi4s6wz946pad1id0yc4qzz5"))))
+    (build-system emacs-build-system)
+    (native-inputs
+     (list sqlite))
+    (propagated-inputs
+     (list emacs-aio
+           emacs-closql
+           emacs-emacsql
+           emacs-emacsql-sqlite3
+           emacs-f
+           emacs-ht
+           emacs-transient
+           emacs-request))
+    (arguments
+     `(#:include
+       '("^[^/]+.el$"
+         "^[^/]+.el.in$"
+         "^dir$"
+         "^[^/]+.info$"
+         "^[^/]+.texi$"
+         "^[^/]+.texinfo$"
+         "^doc/dir$"
+         "^doc/[^/]+.info$"
+         "^doc/[^/]+.texi$"
+         "^doc/[^/]+.texinfo$"
+         "^src/[^/]+.el$")
+       #:exclude
+       '("^.dir-locals.el$"
+         "^test.el$"
+         "^tests.el$"
+         "^[^/]+-test.el$"
+         "^[^/]+-tests.el$")
+       #:phases
+       (modify-phases %standard-phases
+         (add-after 'expand-load-path 'add-el-dir-to-emacs-load-path
+           (lambda _ (setenv "EMACSLOADPATH" (string-append (getcwd) "/src:" (getenv "EMACSLOADPATH"))))))))
+    (home-page "https://github.com/r0man/paimon.el")
+    (synopsis "A major mode for Splunk")
+    (description "This package provides a major mode for Splunk")
     (license #f)))
 
 (define-public emacs-popwin
