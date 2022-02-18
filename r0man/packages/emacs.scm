@@ -281,6 +281,49 @@ This rewrite should work in Emacs 19.18 or later and any version of XEmacs.
 However it will not work in Emacs 18.")
     (license #f)))
 
+(define-public emacs-docopt
+  (package
+    (name "emacs-docopt")
+    (version "20201211.1008")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/r0man/docopt.el.git")
+             (commit "2e49c2f4e9ee023d2a143086463bac47db914846")))
+       (sha256
+        (base32 "0vkmgfgw8qica21hcqila62ivqxshkay2r2dyy4dxxj3xypk3083"))))
+    (build-system emacs-build-system)
+    (propagated-inputs
+     (list emacs-dash emacs-f emacs-parsec emacs-s emacs-transient))
+    (arguments
+     `(#:include
+       '("^[^/]+.el$"
+         "^[^/]+.el.in$"
+         "^dir$"
+         "^[^/]+.info$"
+         "^[^/]+.texi$"
+         "^[^/]+.texinfo$"
+         "^doc/dir$"
+         "^doc/[^/]+.info$"
+         "^doc/[^/]+.texi$"
+         "^doc/[^/]+.texinfo$"
+         "^src/[^/]+.el$")
+       #:exclude
+       '("^.dir-locals.el$"
+         "^test.el$"
+         "^tests.el$"
+         "^[^/]+-test.el$"
+         "^[^/]+-tests.el$")
+       #:phases
+       (modify-phases %standard-phases
+         (add-after 'expand-load-path 'add-el-dir-to-emacs-load-path
+           (lambda _ (setenv "EMACSLOADPATH" (string-append (getcwd) "/src:" (getenv "EMACSLOADPATH"))))))))
+    (home-page "https://github.com/r0man/docopt.el")
+    (synopsis "A Docopt implementation in Elisp")
+    (description "This package provides a Docopt implementation in Elisp")
+    (license #f)))
+
 (define-public emacs-flycheck-clj-kondo
   (package
     (name "emacs-flycheck-clj-kondo")
