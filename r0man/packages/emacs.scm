@@ -5,39 +5,6 @@
   #:use-module (guix build-system emacs)
   #:use-module (gnu packages emacs-xyz))
 
-(define-public emacs-aio
-  (package
-    (name "emacs-aio")
-    (version "20200610.1904")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/skeeto/emacs-aio.git")
-             (commit "da93523e235529fa97d6f251319d9e1d6fc24a41")))
-       (sha256
-        (base32 "0hnxbz5pxlrgxhjr5gnhf06qwg67g5pd87xkp0smmagsh18pnf76"))))
-    (build-system emacs-build-system)
-    (arguments
-     '(#:include '("^aio.el$" "^README.md$" "^UNLICENSE$") #:exclude '()))
-    (home-page "https://github.com/skeeto/emacs-aio")
-    (synopsis "async/await for Emacs Lisp")
-    (description
-     "`aio` is to Emacs Lisp as [`asyncio`][asyncio] is to Python.  This package
-builds upon Emacs 25 generators to provide functions that pause while they wait
-on asynchronous events.  They do not block any thread while paused.
-
-The main components of this package are `aio-defun' / `aio-lambda' to define
-async function, and `aio-await' to pause these functions while they wait on
-asynchronous events.  When an asynchronous function is paused, the main thread
-is not blocked.  It is no more or less powerful than callbacks, but is nicer to
-use.
-
-This is implementation is based on Emacs 25 generators, and asynchronous
-functions are actually iterators in disguise, operated as stackless, asymmetric
-coroutines.")
-    (license #f)))
-
 (define-public emacs-avy-menu
   (package
     (name "emacs-avy-menu")
