@@ -1,9 +1,12 @@
 (define-module (r0man packages emacs)
   #:use-module ((guix licenses) #:prefix license:)
-  #:use-module (guix packages)
-  #:use-module (guix git-download)
+  #:use-module (gnu packages emacs)
+  #:use-module (gnu packages emacs-xyz)
+  #:use-module (gnu packages sqlite)
   #:use-module (guix build-system emacs)
-  #:use-module (gnu packages emacs-xyz))
+  #:use-module (guix gexp)
+  #:use-module (guix git-download)
+  #:use-module (guix packages))
 
 (define-public emacs-avy-menu
   (package
@@ -246,6 +249,49 @@ didn't work in XEmacs at all.
 
 This rewrite should work in Emacs 19.18 or later and any version of XEmacs.
 However it will not work in Emacs 18.")
+    (license #f)))
+
+(define-public emacs-docopt
+  (package
+    (name "emacs-docopt")
+    (version "20201211.1008")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/r0man/docopt.el.git")
+             (commit "2e49c2f4e9ee023d2a143086463bac47db914846")))
+       (sha256
+        (base32 "0vkmgfgw8qica21hcqila62ivqxshkay2r2dyy4dxxj3xypk3083"))))
+    (build-system emacs-build-system)
+    (propagated-inputs
+     (list emacs-dash emacs-f emacs-parsec emacs-s emacs-transient))
+    (arguments
+     `(#:include
+       '("^[^/]+.el$"
+         "^[^/]+.el.in$"
+         "^dir$"
+         "^[^/]+.info$"
+         "^[^/]+.texi$"
+         "^[^/]+.texinfo$"
+         "^doc/dir$"
+         "^doc/[^/]+.info$"
+         "^doc/[^/]+.texi$"
+         "^doc/[^/]+.texinfo$"
+         "^src/[^/]+.el$")
+       #:exclude
+       '("^.dir-locals.el$"
+         "^test.el$"
+         "^tests.el$"
+         "^[^/]+-test.el$"
+         "^[^/]+-tests.el$")
+       #:phases
+       (modify-phases %standard-phases
+         (add-after 'expand-load-path 'add-el-dir-to-emacs-load-path
+           (lambda _ (setenv "EMACSLOADPATH" (string-append (getcwd) "/src:" (getenv "EMACSLOADPATH"))))))))
+    (home-page "https://github.com/r0man/docopt.el")
+    (synopsis "A Docopt implementation in Elisp")
+    (description "This package provides a Docopt implementation in Elisp")
     (license #f)))
 
 (define-public emacs-flycheck-clj-kondo
@@ -598,6 +644,45 @@ Run the tests with:
 The process must output one JSON message per line.")
     (license #f)))
 
+(define-public emacs-kubel
+  (package
+    (name "emacs-kubel")
+    (version "20220104.2320")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/abrochard/kubel.git")
+             (commit "68d2925c7942039e3fb3eb6c113adec5369c6c72")))
+       (sha256
+        (base32 "173ympabfa14rc6y4f3rjxapj7py0dsnzp8zg7q2gkyxv1iwhh55"))))
+    (build-system emacs-build-system)
+    (propagated-inputs (list emacs-transient emacs-dash emacs-s emacs-yaml-mode))
+    (arguments
+     '(#:include
+       '("^[^/]+.el$"
+         "^[^/]+.el.in$"
+         "^dir$"
+         "^[^/]+.info$"
+         "^[^/]+.texi$"
+         "^[^/]+.texinfo$"
+         "^doc/dir$"
+         "^doc/[^/]+.info$"
+         "^doc/[^/]+.texi$"
+         "^doc/[^/]+.texinfo$")
+       #:exclude
+       '("^.dir-locals.el$"
+         "^test.el$"
+         "^tests.el$"
+         "^[^/]+-test.el$"
+         "^[^/]+-tests.el$"
+         "^kubel-evil.el$")))
+    (home-page "https://github.com/abrochard/kubel")
+    (synopsis "Control Kubernetes with limited permissions")
+    (description
+     "Emacs extension for controlling Kubernetes with limited permissions.")
+    (license #f)))
+
 (define-public emacs-language-detection
   (package
     (name "emacs-language-detection")
@@ -927,6 +1012,58 @@ Next steps...  - customize your name (in defs.tex) and logo (in logo.pdf).  -
 update some time entries.
 
 Example key bindings  see example.emacs.d/foo/bindings.el")
+    (license #f)))
+
+(define-public emacs-paimon
+  (package
+    (name "emacs-paimon")
+    (version "20220214.2145")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/r0man/paimon.el.git")
+             (commit "e13bbd4d58d31d34e4c8edfd34b095529d02ec73")))
+       (sha256
+        (base32 "0733lb96hmvlm1437chrhgy6hdh5pi4s6wz946pad1id0yc4qzz5"))))
+    (build-system emacs-build-system)
+    (native-inputs
+     (list sqlite))
+    (propagated-inputs
+     (list emacs-aio
+           emacs-closql
+           emacs-emacsql
+           emacs-emacsql-sqlite3
+           emacs-f
+           emacs-ht
+           emacs-transient
+           emacs-request))
+    (arguments
+     `(#:include
+       '("^[^/]+.el$"
+         "^[^/]+.el.in$"
+         "^dir$"
+         "^[^/]+.info$"
+         "^[^/]+.texi$"
+         "^[^/]+.texinfo$"
+         "^doc/dir$"
+         "^doc/[^/]+.info$"
+         "^doc/[^/]+.texi$"
+         "^doc/[^/]+.texinfo$"
+         "^src/[^/]+.el$")
+       #:exclude
+       '("^.dir-locals.el$"
+         "^test.el$"
+         "^tests.el$"
+         "^[^/]+-test.el$"
+         "^[^/]+-tests.el$")
+       #:phases
+       (modify-phases %standard-phases
+         (add-after 'expand-load-path 'add-el-dir-to-emacs-load-path
+           (lambda _ (setenv "EMACSLOADPATH" (string-append (getcwd) "/src:" (getenv "EMACSLOADPATH"))))))))
+    (home-page "https://github.com/r0man/paimon.el")
+    (synopsis "A major mode for Splunk")
+    (description "This package provides a major mode for Splunk")
     (license #f)))
 
 (define-public emacs-popwin
