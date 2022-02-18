@@ -1,6 +1,8 @@
-#+title: My GUIX channel
+#+title: My Guix channel
 
 [[https://github.com/r0man/guix-channel/actions/workflows/test.yml][https://github.com/r0man/guix-channel/actions/workflows/test.yml/badge.svg]]
+
+[[https://guix.gnu.org/static/blog/img/test-pilot.png]]
 
 * Usage
 
