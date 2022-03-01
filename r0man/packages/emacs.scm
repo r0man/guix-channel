@@ -441,6 +441,32 @@ languages is very easy and this package already contains language statistics for
 49 additional languages.")
     (license #f)))
 
+(define-public emacs-grip-mode
+  (package
+    (name "emacs-grip-mode")
+    (version "20220228.1516")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/seagle0128/grip-mode.git")
+             (commit "c0b45c3a0bf2f6ea51b166020aaf27050f4d3c66")))
+       (sha256
+        (base32 "1zcrzy47lxk5p6qk0d9x2gpy2pza8kjwcp7aqnad7gl6jr257cac"))))
+    (build-system emacs-build-system)
+    (home-page "https://github.com/seagle0128/grip-mode")
+    (synopsis "Instant GitHub-flavored Markdown/Org preview using grip.")
+    (description
+     "Instant GitHub-flavored Markdown/Org preview using a grip subprocess.
+
+Install: From melpa, `M-x package-install RET grip-mode RET`.  ;; Make a
+keybinding: `C-c C-c g' (define-key markdown-mode-command-map (kbd \"g\")
+#'grip-mode) ;; or start grip when opening a markdown file (add-hook
+'markdown-mode-hook #'grip-mode) or (use-package grip-mode   :ensure t   :bind
+(:map markdown-mode-command-map          (\"g\" .  grip-mode))) Run `M-x
+grip-mode` to preview the markdown file with the default browser.")
+    (license #f)))
+
 (define-public emacs-inflections
   (package
     (name "emacs-inflections")
