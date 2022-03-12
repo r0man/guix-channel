@@ -790,52 +790,6 @@ returns the language of the      current buffer  * language-detection-string
     (description "Run language servers in containers")
     (license #f)))
 
-(define-public emacs-lsp-metals
-  (package
-    (name "emacs-lsp-metals")
-    (version "20220107.1434")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/emacs-lsp/lsp-metals.git")
-             (commit "743db8df15375ff9270424951d2dcc3a7e8e7a0b")))
-       (sha256
-        (base32 "1251hkpjh0s51znpqhfg193c67fcyr9b7i9hfs8xfalivjpnj254"))))
-    (build-system emacs-build-system)
-    (propagated-inputs
-     (list emacs-scala-mode
-           emacs-lsp-mode
-           emacs-lsp-treemacs
-           emacs-dap-mode
-           emacs-dash
-           emacs-f
-           emacs-ht
-           emacs-treemacs))
-    (arguments
-     '(#:include
-       '("^[^/]+.el$"
-         "^[^/]+.el.in$"
-         "^dir$"
-         "^[^/]+.info$"
-         "^[^/]+.texi$"
-         "^[^/]+.texinfo$"
-         "^doc/dir$"
-         "^doc/[^/]+.info$"
-         "^doc/[^/]+.texi$"
-         "^doc/[^/]+.texinfo$"
-         "^icons$")
-       #:exclude
-       '("^.dir-locals.el$"
-         "^test.el$"
-         "^tests.el$"
-         "^[^/]+-test.el$"
-         "^[^/]+-tests.el$")))
-    (home-page "https://github.com/emacs-lsp/lsp-metals")
-    (synopsis "Scala Client settings")
-    (description "lsp-metals client")
-    (license #f)))
-
 (define-public emacs-markdown-preview-eww
   (package
     (name "emacs-markdown-preview-eww")
