@@ -252,6 +252,58 @@ This rewrite should work in Emacs 19.18 or later and any version of XEmacs.
 However it will not work in Emacs 18.")
     (license #f)))
 
+(define-public emacs-emacsql-sqlite
+  (package
+    (name "emacs-emacsql-sqlite")
+    (version "20220218.1543")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/skeeto/emacsql.git")
+             (commit "374726060d74df0e2bcb9d0355ff41e2c400ed30")))
+       (sha256
+        (base32 "0z382qksrwhkv0ayjp8nays65c3xwd4kylj41k1pc3nnqg6b2k45"))))
+    (build-system emacs-build-system)
+    (propagated-inputs (list emacs-emacsql))
+    (arguments '(#:include '("^emacsql-sqlite.el$" "^sqlite$") #:exclude '()))
+    (home-page "https://github.com/skeeto/emacsql")
+    (synopsis "EmacSQL back-end for SQLite")
+    (description
+     "During package installation EmacSQL will attempt to compile a custom native
+binary for communicating with a SQLite database.")
+    (license #f)))
+
+(define-public emacs-emacsql-libsqlite3
+  (package
+    (name "emacs-emacsql-libsqlite3")
+    (version "20220129.2241")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/emacscollective/emacsql-libsqlite3.git")
+             (commit "2aca80a3869d4fd654e79c4a1e20b5227fc2ba39")))
+       (sha256
+        (base32 "0x0fmxgjs17hckx2a32y96nlqdcsx42wcw4lpyc6nk98ikraipgq"))))
+    (build-system emacs-build-system)
+    (inputs
+     (list emacs-sqlite3 sqlite))
+    (native-inputs
+     (list emacs-sqlite3 sqlite))
+    (propagated-inputs (list emacs-emacsql emacs-emacsql-sqlite emacs-sqlite3))
+    (home-page "https://github.com/emacscollective/emacsql-libsqlite3")
+    (synopsis "EmacSQL back-end for SQLite using a module")
+    (description
+     "An alternative EmacsSQL back-end for SQLite, which uses an Emacs module that
+exposes parts of the SQLite C API to elisp, instead of using subprocess as
+`emacsql-sqlite' does.  The module is provided by the `sqlite3' package.
+
+The goal is to provide a more performant and resilent drop-in replacement for
+`emacsql-sqlite'.  Taking full advantage of the granular module functions
+currently isn't a goal.")
+    (license #f)))
+
 (define-public emacs-docopt
   (package
     (name "emacs-docopt")
@@ -1123,9 +1175,9 @@ Enjoy!")
              (lambda* (#:key outputs #:allow-other-keys)
                (chmod "sqlite3.el" #o644)
                (emacs-substitute-sexps "sqlite3.el"
-                 ("(require 'sqlite3-core)"
-                  `(module-load ,(string-append (assoc-ref outputs "out")
-                                                "/lib/sqlite3-core.so"))))))
+                 ("(require 'cl-lib)"
+                  `(unless (require 'sqlite3-core nil t)
+                     (module-load ,(string-append (assoc-ref outputs "out") "/lib/sqlite3-core.so")))))))
            (add-before 'install 'build-emacs-module
              ;; Run make.
              (lambda* (#:key (make-flags '()) outputs #:allow-other-keys)
