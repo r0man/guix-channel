@@ -1,5 +1,6 @@
 (define-module (r0man packages emacs)
   #:use-module ((guix licenses) #:prefix license:)
+  #:use-module (gnu packages autotools)
   #:use-module (gnu packages emacs)
   #:use-module (gnu packages emacs-xyz)
   #:use-module (gnu packages sqlite)
@@ -1140,6 +1141,52 @@ See also `popwin:keymap' documentation.
 
 Enjoy!")
     (license #f)))
+
+(define-public emacs-sqlite3
+  (let ((version "0.0.1")
+        (revision "0")
+        (commit "50479fc43df0fbc17cd02108f52fcf6e1686e907"))
+    (package
+      (name "emacs-sqlite3")
+      (version (git-version version revision commit))
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                      (url "https://github.com/syohex/emacs-sqlite3")
+                      (commit commit)))
+                (file-name (git-file-name name version))
+                (sha256
+                 (base32
+                  "0xxaj8ah87wc416ncbp1f9zfhqa5yy2fpvlhz25fs5nhy1i8pzc6"))))
+      (build-system emacs-build-system)
+      (arguments
+       `(#:modules ((guix build emacs-build-system)
+                    (guix build emacs-utils)
+                    (guix build utils))
+         #:phases
+         (modify-phases %standard-phases
+           (add-after 'unpack 'patch-module-load
+             (lambda* (#:key outputs #:allow-other-keys)
+               (chmod "sqlite3.el" #o644)
+               (emacs-substitute-sexps "sqlite3.el"
+                 ("(require 'sqlite3-core)"
+                  `(module-load ,(string-append (assoc-ref outputs "out")
+                                                "/lib/sqlite3-core.so"))))))
+           (add-before 'install 'build-emacs-module
+             ;; Run make.
+             (lambda* (#:key (make-flags '()) outputs #:allow-other-keys)
+               ;; Compile the shared object file.
+               (apply invoke "make" "all" make-flags)
+               ;; Move the file into /lib.
+               (install-file "sqlite3-core.so"
+                             (string-append (assoc-ref outputs "out") "/lib")))))
+         #:tests? #f))
+      (native-inputs
+       (list libtool sqlite))
+      (home-page "https://github.com/syohex/emacs-sqlite3")
+      (synopsis "Sqlite3 binding of Emacs Lisp")
+      (description "Sqlite binding of Emacs Lisp inspired by mruby-sqlite3")
+      (license license:gpl3+))))
 
 (define-public emacs-virtualenvwrapper
   (package
