@@ -1194,6 +1194,50 @@ Enjoy!")
       (description "Sqlite binding of Emacs Lisp inspired by mruby-sqlite3")
       (license license:gpl3+))))
 
+(define-public emacs-sqlite3-api
+  (let ((version "0.0.1")
+        (revision "0")
+        (commit "88dfeae8f9612cb3564a7393aa8a5c867aacbaf8"))
+    (package
+      (name "emacs-sqlite3-api")
+      (version (git-version version revision commit))
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                      (url "https://github.com/pekingduck/emacs-sqlite3-api")
+                      (commit commit)))
+                (file-name (git-file-name name version))
+                (sha256
+                 (base32
+                  "0sj1fsgcgfzz6dfpmp8r5gmdwpbdzpk5g5lm8j7c3nqj6wqgg7g6"))))
+      (build-system emacs-build-system)
+      (arguments
+       `(#:modules ((guix build emacs-build-system)
+                    (guix build emacs-utils)
+                    (guix build utils))
+         #:phases
+         (modify-phases %standard-phases
+           (add-after 'unpack 'patch-module-load
+             (lambda* (#:key outputs #:allow-other-keys)
+               (chmod "sqlite3.el" #o644)
+               (emacs-substitute-sexps "sqlite3.el"
+                 ("(require 'sqlite3-api nil t)"
+                  `(module-load ,(string-append (assoc-ref outputs "out") "/lib/sqlite3-api.so"))))))
+           (add-before 'install 'build-emacs-module
+             ;; Run make.
+             (lambda* (#:key (make-flags '()) outputs #:allow-other-keys)
+               ;; Compile the shared object file.
+               (apply invoke "make" "CC=gcc" make-flags)
+               ;; Move the file into /lib.
+               (install-file "sqlite3-api.so" (string-append (assoc-ref outputs "out") "/lib")))))
+         #:tests? #f))
+      (native-inputs
+       (list libtool sqlite))
+      (home-page "https://github.com/pekingduck/emacs-sqlite3-api")
+      (synopsis "SQLite3 API for GNU Emacs 25+")
+      (description "SQLite3 is a dynamic module for GNU Emacs 25+ that provides direct access to the core SQLite3 C API from Emacs Lisp.")
+      (license license:gpl3+))))
+
 (define-public emacs-virtualenvwrapper
   (package
     (name "emacs-virtualenvwrapper")
