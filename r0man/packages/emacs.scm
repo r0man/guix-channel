@@ -288,10 +288,10 @@ binary for communicating with a SQLite database.")
         (base32 "0x0fmxgjs17hckx2a32y96nlqdcsx42wcw4lpyc6nk98ikraipgq"))))
     (build-system emacs-build-system)
     (inputs
-     (list emacs-sqlite3 sqlite))
+     (list emacs-sqlite3-api sqlite))
     (native-inputs
-     (list emacs-sqlite3 sqlite))
-    (propagated-inputs (list emacs-emacsql emacs-emacsql-sqlite emacs-sqlite3))
+     (list emacs-sqlite3-api sqlite))
+    (propagated-inputs (list emacs-emacsql emacs-emacsql-sqlite emacs-sqlite3-api))
     (home-page "https://github.com/emacscollective/emacsql-libsqlite3")
     (synopsis "EmacSQL back-end for SQLite using a module")
     (description
