@@ -1050,15 +1050,15 @@ Example key bindings  see example.emacs.d/foo/bindings.el")
 (define-public emacs-paimon
   (package
     (name "emacs-paimon")
-    (version "20220214.2145")
+    (version "0.1.2")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
              (url "https://github.com/r0man/paimon.el.git")
-             (commit "e13bbd4d58d31d34e4c8edfd34b095529d02ec73")))
+             (commit "38e6f128dc0a84ba805089808aff9942584db56a")))
        (sha256
-        (base32 "0733lb96hmvlm1437chrhgy6hdh5pi4s6wz946pad1id0yc4qzz5"))))
+        (base32 "1dqagd4856dfy8m6ajb66rl9nlr4dyrkpznpkrm5p8xdbkryhb3v"))))
     (build-system emacs-build-system)
     (native-inputs
      (list sqlite))
