@@ -340,8 +340,10 @@ currently isn't a goal.")
          "^[^/]+-tests.el$")
        #:phases
        (modify-phases %standard-phases
-         (add-after 'expand-load-path 'add-el-dir-to-emacs-load-path
-           (lambda _ (setenv "EMACSLOADPATH" (string-append (getcwd) "/src:" (getenv "EMACSLOADPATH"))))))))
+         (add-after 'unpack 'move-source-files
+           (lambda _
+             (let ((el-files (find-files "./src" ".*\\.el$")))
+               (for-each (lambda (f) (rename-file f (basename f))) el-files)))))))
     (home-page "https://github.com/r0man/docopt.el")
     (synopsis "A Docopt implementation in Elisp")
     (description "This package provides a Docopt implementation in Elisp")
@@ -1092,8 +1094,10 @@ Example key bindings  see example.emacs.d/foo/bindings.el")
          "^[^/]+-tests.el$")
        #:phases
        (modify-phases %standard-phases
-         (add-after 'expand-load-path 'add-el-dir-to-emacs-load-path
-           (lambda _ (setenv "EMACSLOADPATH" (string-append (getcwd) "/src:" (getenv "EMACSLOADPATH"))))))))
+         (add-after 'unpack 'move-source-files
+           (lambda _
+             (let ((el-files (find-files "./src" ".*\\.el$")))
+               (for-each (lambda (f) (rename-file f (basename f))) el-files)))))))
     (home-page "https://github.com/r0man/paimon.el")
     (synopsis "A major mode for Splunk")
     (description "This package provides a major mode for Splunk")
