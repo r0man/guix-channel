@@ -307,15 +307,15 @@ currently isn't a goal.")
 (define-public emacs-docopt
   (package
     (name "emacs-docopt")
-    (version "20201211.1008")
+    (version "0.1.2")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
              (url "https://github.com/r0man/docopt.el.git")
-             (commit "2e49c2f4e9ee023d2a143086463bac47db914846")))
+             (commit "a7f5b4a8b1a43552067ce27bce6080a509c92cff")))
        (sha256
-        (base32 "0vkmgfgw8qica21hcqila62ivqxshkay2r2dyy4dxxj3xypk3083"))))
+        (base32 "0dr0m5rrk0vhz1sq3d28pxijlkj030ckxc5mhqv3jpq2xfjwd2gv"))))
     (build-system emacs-build-system)
     (propagated-inputs
      (list emacs-dash emacs-f emacs-parsec emacs-s emacs-transient))
