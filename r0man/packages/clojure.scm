@@ -17,7 +17,7 @@
              version
              "/clojure-lsp-native-static-linux-amd64.zip"))
        (sha256
-        (base32 "1ckmjh0mfi961vjcqzdk0r5f7kazvc34rmq6gbkxba3kg7rv18yg"))))
+        (base32 "1l5372031va7ij3b6j001q6wsiqmmqxn78ajhzv6qfq0bcl6dziy"))))
     (build-system copy-build-system)
     (native-inputs (list unzip))
     (arguments
