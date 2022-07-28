@@ -8,7 +8,7 @@
 (define-public clojure-lsp
   (package
     (name "clojure-lsp")
-    (version "2022.06.29-19.32.13")
+    (version "2022.07.24-18.25.43")
     (source
      (origin
        (method url-fetch)
