@@ -28,7 +28,7 @@
            (add-before 'install 'set-permissions
              (lambda _
                (chmod "container-structure-test-linux-amd64" #o755))))))
-    (home-page "https://clojure.org/releases/tools")
+    (home-page "https://github.com/GoogleContainerTools/container-structure-test")
     (synopsis "Container Structure Tests")
     (description "The Container Structure Tests provide a powerful framework to
 validate the structure of a container image. These tests can be used
