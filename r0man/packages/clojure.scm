@@ -1,9 +1,33 @@
 (define-module (r0man packages clojure)
+  #:use-module (gnu packages gcc)
   #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix build-system copy)
   #:use-module (gnu packages compression)
   #:use-module (guix download)
   #:use-module (guix packages))
+
+(define-public babashka
+  (package
+    (name "babashka")
+    (version "0.9.162")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append "https://github.com/babashka/babashka/releases/download/v"
+                                  version "/babashka-" version "-linux-amd64-static.tar.gz"))
+              (sha256
+               (base32
+                "07dgpg1j202ayggvwi8d1g85q33p7fydwa1db7499m95svllfh6l"))))
+    (build-system copy-build-system)
+    (arguments
+     `(#:install-plan
+       '(("bb" "bin/"))))
+    (synopsis "Native, fast starting Clojure interpreter for scripting")
+    (description
+     "Babashka is a native Clojure interpreter for scripting with fast
+startup. Its main goal is to leverage Clojure in places where you
+would be using bash otherwise.")
+    (home-page "https://babashka.org")
+    (license license:epl1.0)))
 
 (define-public clojure-lsp
   (package
