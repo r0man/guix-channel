@@ -34,6 +34,28 @@ following packages:
 It can also be used directly.")
     (license #f)))
 
+(define-public emacs-bnf-mode
+  (package
+    (name "emacs-bnf-mode")
+    (version "20200323.1348")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/sergeyklay/bnf-mode.git")
+                    (commit "d9329dd90e5d4f629295e85898362d9682047898")))
+              (sha256
+               (base32
+                "11ka3qb3wz6bs9b9bc6kwyxcxzrsmq9s8292lyzd0kknd162qx2z"))))
+    (build-system emacs-build-system)
+    (home-page "https://github.com/sergeyklay/bnf-mode")
+    (synopsis "Major mode for editing BNF grammars.")
+    (description
+     "BNF Mode is a GNU Emacs major mode for editing BNF grammars.
+Presently itprovides basic syntax and font-locking for BNF files.  BNF
+notation is supportedexactly form as it was first announced in the
+ALGOL 60 report.")
+    (license #f)))
+
 (define-public emacs-cask
   (package
     (name "emacs-cask")
