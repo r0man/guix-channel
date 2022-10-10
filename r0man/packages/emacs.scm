@@ -6,6 +6,7 @@
   #:use-module (gnu packages sqlite)
   #:use-module (guix build-system emacs)
   #:use-module (guix gexp)
+  #:use-module (guix download)
   #:use-module (guix git-download)
   #:use-module (guix packages))
 
@@ -218,6 +219,26 @@ themes.
 
 \f")
     (license #f)))
+
+(define-public emacs-ef-themes
+  (package
+    (name "emacs-ef-themes")
+    (version "0.7.0")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append "https://elpa.gnu.org/packages/ef-themes-"
+                                  version ".tar"))
+              (sha256
+               (base32
+                "1vfz7sb9z4b8vs94rskzbrxn82jkzxyil115900li2rbd19rahh4"))))
+    (build-system emacs-build-system)
+    (home-page "https://git.sr.ht/~protesilaos/ef-themes")
+    (synopsis "Ef (εὖ) themes, colorful and legible themes for Emacs")
+    (description
+     "The ef-themes are a collection of light and dark themes for GNU Emacs
+whose goal is to provide colorful (\"pretty\") yet legible options for
+users who want something with a bit more flair than the modus themes.")
+    (license license:gpl3+)))
 
 (define-public emacs-eval-expr
   (package
