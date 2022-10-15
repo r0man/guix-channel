@@ -584,6 +584,37 @@ grip-mode` to preview the markdown file with the default browser.")
     (description "No description available.")
     (license #f)))
 
+(define-public emacs-inspector
+  (package
+    (name "emacs-inspector")
+    (version "0.8")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append "https://elpa.gnu.org/packages/inspector-"
+                                  version ".tar"))
+              (sha256
+               (base32
+                "0yrkm5bh2kczl5f642wx1xlnzry1xrw0yxhpm0hqwjrmgmbdb9m6"))))
+    (build-system emacs-build-system)
+    (home-page "https://github.com/mmontone/emacs-inspector")
+    (propagated-inputs (list emacs-treeview))
+    (synopsis "Tool for inspection of Emacs Lisp objects")
+    (description
+     "Tool for inspection of Emacs Lisp objects.  Usage: M-x
+`inspector-inspect-expression to evaluate an elisp expression and inspect the
+result.  M-x `inspector-inspect-last-sexp to evaluate last sexp in current
+buffer and inspect the result.  Inside the inspector: M-x `inspector-pop bound
+to letter l, to navigate to previous object.  M-x `inspector-quit bound to
+letter q, to exit the inspector.  Also, M-x `forward-button and M-x
+`backward-button are conveniently bound to n and p.  They can be used for fast
+navigation across the buttons that the inspector displays.  Finally, you can use
+M-x `eval-expression bound to letter e, to evaluate an elisp expression using
+the object currently being inspected (it is bound to *).  From the Emacs
+debugger: When on an Emacs debugging backtrace, press letter i to inspect the
+pointed frame and its local variables.  When on edebug-mode, use C-c C-i for
+inspecting expressions in the debugger.")
+    (license license:gpl3+)))
+
 (define-public emacs-jiralib2
   (package
     (name "emacs-jiralib2")
@@ -1284,6 +1315,26 @@ Enjoy!")
       (synopsis "SQLite3 API for GNU Emacs 25+")
       (description "SQLite3 is a dynamic module for GNU Emacs 25+ that provides direct access to the core SQLite3 C API from Emacs Lisp.")
       (license license:gpl3+))))
+
+(define-public emacs-treeview
+  (package
+    (name "emacs-treeview")
+    (version "1.1.1")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append "https://elpa.nongnu.org/nongnu/treeview-"
+                                  version ".tar"))
+              (sha256
+               (base32
+                "0ryycz2n1kam3ji0ibpy99ll5l6xnx1mx9i9bgfvma61f0ppcppd"))))
+    (build-system emacs-build-system)
+    (home-page "https://github.com/tilmanrassy/emacs-treeview")
+    (synopsis "A generic tree navigation library")
+    (description
+     "Abstract Emacs Lisp framework for tree navigation. Based on this
+framework, specific libraries for particular hierarchical data can be
+implemented, for example, file systems.")
+    (license #f)))
 
 (define-public emacs-virtualenvwrapper
   (package
