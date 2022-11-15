@@ -32,7 +32,7 @@ would be using bash otherwise.")
 (define-public clojure-lsp
   (package
     (name "clojure-lsp")
-    (version "2022.10.05-16.39.51")
+    (version "2022.11.03-00.14.57")
     (source
      (origin
        (method url-fetch)
@@ -41,7 +41,7 @@ would be using bash otherwise.")
              version
              "/clojure-lsp-native-static-linux-amd64.zip"))
        (sha256
-        (base32 "1gzdzz7zj7idbnx6cayp4sy4phz5vk3bry231gc46bkw6ygfwzlv"))))
+        (base32 "0a93fjrslyqrj1in49a51b0hnrjmgjamxxg39y9h9b9xpsy1dwcz"))))
     (build-system copy-build-system)
     (native-inputs (list unzip))
     (arguments
