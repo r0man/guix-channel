@@ -615,6 +615,25 @@ pointed frame and its local variables.  When on edebug-mode, use C-c C-i for
 inspecting expressions in the debugger.")
     (license license:gpl3+)))
 
+(define-public emacs-jarchive
+  (package
+    (name "emacs-jarchive")
+    (version "0.8.0")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append "https://elpa.gnu.org/packages/jarchive-"
+                                  version ".tar"))
+              (sha256
+               (base32
+                "0xfl0gbfqjgbkd28r56j35kc8y6x8nd2zi8xqzxmqvcyv9sd731l"))))
+    (build-system emacs-build-system)
+    (home-page "https://git.sr.ht/~dannyfreeman/jarchive")
+    (synopsis "Open project dependencies in jar archives")
+    (description
+     "Jarchive teaches emacs how to open project dependencies that reside
+inside jar files.")
+    (license license:gpl3+)))
+
 (define-public emacs-jiralib2
   (package
     (name "emacs-jiralib2")
