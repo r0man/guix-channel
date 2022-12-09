@@ -317,36 +317,6 @@ However it will not work in Emacs 18.")
 binary for communicating with a SQLite database.")
     (license #f)))
 
-(define-public emacs-emacsql-libsqlite3
-  (package
-    (name "emacs-emacsql-libsqlite3")
-    (version "20220129.2241")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/emacscollective/emacsql-libsqlite3.git")
-             (commit "2aca80a3869d4fd654e79c4a1e20b5227fc2ba39")))
-       (sha256
-        (base32 "0x0fmxgjs17hckx2a32y96nlqdcsx42wcw4lpyc6nk98ikraipgq"))))
-    (build-system emacs-build-system)
-    (inputs
-     (list emacs-sqlite3-api sqlite))
-    (native-inputs
-     (list emacs-sqlite3-api sqlite))
-    (propagated-inputs (list emacs-emacsql emacs-emacsql-sqlite emacs-sqlite3-api))
-    (home-page "https://github.com/emacscollective/emacsql-libsqlite3")
-    (synopsis "EmacSQL back-end for SQLite using a module")
-    (description
-     "An alternative EmacsSQL back-end for SQLite, which uses an Emacs module that
-exposes parts of the SQLite C API to elisp, instead of using subprocess as
-`emacsql-sqlite' does.  The module is provided by the `sqlite3' package.
-
-The goal is to provide a more performant and resilent drop-in replacement for
-`emacsql-sqlite'.  Taking full advantage of the granular module functions
-currently isn't a goal.")
-    (license #f)))
-
 (define-public emacs-docopt
   (package
     (name "emacs-docopt")
