@@ -9,14 +9,14 @@
 (define-public babashka
   (package
     (name "babashka")
-    (version "1.0.165")
+    (version "1.0.168")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://github.com/babashka/babashka/releases/download/v"
                                   version "/babashka-" version "-linux-amd64-static.tar.gz"))
               (sha256
                (base32
-                "0m193w5dc3lm2s2295q82p7m6binn6jl377s9g8m416hgkd21vhb"))))
+                "126sx9q9lsm4s4g5xplndw4difq9rbp7r633ky9j2x57sa11cbf7"))))
     (build-system copy-build-system)
     (arguments
      `(#:install-plan
@@ -32,7 +32,7 @@ would be using bash otherwise.")
 (define-public clojure-lsp
   (package
     (name "clojure-lsp")
-    (version "2022.11.03-00.14.57")
+    (version "2022.12.09-15.51.10")
     (source
      (origin
        (method url-fetch)
@@ -41,7 +41,7 @@ would be using bash otherwise.")
              version
              "/clojure-lsp-native-static-linux-amd64.zip"))
        (sha256
-        (base32 "0a93fjrslyqrj1in49a51b0hnrjmgjamxxg39y9h9b9xpsy1dwcz"))))
+        (base32 "1l0dbk5samqgjr5jyh6djqmrh5pi2bs7l6dkkqhqs43qq5df0xsg"))))
     (build-system copy-build-system)
     (native-inputs (list unzip))
     (arguments
