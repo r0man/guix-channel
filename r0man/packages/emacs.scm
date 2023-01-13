@@ -220,6 +220,20 @@ themes.
 \f")
     (license #f)))
 
+(define-public emacs-color-theme-solarized-r0man
+  (package
+    (inherit emacs-color-theme-solarized)
+    (name "emacs-color-theme-solarized-r0man")
+    (version "20210617")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/r0man/emacs-color-theme-solarized.git")
+             (commit "3e250c48ea6b244c2c5af946d6cf6cfe24a6a4a5")))
+       (sha256
+        (base32 "1splha7sj2jcxlc8qh8d63b2531n36p74x722fnbf6fcfn3kkbs6"))))))
+
 (define-public emacs-eval-expr
   (package
     (name "emacs-eval-expr")
