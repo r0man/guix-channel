@@ -1290,26 +1290,6 @@ the \"sql-indent.org\" file.  The package also defines align rules so that the
       (description "SQLite3 is a dynamic module for GNU Emacs 25+ that provides direct access to the core SQLite3 C API from Emacs Lisp.")
       (license license:gpl3+))))
 
-(define-public emacs-treeview
-  (package
-    (name "emacs-treeview")
-    (version "1.1.1")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "https://elpa.nongnu.org/nongnu/treeview-"
-                                  version ".tar"))
-              (sha256
-               (base32
-                "0ryycz2n1kam3ji0ibpy99ll5l6xnx1mx9i9bgfvma61f0ppcppd"))))
-    (build-system emacs-build-system)
-    (home-page "https://github.com/tilmanrassy/emacs-treeview")
-    (synopsis "A generic tree navigation library")
-    (description
-     "Abstract Emacs Lisp framework for tree navigation. Based on this
-framework, specific libraries for particular hierarchical data can be
-implemented, for example, file systems.")
-    (license #f)))
-
 (define-public emacs-virtualenvwrapper
   (package
     (name "emacs-virtualenvwrapper")
