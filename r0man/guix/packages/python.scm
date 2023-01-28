@@ -1,4 +1,4 @@
-(define-module (r0man packages python)
+(define-module (r0man guix packages python)
   #:use-module (gnu packages gcc)
   #:use-module ((guix licenses) #:prefix license:)
   #:use-module (gnu packages check)

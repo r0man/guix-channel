@@ -1,4 +1,4 @@
-(define-module (r0man packages lisp)
+(define-module (r0man guix packages lisp)
   #:use-module (gnu packages lisp-check)
   #:use-module (gnu packages lisp-xyz)
   #:use-module (guix build-system asdf)

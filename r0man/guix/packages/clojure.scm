@@ -1,4 +1,4 @@
-(define-module (r0man packages clojure)
+(define-module (r0man guix packages clojure)
   #:use-module (gnu packages gcc)
   #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix build-system copy)

@@ -1,4 +1,4 @@
-(define-module (r0man packages container)
+(define-module (r0man guix packages container)
   #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix build-system copy)
   #:use-module (gnu packages compression)

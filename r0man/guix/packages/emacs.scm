@@ -1,4 +1,4 @@
-(define-module (r0man packages emacs)
+(define-module (r0man guix packages emacs)
   #:use-module ((guix licenses) #:prefix license:)
   #:use-module (gnu packages autotools)
   #:use-module (gnu packages emacs)
