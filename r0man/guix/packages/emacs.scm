@@ -314,15 +314,15 @@ binary for communicating with a SQLite database.")
 (define-public emacs-docopt
   (package
     (name "emacs-docopt")
-    (version "0.1.2")
+    (version "0.1.3")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
              (url "https://github.com/r0man/docopt.el.git")
-             (commit "a7f5b4a8b1a43552067ce27bce6080a509c92cff")))
+             (commit (string-append "v" version))))
        (sha256
-        (base32 "0dr0m5rrk0vhz1sq3d28pxijlkj030ckxc5mhqv3jpq2xfjwd2gv"))))
+        (base32 "1g3q6ymw5cxlm91zmwf8rilsz38rcgp2kki29ynk37vxc84bij13"))))
     (build-system emacs-build-system)
     (propagated-inputs
      (list emacs-dash emacs-f emacs-parsec emacs-s emacs-transient))
