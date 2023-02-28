@@ -1190,6 +1190,36 @@ See also `popwin:keymap' documentation.
 Enjoy!")
     (license #f)))
 
+(define-public emacs-sayid
+  (package
+    (name "emacs-sayid")
+    (version "0.1.0")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append "https://github.com/clojure-emacs/sayid/archive"
+                                  "/refs/tags/v" version ".tar.gz"))
+              (sha256
+               (base32
+                "1bscg0s5rv62p8a8pmniyqadrbvrq3lj1kza5lbp00ds3w55y0w1"))))
+    (build-system emacs-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'install 'enter-lisp-directory
+            (lambda _
+              (chdir "src/el"))))))
+    (propagated-inputs (list emacs-cider))
+    (home-page "https://github.com/clojure-emacs/sayid")
+    (synopsis "Sayid Emacs mode")
+    (description
+     "Sayid (siy EED) is an omniscient debugger and profiler for Clojure.
+It intercepts and records the inputs and outputs of user selected
+functions.  This package is the Emacs front-end to it, which allows
+the user to select functions to trace, and display the recorded inputs
+and outputs from within Emacs.")
+    (license license:asl2.0)))
+
 (define-public emacs-sql-indent
   (package
     (name "emacs-sql-indent")
