@@ -900,6 +900,70 @@ returns the language of the      current buffer  * language-detection-string
     (description "This package provides the realtime markdown preview by eww.")
     (license #f)))
 
+(define-public emacs-tblui
+  (package
+    (name "emacs-tblui")
+    (version "0.1.0")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/Yuki-Inoue/tblui.el")
+                    (commit "bb29323bb3e27093d50cb42db3a9329a096b6e4d")))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "1pja9v4h3abqc2iydm7wwjxrg7ni1pn94yb4azrgjq5qc0fsgn7a"))))
+    (build-system emacs-build-system)
+    (propagated-inputs (list emacs-dash emacs-magit-popup emacs-tablist))
+    (home-page "https://github.com/Yuki-Inoue/tblui.el")
+    (synopsis "Define tabulated list mode based UIs more easily")
+    (description "This package can be used to define user interfaces that are similar to
+Emacs built-in tabulated list mode, but with less boilerplate.")
+    (license license:gpl3+)))
+
+(define-public emacs-openai
+  (package
+    (name "emacs-openai")
+    (version "0.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/emacs-openai/openai")
+             (commit "e1a7fa234faa1130e997a942e96fe18d9785d0f3")))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "12ljmg4jy7q9lsjvh6g1gzqzinmf67hvi54qdb0k1h2b46x5wlkf"))))
+    (build-system emacs-build-system)
+    (propagated-inputs (list emacs-dash emacs-request emacs-tblui))
+    (home-page "https://github.com/emacs-openai/openai")
+    (synopsis "Elisp library for the OpenAI API")
+    (description "The OpenAI Elisp library provides convenient access to the OpenAI API
+from applications written in the Elips language.")
+    (license license:gpl3+)))
+
+(define-public emacs-codegpt
+  (package
+    (name "emacs-codegpt")
+    (version "0.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/emacs-openai/codegpt")
+             (commit "0.1.0")))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "05yp1x6ka8x3hslyvsd9hcqqy0k3j3cn88k29mll5d3rvsrbsbzg"))))
+    (build-system emacs-build-system)
+    (propagated-inputs (list emacs-openai))
+    (home-page "https://github.com/emacs-openai/codegpt")
+    (synopsis "Use GPT-3 inside Emacs")
+    (description "This Emacs Code extension allows you to use the official OpenAI API to
+generate code or natural language responses from OpenAI's GPT-3 to
+your questions, right within the editor.")
+    (license license:gpl3+)))
+
 (define-public emacs-org-gcal
   (package
     (name "emacs-org-gcal")
