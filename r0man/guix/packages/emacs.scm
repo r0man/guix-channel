@@ -940,47 +940,79 @@ Emacs built-in tabulated list mode, but with less boilerplate.")
     (license license:gpl3+)))
 
 (define-public emacs-openai
-  (package
-    (name "emacs-openai")
-    (version "0.1.0")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/emacs-openai/openai")
-             (commit "e1a7fa234faa1130e997a942e96fe18d9785d0f3")))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "12ljmg4jy7q9lsjvh6g1gzqzinmf67hvi54qdb0k1h2b46x5wlkf"))))
-    (build-system emacs-build-system)
-    (propagated-inputs (list emacs-dash emacs-request emacs-tblui))
-    (home-page "https://github.com/emacs-openai/openai")
-    (synopsis "Elisp library for the OpenAI API")
-    (description "The OpenAI Elisp library provides convenient access to the OpenAI API
-from applications written in the Elips language.")
-    (license license:gpl3+)))
+  (let ((commit "6e002136153608a855d061d402a3cf570a059de1"))
+    (package
+      (name "emacs-openai")
+      (version (git-version "0.1.0" "1" commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/emacs-openai/openai")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1dac7x4gyljf9naszc4m7103yk714prl9d60mn6ccb0lnwxs7i9s"))))
+      (build-system emacs-build-system)
+      (propagated-inputs (list emacs-dash emacs-request emacs-tblui))
+      (home-page "https://github.com/emacs-openai/openai")
+      (synopsis "Elisp library for the OpenAI API")
+      (description "The OpenAI Elisp library provides convenient access to the OpenAI API
+from applications written in the Elisp language.")
+      (license license:gpl3+))))
+
+(define-public emacs-chatgpt
+  (let ((commit "3162f88efb1d1fea733a647e5cabe15a5d309793"))
+    (package
+      (name "emacs-chatgpt")
+      (version (git-version "0.1.0" "0" commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/emacs-openai/chatgpt")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "0nzgza1a8r06jl0p5x69m0jh796df5rycmr0glfd54b381n62jkq"))))
+      (build-system emacs-build-system)
+      (propagated-inputs (list emacs-ht
+                               emacs-hydra
+                               emacs-markdown-mode
+                               emacs-openai
+                               emacs-spinner))
+      (home-page "https://github.com/emacs-openai/chatgpt")
+      (synopsis "Use ChatGPT inside Emacs")
+      (description "This Emacs Code extension allows you to use the official OpenAI API to
+generate code or natural language responses from OpenAI's ChatGPT to
+your questions, right within the editor.")
+      (license license:gpl3+))))
 
 (define-public emacs-codegpt
-  (package
-    (name "emacs-codegpt")
-    (version "0.1.0")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/emacs-openai/codegpt")
-             (commit "0.1.0")))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "05yp1x6ka8x3hslyvsd9hcqqy0k3j3cn88k29mll5d3rvsrbsbzg"))))
-    (build-system emacs-build-system)
-    (propagated-inputs (list emacs-openai))
-    (home-page "https://github.com/emacs-openai/codegpt")
-    (synopsis "Use GPT-3 inside Emacs")
-    (description "This Emacs Code extension allows you to use the official OpenAI API to
+  (let ((commit "f06adfcf9f81e66ac5a45d11cf2eb8a027ab6c8e"))
+    (package
+      (name "emacs-codegpt")
+      (version (git-version "0.1.0" "0" commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/emacs-openai/codegpt")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "05yp1x6ka8x3hslyvsd9hcqqy0k3j3cn88k29mll5d3rvsrbsbzg"))))
+      (build-system emacs-build-system)
+      (propagated-inputs (list emacs-chatgpt
+                               emacs-markdown-mode
+                               emacs-openai
+                               emacs-spinner))
+      (home-page "https://github.com/emacs-openai/codegpt")
+      (synopsis "Use GPT-3 inside Emacs")
+      (description "This Emacs Code extension allows you to use the official OpenAI API to
 generate code or natural language responses from OpenAI's GPT-3 to
 your questions, right within the editor.")
-    (license license:gpl3+)))
+      (license license:gpl3+))))
 
 (define-public emacs-org-gcal
   (package
