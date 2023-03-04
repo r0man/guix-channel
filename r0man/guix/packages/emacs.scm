@@ -234,6 +234,24 @@ themes.
        (sha256
         (base32 "1splha7sj2jcxlc8qh8d63b2531n36p74x722fnbf6fcfn3kkbs6"))))))
 
+(define-public emacs-eldoc-box
+  (package
+    (name "emacs-eldoc-box")
+    (version "20230228.237")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/casouri/eldoc-box.git")
+                    (commit "16fbf1f17f09a8308d5e5df3a3a97277baa5736a")))
+              (sha256
+               (base32
+                "100dlzzwaf09i3vp0dj8maf1is0pnp3r21iix41ymxrfcafx6hi1"))))
+    (build-system emacs-build-system)
+    (home-page "https://github.com/casouri/eldoc-box")
+    (synopsis "Display ElDoc documentation in childframe")
+    (description "This package displays ElDoc documentations in a childframe.")
+    (license license:gpl3+)))
+
 (define-public emacs-eval-expr
   (package
     (name "emacs-eval-expr")
