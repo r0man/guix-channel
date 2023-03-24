@@ -940,7 +940,7 @@ Emacs built-in tabulated list mode, but with less boilerplate.")
     (license license:gpl3+)))
 
 (define-public emacs-openai
-  (let ((commit "6e002136153608a855d061d402a3cf570a059de1"))
+  (let ((commit "4726315265cc850353df2f2bd216ab966c66fda8"))
     (package
       (name "emacs-openai")
       (version (git-version "0.1.0" "1" commit))
@@ -952,7 +952,7 @@ Emacs built-in tabulated list mode, but with less boilerplate.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "1dac7x4gyljf9naszc4m7103yk714prl9d60mn6ccb0lnwxs7i9s"))))
+          (base32 "1jwvzhj8x302irj7qiaihg2rmdisfslvnqxap77jk6chnipf88dr"))))
       (build-system emacs-build-system)
       (propagated-inputs (list emacs-dash emacs-request emacs-tblui))
       (home-page "https://github.com/emacs-openai/openai")
@@ -962,7 +962,7 @@ from applications written in the Elisp language.")
       (license license:gpl3+))))
 
 (define-public emacs-chatgpt
-  (let ((commit "3162f88efb1d1fea733a647e5cabe15a5d309793"))
+  (let ((commit "d5e773de2b31a1227d8e1a8946c99e8691bcf375"))
     (package
       (name "emacs-chatgpt")
       (version (git-version "0.1.0" "0" commit))
@@ -974,7 +974,7 @@ from applications written in the Elisp language.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "0nzgza1a8r06jl0p5x69m0jh796df5rycmr0glfd54b381n62jkq"))))
+          (base32 "0zsz6s9qiqz2bbh37ycs5anrh2a5zbx9dlij2fwh3gyp443rjbps"))))
       (build-system emacs-build-system)
       (propagated-inputs (list emacs-ht
                                emacs-hydra
@@ -989,7 +989,7 @@ your questions, right within the editor.")
       (license license:gpl3+))))
 
 (define-public emacs-codegpt
-  (let ((commit "f06adfcf9f81e66ac5a45d11cf2eb8a027ab6c8e"))
+  (let ((commit "7ad39a808d3d07f982e7cd45866d86cac0557631"))
     (package
       (name "emacs-codegpt")
       (version (git-version "0.1.0" "0" commit))
@@ -1001,7 +1001,7 @@ your questions, right within the editor.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "05yp1x6ka8x3hslyvsd9hcqqy0k3j3cn88k29mll5d3rvsrbsbzg"))))
+          (base32 "0ddwhy7wsmsk3s9md4px7zw62mvbs7zc9w3db6chpkph1xrdvlp9"))))
       (build-system emacs-build-system)
       (propagated-inputs (list emacs-chatgpt
                                emacs-markdown-mode
