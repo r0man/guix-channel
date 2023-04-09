@@ -1014,6 +1014,53 @@ generate code or natural language responses from OpenAI's GPT-3 to
 your questions, right within the editor.")
       (license license:gpl3+))))
 
+(define-public emacs-dall-e
+  (let ((commit "e0de774ddc24c610c24fea877615fdf4a1b4e8f7"))
+    (package
+      (name "emacs-dall-e")
+      (version (git-version "0.1.0" "0" commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/emacs-openai/dall-e.git")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "172k0fzihin5z3gy1bg50hl71x6xw2bcavz9kghlffhbbhj9a7xy"))))
+      (build-system emacs-build-system)
+      (propagated-inputs (list emacs-async
+                               emacs-ht
+                               emacs-hydra
+                               emacs-openai
+                               emacs-reveal-in-folder
+                               emacs-spinner))
+      (home-page "https://github.com/emacs-openai/dall-e")
+      (synopsis "Use DALL-E inside Emacs")
+      (description "This Emacs Code extension allows you to use the official OpenAI API to
+generate generate digital images from natural language descriptions.")
+      (license license:gpl3+))))
+
+(define-public emacs-reveal-in-folder
+  (let ((commit "f62be2d11c8a9182cf84f0efe7ed054cc304262d"))
+    (package
+      (name "emacs-reveal-in-folder")
+      (version (git-version "0.1.2" "0" commit))
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                      (url "https://github.com/jcs-elpa/reveal-in-folder.git")
+                      (commit "648aef32c55c0b2b175ed0939fbe50fd7fa0dcf5")))
+                (sha256
+                 (base32
+                  "0018rwsl6gqjxyavny2m9q66yxlbw86rjfi570zdhj0zmdh8yfxw"))))
+      (build-system emacs-build-system)
+      (propagated-inputs (list emacs-f emacs-s))
+      (home-page "https://github.com/jcs-elpa/reveal-in-folder")
+      (synopsis "Reveal current file in folder")
+      (description "Reveal current file in folder.")
+      (license #f))))
+
 (define-public emacs-org-gcal
   (package
     (name "emacs-org-gcal")
