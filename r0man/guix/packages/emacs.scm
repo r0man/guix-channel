@@ -1015,7 +1015,7 @@ your questions, right within the editor.")
       (license license:gpl3+))))
 
 (define-public emacs-dall-e
-  (let ((commit "e0de774ddc24c610c24fea877615fdf4a1b4e8f7"))
+  (let ((commit "f8f93843a333fac63a0722cd4c710f0db408f28f"))
     (package
       (name "emacs-dall-e")
       (version (git-version "0.1.0" "0" commit))
@@ -1027,7 +1027,7 @@ your questions, right within the editor.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "172k0fzihin5z3gy1bg50hl71x6xw2bcavz9kghlffhbbhj9a7xy"))))
+          (base32 "0xvgzvkf5bw0mi3v7q19qq9mb6kgqm5kdr4b3dvasxyfjrqafbj0"))))
       (build-system emacs-build-system)
       (propagated-inputs (list emacs-async
                                emacs-ht
