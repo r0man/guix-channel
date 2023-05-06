@@ -30,6 +30,9 @@
       (description "A simple BNF parser in Common Lisp")
       (license (list license:expat)))))
 
+(define-public cl-bnf
+  (sbcl-package->cl-source-package sbcl-cl-bnf))
+
 (define-public sbcl-stumpwm-battery-portable
   (let ((commit "a7dc1c663d04e6c73a4772c8a6ad56a34381096a")
         (revision "3"))
