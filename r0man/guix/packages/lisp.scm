@@ -9,6 +9,27 @@
   #:use-module (guix git-download)
   #:use-module (guix packages))
 
+(define-public sbcl-cl-bnf
+  (let ((commit "6fb3e02c1b4039a0a81c0425c5704e60595bec6d")
+        (revision "0"))
+    (package
+      (name "sbcl-cl-bnf")
+      (version (git-version "0.0.1" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/diasbruno/cl-bnf")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "05lskaz5kwl4sk8mb13l4kvr3q0q56dyarmznpp1cjpan6rdyr4x"))))
+      (build-system asdf-build-system/sbcl)
+      (home-page "https://github.com/diasbruno/cl-bnf")
+      (synopsis "A simple BNF parser")
+      (description "A simple BNF parser in Common Lisp")
+      (license (list license:expat)))))
+
 (define-public sbcl-stumpwm-battery-portable
   (let ((commit "a7dc1c663d04e6c73a4772c8a6ad56a34381096a")
         (revision "3"))
