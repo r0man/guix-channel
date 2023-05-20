@@ -1,11 +1,13 @@
 (define-module (r0man guix packages emacs)
   #:use-module ((guix licenses) #:prefix license:)
   #:use-module (gnu packages autotools)
+  #:use-module (gnu packages databases)
   #:use-module (gnu packages emacs)
   #:use-module (gnu packages emacs-xyz)
   #:use-module (gnu packages sqlite)
   #:use-module (guix build-system emacs)
   #:use-module (guix gexp)
+  #:use-module (guix utils)
   #:use-module (guix download)
   #:use-module (guix git-download)
   #:use-module (guix packages))
@@ -1247,6 +1249,106 @@ update some time entries.
 
 Example key bindings  see example.emacs.d/foo/bindings.el")
     (license #f)))
+
+(define-public emacs-emacsql-next
+  (let ((commit "64012261f65fcdd7ea137d1973ef051af1dced42")
+        (revision "0"))
+    (package
+      (name "emacs-emacsql-next")
+      (version (git-version "3.1.1" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/magit/emacsql")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1x9r0pg2dv6n8dn1lwrvs9xfkxskr5pgw0sigspfqj3ycbpyz1ks"))))
+      (build-system emacs-build-system)
+      (arguments
+       (list
+        #:tests? #true
+        #:test-command #~(list "emacs" "-Q" "--batch"
+                               "-L" "tests"
+                               "-L" "."
+                               "-l" "tests/emacsql-tests.el"
+                               "-f" "ert-run-tests-batch-and-exit")
+        #:modules '((guix build emacs-build-system)
+                    (guix build utils)
+                    (guix build emacs-utils)
+                    (srfi srfi-26))
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-before 'install 'remove-sqlite-builtin
+              ;; Current emacs 28.2 doesn't have sqlite feature and compilation
+              ;; of this file fails.  This phase should be removed, when emacs
+              ;; package is updated to 29.
+              (lambda _
+                (delete-file "emacsql-sqlite-builtin.el")))
+            (add-before 'install 'patch-elisp-shell-shebangs
+              (lambda _
+                (substitute* (find-files "." "\\.el")
+                  (("/bin/sh") (which "sh")))))
+            (add-after 'patch-elisp-shell-shebangs 'setenv-shell
+              (lambda _
+                (setenv "SHELL" "sh")))
+            (add-after 'setenv-shell 'build-emacsql-sqlite
+              (lambda _
+                (invoke "make" "binary" (string-append "CC=" #$(cc-for-target)))))
+            (add-after 'build-emacsql-sqlite 'install-emacsql-sqlite
+              ;; This build phase installs emacs-emacsql binary.
+              (lambda _
+                (install-file "sqlite/emacsql-sqlite"
+                              (string-append #$output "/bin"))))
+            (add-after 'install-emacsql-sqlite 'patch-emacsql-sqlite.el
+              ;; This build phase removes interactive prompts
+              ;; and makes sure Emacs look for binaries in the right places.
+              (lambda _
+                (emacs-substitute-variables "emacsql-sqlite.el"
+                  ("emacsql-sqlite-executable"
+                   (string-append #$output "/bin/emacsql-sqlite"))
+                  ;; Make sure Emacs looks for ‘GCC’ binary in the right place.
+                  ("emacsql-sqlite-c-compilers"
+                   `(list ,(which "gcc")))))))))
+      (inputs
+       (list emacs-minimal `(,mariadb "dev") `(,mariadb "lib") postgresql))
+      (propagated-inputs
+       (list emacs-finalize emacs-pg emacs-sqlite3-api))
+      (home-page "https://github.com/magit/emacsql")
+      (synopsis "Emacs high-level SQL database front-end")
+      (description "Any readable Lisp value can be stored as a value in EmacSQL,
+including numbers, strings, symbols, lists, vectors, and closures.  EmacSQL
+has no concept of @code{TEXT} values; it's all just Lisp objects.  The Lisp
+object @code{nil} corresponds 1:1 with @code{NULL} in the database.")
+      (license license:gpl3+))))
+
+(define-public emacs-closql-next
+  (package
+    (name "emacs-closql-next")
+    (version "1.2.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/emacscollective/closql")
+             (commit "618c94dba7666e8c55c0094ee21fa0381d3536df")))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "03wwb6zr4n1mf4hsfqyhrasha0hxqlfm6d5xvlvs2icjfkxbq7j1"))))
+    (build-system emacs-build-system)
+    (propagated-inputs
+     (list emacs-emacsql-next emacs-compat))
+    (home-page "https://github.com/emacscollective/closql")
+    (synopsis "Store EIEIO objects using EmacSQL")
+    (description
+     "This package stores uniform EIEIO objects in an EmacSQL
+database.  SQLite is used as backend.  This library imposes some restrictions
+on what kind of objects can be stored; it isn't intended to store arbitrary
+objects.  All objects have to share a common superclass and subclasses cannot
+add any additional instance slots.")
+    (license license:gpl3)))
 
 (define-public emacs-paimon
   (package
