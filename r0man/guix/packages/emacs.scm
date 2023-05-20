@@ -1280,12 +1280,6 @@ Example key bindings  see example.emacs.d/foo/bindings.el")
                     (srfi srfi-26))
         #:phases
         #~(modify-phases %standard-phases
-            (add-before 'install 'remove-sqlite-builtin
-              ;; Current emacs 28.2 doesn't have sqlite feature and compilation
-              ;; of this file fails.  This phase should be removed, when emacs
-              ;; package is updated to 29.
-              (lambda _
-                (delete-file "emacsql-sqlite-builtin.el")))
             (add-before 'install 'patch-elisp-shell-shebangs
               (lambda _
                 (substitute* (find-files "." "\\.el")
