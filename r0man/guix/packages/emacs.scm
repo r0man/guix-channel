@@ -1312,7 +1312,7 @@ Example key bindings  see example.emacs.d/foo/bindings.el")
                   ("emacsql-sqlite-c-compilers"
                    `(list ,(which "gcc")))))))))
       (inputs
-       (list emacs-minimal `(,mariadb "dev") `(,mariadb "lib") postgresql))
+       (list emacs-next `(,mariadb "dev") `(,mariadb "lib") postgresql))
       (propagated-inputs
        (list emacs-finalize emacs-pg emacs-sqlite3-api))
       (home-page "https://github.com/magit/emacsql")
