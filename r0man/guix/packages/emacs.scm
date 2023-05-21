@@ -1326,11 +1326,11 @@ object @code{nil} corresponds 1:1 with @code{NULL} in the database.")
        (method git-fetch)
        (uri (git-reference
              (url "https://github.com/emacscollective/closql")
-             (commit "618c94dba7666e8c55c0094ee21fa0381d3536df")))
+             (commit "85ac7b8a894a4e259439d79eb6bd6f5129770905")))
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "03wwb6zr4n1mf4hsfqyhrasha0hxqlfm6d5xvlvs2icjfkxbq7j1"))))
+         "06xf5nkmzzn7rlxzg7fnc12jcyh06kkcn84a0v248kahbdsqn3sg"))))
     (build-system emacs-build-system)
     (propagated-inputs
      (list emacs-emacsql-next emacs-compat))
