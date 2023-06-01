@@ -570,25 +570,6 @@ keybinding: `C-c C-c g' (define-key markdown-mode-command-map (kbd \"g\")
 grip-mode` to preview the markdown file with the default browser.")
     (license #f)))
 
-(define-public emacs-inflections
-  (package
-    (name "emacs-inflections")
-    (version "20210110.2237")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/eschulte/jump.el.git")
-             (commit "55caa66a7cc6e0b1a76143fd40eff38416928941")))
-       (sha256
-        (base32 "03fh7i6blnbc0zbmp83fk095hr3q4fdvrvfxad74zghcbc2nk7b7"))))
-    (build-system emacs-build-system)
-    (arguments '(#:include '("^inflections.el$") #:exclude '()))
-    (home-page "https://github.com/eschulte/jump.el")
-    (synopsis "convert english words between singular and plural")
-    (description "No description available.")
-    (license #f)))
-
 (define-public emacs-jiralib2
   (package
     (name "emacs-jiralib2")
