@@ -204,6 +204,20 @@ themes.
          (sha256
           (base32 "1kchnfnqvhwzs9fbwalrfdzyp8zsdv64psdhbnbwq67vd7wqykb1"))))
       (build-system emacs-build-system)
+      (arguments
+       (list
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-before 'install 'patch-base-dir
+              (lambda _
+                (substitute* (find-files "." "\\.el")
+                  (("\\(or load-file-name")
+                   (string-append "(or \"" #$output "/share/emacs/\"")))))
+            (add-after 'install 'install-dist
+              (lambda* (#:key outputs #:allow-other-keys)
+                (let* ((dist (string-append #$output "/share/emacs/dist")))
+                  (mkdir-p dist)
+                  (copy-recursively "dist" dist)))))))
       (propagated-inputs (list emacs-dash emacs-editorconfig emacs-jsonrpc emacs-s))
       (home-page "https://github.com/zerolfx/copilot.el")
       (synopsis "Unofficial Github Copilot mode for Emacs")
