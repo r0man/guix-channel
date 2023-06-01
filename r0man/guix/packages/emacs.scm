@@ -236,6 +236,27 @@ themes.
        (sha256
         (base32 "1splha7sj2jcxlc8qh8d63b2531n36p74x722fnbf6fcfn3kkbs6"))))))
 
+(define-public emacs-copilot
+  (let ((commit "5593db8d45292f25b2e10fdfb25bde5a1b0fc203"))
+    (package
+      (name "emacs-copilot")
+      (version (git-version "0.0.1" "1" commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/zerolfx/copilot.el")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1kchnfnqvhwzs9fbwalrfdzyp8zsdv64psdhbnbwq67vd7wqykb1"))))
+      (build-system emacs-build-system)
+      (propagated-inputs (list emacs-dash emacs-editorconfig emacs-jsonrpc emacs-s))
+      (home-page "https://github.com/zerolfx/copilot.el")
+      (synopsis "Unofficial Github Copilot mode for Emacs")
+      (description "An unofficial Emacs mode for Github Copilot.")
+      (license license:gpl3+))))
+
 (define-public emacs-eldoc-box
   (package
     (name "emacs-eldoc-box")
