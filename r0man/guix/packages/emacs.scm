@@ -87,53 +87,6 @@ ALGOL 60 report.")
 development cycle.")
     (license #f)))
 
-(define-public emacs-clj-refactor
-  (package
-    (name "emacs-clj-refactor")
-    (version "20220109.244")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/clojure-emacs/clj-refactor.el.git")
-             (commit "bfd83d142f1a05bad779fa7ccbaec8bd24dae177")))
-       (sha256
-        (base32 "0010db9xagz5dykh377z9r6vn50wk9ffvgq8410ppcymdaq1syx9"))))
-    (build-system emacs-build-system)
-    (propagated-inputs
-     (list emacs-yasnippet
-           emacs-paredit
-           emacs-multiple-cursors
-           emacs-clojure-mode
-           emacs-cider
-           emacs-parseedn
-           emacs-inflections
-           emacs-hydra))
-    (arguments
-     '(#:include
-       '("^[^/]+.el$"
-         "^[^/]+.el.in$"
-         "^dir$"
-         "^[^/]+.info$"
-         "^[^/]+.texi$"
-         "^[^/]+.texinfo$"
-         "^doc/dir$"
-         "^doc/[^/]+.info$"
-         "^doc/[^/]+.texi$"
-         "^doc/[^/]+.texinfo$"
-         "^CHANGELOG.md$")
-       #:exclude
-       '("^.dir-locals.el$"
-         "^test.el$"
-         "^tests.el$"
-         "^[^/]+-test.el$"
-         "^[^/]+-tests.el$")))
-    (home-page "unspecified")
-    (synopsis "A collection of commands for refactoring Clojure code")
-    (description
-     "See README.md at https://github.com/clojure-emacs/clj-refactor.el")
-    (license #f)))
-
 (define-public emacs-clojure-mode-extra-font-locking
   (package
     (name "emacs-clojure-mode-extra-font-locking")
