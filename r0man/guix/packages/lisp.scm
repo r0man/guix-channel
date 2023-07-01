@@ -9,6 +9,40 @@
   #:use-module (guix git-download)
   #:use-module (guix packages))
 
+(define-public sbcl-cl-autowrap-next
+  (let ((revision "2")
+        (commit "1e6735ae8e22bd8805b89a1857417756bb8a0f31"))
+    ;; no taged branches
+    (package
+      (name "sbcl-cl-autowrap")
+      (version (git-version "1.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/rpav/cl-autowrap")
+               (commit commit)))
+         (file-name (git-file-name "cl-autowrap" version))
+         (sha256
+          (base32 "0pbabpmg61bflx6kxllqvhbvxqwjsik3nnynqdhgzzkgzk6jlixv"))))
+      (build-system asdf-build-system/sbcl)
+      (arguments
+       `(#:asd-systems '("cl-plus-c" "cl-autowrap")))
+      (inputs
+       `(("alexandria" ,sbcl-alexandria)
+         ("cffi" ,sbcl-cffi)
+         ("cl-json" ,sbcl-cl-json)
+         ("cl-ppcre" ,sbcl-cl-ppcre)
+         ("defpackage-plus" ,sbcl-defpackage-plus)
+         ("trivial-features" ,sbcl-trivial-features)))
+      (home-page "https://github.com/rpav/cl-autowrap")
+      (synopsis "FFI wrapper generator for Common Lisp")
+      (description "This is a c2ffi-based wrapper generator for Common Lisp.")
+      (license license:bsd-2))))
+
+(define-public cl-autowrap-next
+  (sbcl-package->cl-source-package sbcl-cl-autowrap-next))
+
 (define-public sbcl-cl-bnf
   (let ((commit "6fb3e02c1b4039a0a81c0425c5704e60595bec6d")
         (revision "0"))
