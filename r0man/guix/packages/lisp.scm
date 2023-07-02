@@ -1,55 +1,13 @@
 (define-module (r0man guix packages lisp)
-  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (gnu packages lisp-check)
   #:use-module (gnu packages lisp-xyz)
-  #:use-module (gnu packages wm)
   #:use-module (guix build-system asdf)
+  #:use-module ((guix licenses) #:prefix license:)
+  #:use-module (gnu packages wm)
   #:use-module (guix build-system)
   #:use-module (guix gexp)
   #:use-module (guix git-download)
   #:use-module (guix packages))
-
-(define-public sbcl-cl-postgres+local-time
-  (let ((commit "40169fe26d9639f3d9560ec0255789bf00b30036")
-        (revision "3"))
-    (package
-      (name "sbcl-cl-postgres+local-time")
-      (version (git-version "1.0.6" revision commit))
-      (source
-       (origin
-         (method git-fetch)
-         (uri (git-reference
-               (url "https://github.com/dlowe-net/local-time")
-               (commit commit)))
-         (file-name (git-file-name "cl-postgres-local-time" version))
-         (sha256
-          (base32 "1dbp33zmkqzzshmf5k76pxqgli285wvy0p0dhcz816fdikpwn2jg"))))
-      (build-system asdf-build-system/sbcl)
-      (inputs (list sbcl-local-time sbcl-postmodern))
-      (native-inputs
-       (list sbcl-hu.dwim.stefil))
-      (arguments
-       `(#:asd-systems '("cl-postgres+local-time")
-         #:phases
-         (modify-phases %standard-phases
-           (add-after 'unpack 'delete-local-time
-             (lambda _
-               (delete-file "local-time.asd")
-               (delete-file "src/package.lisp")
-               (delete-file "src/local-time.lisp")
-               (delete-file-recursively "doc")
-               (delete-file-recursively "test")
-               (delete-file-recursively "zoneinfo"))))))
-      (home-page "https://common-lisp.net/project/local-time/")
-      (synopsis "Time manipulation library for Common Lisp")
-      (description
-       "The LOCAL-TIME library is a Common Lisp library for the manipulation of
-dates and times.  It is based almost entirely upon Erik Naggum's paper \"The
-Long Painful History of Time\".")
-      (license license:expat))))
-
-(define-public cl-postgres+local-time
-  (sbcl-package->cl-source-package sbcl-cl-postgres+local-time))
 
 (define-public sbcl-cl-autowrap-next
   (let ((revision "2")
