@@ -189,6 +189,30 @@ themes.
        (sha256
         (base32 "1splha7sj2jcxlc8qh8d63b2531n36p74x722fnbf6fcfn3kkbs6"))))))
 
+(define-public emacs-consult-recoll
+  (package
+    (name "emacs-consult-recoll")
+    (version "0.8")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append
+                    "https://elpa.gnu.org/packages/consult-recoll-" version
+                    ".tar"))
+              (sha256 (base32
+                       "02vg1rr2fkcqrrivqgggdjdq0ywvlyzazwq1xd02yah3j4sbv4ag"))))
+    (build-system emacs-build-system)
+    (propagated-inputs (list emacs-consult))
+    (home-page "https://codeberg.org/jao/consult-recoll")
+    (synopsis "Recoll queries in Emacs using consult")
+    (description
+    "Recoll is a local search engine that knows how to index a wide variety
+of file formats, including PDFs, org and other text files and emails.
+This package provides an emacs interface to perform recoll queries,
+and display its results, via consult. It is also recommened that you
+use a a package for vertical display of completions that works well
+with consult, such as vertico.")
+    (license license:gpl3+)))
+
 (define-public emacs-copilot
   (let ((commit "5593db8d45292f25b2e10fdfb25bde5a1b0fc203"))
     (package
