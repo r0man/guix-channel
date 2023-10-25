@@ -819,6 +819,30 @@ returns the language of the      current buffer  * language-detection-string
 - Non-interactive function, returns the language of its argument")
     (license #f)))
 
+(define-public emacs-llm
+  (package
+    (name "emacs-llm")
+    (version "0.4.0")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append "https://elpa.gnu.org/packages/llm-" version
+                                  ".tar"))
+              (sha256 (base32
+                       "0jq1q9gmm3nbdsycca2qkjpf04qpp9j615z6l41plmfv7bc0p0x6"))))
+    (build-system emacs-build-system)
+    (home-page "https://github.com/ahyatt/llm")
+    (synopsis "Interface to pluggable llm backends")
+    (description
+     "This is a library for interfacing with Large Language Models. It
+allows elisp code to use LLMs, but allows gives the end-user an option
+to choose which LLM they would prefer. This is especially useful for
+LLMs, since there are various high-quality ones that in which API
+access costs money, as well as locally installed ones that are free,
+but of medium quality. Applications using LLMs can use this library to
+make sure their application works regardless of whether the user has a
+local LLM or is paying for API access.")
+    (license license:gpl3+)))
+
 (define-public emacs-lsp-dart
   (package
     (name "emacs-lsp-dart")
