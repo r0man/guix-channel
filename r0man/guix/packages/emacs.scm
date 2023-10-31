@@ -266,6 +266,30 @@ with consult, such as vertico.")
     (description "This package displays ElDoc documentations in a childframe.")
     (license license:gpl3+)))
 
+(define-public emacs-ellama
+  (package
+    (name "emacs-ellama")
+    (version "20231027.1759")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/s-kostyaev/ellama.git")
+                    (commit "2e5219afbef9ae0c9adc288d3d13b21e49c847d1")))
+              (sha256 (base32
+                       "1l551x979914nznczi2n697ykwcpcr40w61c0ivq46fnvzg9sdl8"))))
+    (build-system emacs-build-system)
+    (propagated-inputs (list emacs-llm emacs-spinner))
+    (home-page "http://github.com/s-kostyaev/ellama")
+    (synopsis "Tool for interacting with LLMs")
+    (description
+     "Ellama is a tool for interacting with large language models from Emacs.  It
+allows you to ask questions and receive responses from the
+LLMs. Ellama can perform various tasks such as translation, code
+review, summarization, enhancing grammar/spelling or wording and more
+through the Emacs interface.  Ellama natively supports streaming
+output, making it effortless to use with your preferred text editor.")
+    (license #f)))
+
 (define-public emacs-eval-expr
   (package
     (name "emacs-eval-expr")
