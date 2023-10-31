@@ -822,13 +822,13 @@ returns the language of the      current buffer  * language-detection-string
 (define-public emacs-llm
   (package
     (name "emacs-llm")
-    (version "0.4.0")
+    (version "0.5.0")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://elpa.gnu.org/packages/llm-" version
                                   ".tar"))
               (sha256 (base32
-                       "0jq1q9gmm3nbdsycca2qkjpf04qpp9j615z6l41plmfv7bc0p0x6"))))
+                       "07n32hfzyjzj7vjy5l7rxaldpa4hyjwharkizs2gzz66lg83wix8"))))
     (build-system emacs-build-system)
     (home-page "https://github.com/ahyatt/llm")
     (synopsis "Interface to pluggable llm backends")
