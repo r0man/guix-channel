@@ -269,14 +269,14 @@ with consult, such as vertico.")
 (define-public emacs-ellama
   (package
     (name "emacs-ellama")
-    (version "20231027.1759")
+    (version "20231105.1147")
     (source (origin
               (method git-fetch)
               (uri (git-reference
                     (url "https://github.com/s-kostyaev/ellama.git")
-                    (commit "2e5219afbef9ae0c9adc288d3d13b21e49c847d1")))
+                    (commit "702042c0bf79a4e81133fb2acb9031f5eae817b0")))
               (sha256 (base32
-                       "1l551x979914nznczi2n697ykwcpcr40w61c0ivq46fnvzg9sdl8"))))
+                       "182i95q0n6r2i774f66jkkmd172d4r8ybhqvayxfmgxr2ryfqwjg"))))
     (build-system emacs-build-system)
     (propagated-inputs (list emacs-llm emacs-spinner))
     (home-page "http://github.com/s-kostyaev/ellama")
@@ -846,13 +846,13 @@ returns the language of the      current buffer  * language-detection-string
 (define-public emacs-llm
   (package
     (name "emacs-llm")
-    (version "0.5.0")
+    (version "0.5.2")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://elpa.gnu.org/packages/llm-" version
                                   ".tar"))
               (sha256 (base32
-                       "07n32hfzyjzj7vjy5l7rxaldpa4hyjwharkizs2gzz66lg83wix8"))))
+                       "1nbxdnxpbyvx5rww9mn0zr9hcnblrnk8790cih206y3p1kvs0pnq"))))
     (build-system emacs-build-system)
     (home-page "https://github.com/ahyatt/llm")
     (synopsis "Interface to pluggable llm backends")
