@@ -269,14 +269,14 @@ with consult, such as vertico.")
 (define-public emacs-ellama
   (package
     (name "emacs-ellama")
-    (version "20231105.1147")
+    (version "20231116.2010")
     (source (origin
               (method git-fetch)
               (uri (git-reference
                     (url "https://github.com/s-kostyaev/ellama.git")
-                    (commit "702042c0bf79a4e81133fb2acb9031f5eae817b0")))
+                    (commit "b8ef883fb8a95c64256a8a4bfa6bc79497009b4a")))
               (sha256 (base32
-                       "182i95q0n6r2i774f66jkkmd172d4r8ybhqvayxfmgxr2ryfqwjg"))))
+                       "00vs1sap5g15gv52zp0yv8rsfxggsd988i6rqsyg5527cb4bxl6z"))))
     (build-system emacs-build-system)
     (propagated-inputs (list emacs-llm emacs-spinner))
     (home-page "http://github.com/s-kostyaev/ellama")
