@@ -752,15 +752,15 @@ Run the tests with:
 (define-public emacs-json-process-client
   (package
     (name "emacs-json-process-client")
-    (version "20210525.733")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://gitea.petton.fr/nico/json-process-client.git")
-             (commit "373b2cc7e3d26dc00594e0b2c1bb66815aad2826")))
-       (sha256
-        (base32 "0f6vimdzg28j1jsr31ma0wf6y18jamv8znn4fwvf7pdd51hdn36x"))))
+    (version "20230903.1305")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url
+                     "https://github.com/DamienCassou/json-process-client.git")
+                    (commit "c4385859ada9b7803698a1f0199fea7fc8880214")))
+              (sha256 (base32
+                       "1n4spfyv7g88mkvca0cxc34qvp3x8vc838hmyp7x4ijr87lp8inm"))))
     (build-system emacs-build-system)
     (home-page "https://gitlab.petton.fr/nico/json-process-client")
     (synopsis "Interact with a TCP process using JSON")
