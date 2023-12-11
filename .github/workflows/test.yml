@@ -20,4 +20,4 @@ jobs:
       - name: Ensure no locale warning
         run: test -z "$(guix --version 2>&1 >/dev/null)"
       - name: Build packages
-        run: guix package -L . -A | grep r0man/packages | awk '{print $1}' | xargs guix build -L .
+        run: guix package -L . -A | grep r0man/guix/packages | awk '{print $1}' | xargs guix build -L .
