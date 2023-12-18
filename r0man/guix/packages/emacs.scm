@@ -1777,3 +1777,55 @@ inside Emacs. It uses the consult package and the GitHub CLI and
 optionally Embark and provides an intuitive UI using minibuffer
 completion familiar to Emacs users.")
       (license license:gpl3+))))
+
+(define-public emacs-company-box
+  (package
+    (name "emacs-company-box")
+    (version "20230312.1028")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/sebastiencs/company-box.git")
+                    (commit "b6f53e26adf948aca55c3ff6c22c21a6a6614253")))
+              (sha256 (base32
+                       "0shzdvzrihw8rqgliq6aj1d856m30nj4skzldmw1caqmghfqwv7m"))))
+    (build-system emacs-build-system)
+    (propagated-inputs (list emacs-dash emacs-company emacs-frame-local))
+    (arguments
+     `(#:include '("^[^/]+.el$" "^[^/]+.el.in$"
+                   "^dir$"
+                   "^[^/]+.info$"
+                   "^[^/]+.texi$"
+                   "^[^/]+.texinfo$"
+                   "^doc/dir$"
+                   "^doc/[^/]+.info$"
+                   "^doc/[^/]+.texi$"
+                   "^doc/[^/]+.texinfo$"
+                   "^images$")
+       #:exclude '("^.dir-locals.el$" "^test.el$" "^tests.el$"
+                   "^[^/]+-test.el$" "^[^/]+-tests.el$")
+       #:phases
+       (modify-phases %standard-phases
+         (add-before 'install 'patch-paths
+           (lambda* (#:key inputs outputs #:allow-other-keys)
+             (let ((out (assoc-ref outputs "out")))
+               (substitute* "company-box-icons.el"
+                 (("\\(file-name-as-directory\\)\\)\\)")
+                  (string-append "(file-name-as-directory)))\n"
+                                 "(defconst company-box-icons-dir \""
+                                 out "/share/images\")"))))))
+         (add-after 'install 'install-data
+           (lambda* (#:key outputs #:allow-other-keys)
+             (let ((out (assoc-ref outputs "out")))
+               (copy-recursively "images" (string-append out "/share/images"))))))))
+    (home-page "https://github.com/sebastiencs/company-box")
+    (synopsis "Company front-end with icons")
+    (description
+     "Company box is a Company front-end.  It supports different
+colors for different backends, associates icons to functions,
+variables... and their backends, and displays candidate's
+documentation.  It is not limited by the current window size or
+buffer's text properties.
+
+This package is not compatible with a TTY.")
+    (license #f)))
