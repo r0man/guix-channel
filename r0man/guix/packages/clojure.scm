@@ -9,14 +9,14 @@
 (define-public babashka
   (package
     (name "babashka")
-    (version "1.3.185")
+    (version "1.3.186")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://github.com/babashka/babashka/releases/download/v"
                                   version "/babashka-" version "-linux-amd64-static.tar.gz"))
               (sha256
                (base32
-                "00qjd59mjh5v9ll040k7d7l9jm5ki5j18r2mpbcdhxy3qxj97cgw"))))
+                "17qvbx4c7b6951qr7r26nrsyzw3zlc0xlnwhcdl1lw9rbanxd4ps"))))
     (build-system copy-build-system)
     (arguments
      `(#:install-plan
