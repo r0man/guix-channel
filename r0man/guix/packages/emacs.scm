@@ -1683,3 +1683,26 @@ inside Emacs. It uses the consult package and the GitHub CLI and
 optionally Embark and provides an intuitive UI using minibuffer
 completion familiar to Emacs users.")
       (license license:gpl3+))))
+
+(define-public emacs-whisper
+  (package
+    (name "emacs-whisper")
+    (version "20231114.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/natrys/whisper.el")
+             (commit "fb0ab898b2d01f7d5c5b2dd4379121c1dcfdbae1")))
+       (sha256
+        (base32 "0ci72s9qsgp224ms2mg0jbp7m6wl8s0d5wrl1pj3gawmikbpmf1w"))))
+    (build-system emacs-build-system)
+    (home-page "https://github.com/natrys/whisper.el")
+    (synopsis "Speech-to-Text interface for Emacs using OpenAI's whisper model and
+whisper.cpp as inference engine.")
+    (description
+     "Speech-to-Text interface for Emacs using OpenAI’s whisper speech
+recognition model. For the inference engine it uses the awesome C/C++
+port whisper.cpp that can run on consumer grade CPU (without requiring
+a high end GPU).")
+    (license license:gpl3+)))
