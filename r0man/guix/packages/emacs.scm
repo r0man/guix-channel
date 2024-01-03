@@ -1724,3 +1724,38 @@ recognition model. For the inference engine it uses the awesome C/C++
 port whisper.cpp that can run on consumer grade CPU (without requiring
 a high end GPU).")
     (license license:gpl3+)))
+
+(define-public emacs-company
+  (package
+    (name "emacs-company")
+    (version "0.10.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://elpa.gnu.org/packages/"
+                           "company-" version ".tar"))
+       (sha256
+        (base32 "0j2qrnx2w2al4f2n37b89q0pkabh5ccv00gsknvgaylhy0za5gq9"))))
+    (build-system emacs-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'install 'patch-base-dir
+            (lambda _
+              (substitute* (find-files "." "\\.el")
+                (("\\(file-name-directory \\(or load-file-name buffer-file-name\\)\\)")
+                 (string-append "\"" #$output "/share/\"")))))
+          (add-after 'install 'install-icons
+            (lambda _
+              (let ((dir (string-append #$output "/share/icons")))
+                (mkdir-p dir)
+                (copy-recursively "icons" dir)))))))
+    (home-page "https://company-mode.github.io/")
+    (synopsis "Modular text completion framework")
+    (description
+     "Company is a modular completion mechanism.  Modules for retrieving
+completion candidates are called back-ends, modules for displaying them are
+front-ends.  Company comes with many back-ends, e.g., @code{company-elisp}.
+These are distributed in separate files and can be used individually.")
+    (license (list license:gpl3+ license:cc-by4.0))))
