@@ -1687,12 +1687,12 @@ completion familiar to Emacs users.")
 (define-public emacs-eglot-java
   (package
     (name "emacs-eglot-java")
-    (version "20231224.2257")
+    (version "20231228.2257")
     (source (origin
               (method git-fetch)
               (uri (git-reference
                     (url "https://github.com/yveszoundi/eglot-java.git")
-                    (commit "2f6dfdeca8cbf066c50c0697d5b47ac16f22625f")))
+                    (commit "1abf8d547aaedce7307f3bd86145af0f2054bc9a")))
               (sha256 (base32
                        "0s5mp4kkvpbw3g9m0d42k0c6rls1mkng5sq49vmg7y1r6xzlb40m"))))
     (build-system emacs-build-system)
