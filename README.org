@@ -11,7 +11,7 @@ Add this channel to =~/.config/guix/channels.scm=
 #+begin_src scheme
   (cons* (channel
           (name 'r0man)
-          (url "https://github.com/r0man/guix-channel.git")
+          (url "https://github.com/r0man/guix-channel")
           (branch "main")
           (introduction
            (make-channel-introduction
