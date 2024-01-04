@@ -1694,7 +1694,7 @@ completion familiar to Emacs users.")
                     (url "https://github.com/yveszoundi/eglot-java.git")
                     (commit "1abf8d547aaedce7307f3bd86145af0f2054bc9a")))
               (sha256 (base32
-                       "0s5mp4kkvpbw3g9m0d42k0c6rls1mkng5sq49vmg7y1r6xzlb40m"))))
+                       "0mnd0wy1kdnfniw1dkw1i7c623kmh4p0jj2pdf3q6xn51677209x"))))
     (build-system emacs-build-system)
     (propagated-inputs (list emacs-eglot emacs-jsonrpc))
     (home-page "https://github.com/yveszoundi/eglot-java")
