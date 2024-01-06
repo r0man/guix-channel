@@ -222,7 +222,7 @@ with consult, such as vertico.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/zerolfx/copilot.el")
+               (url "https://github.com/copilot-emacs/copilot.el")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
