@@ -214,10 +214,10 @@ with consult, such as vertico.")
     (license license:gpl3+)))
 
 (define-public emacs-copilot
-  (let ((commit "653fe7b12990b5b7a050971bed4579022ce4b4f8"))
+  (let ((commit "8f5e45405ead77fcbe85b5c02193f23449d2d518"))
     (package
       (name "emacs-copilot")
-      (version (git-version "0.0.1" "2" commit))
+      (version (git-version "0.0.1" "3" commit))
       (source
        (origin
          (method git-fetch)
@@ -226,7 +226,7 @@ with consult, such as vertico.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "1cy3541l33ri4qai61f3l4179q43np9flh5ank5l5a35a1c19gad"))))
+          (base32 "0g2iqndi97m9y6mk3hj6nn4a1zvaivxqrbbv0nwdvxhxpywx9kdp"))))
       (build-system emacs-build-system)
       (arguments
        (list
