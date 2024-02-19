@@ -851,7 +851,8 @@ returns the language of the      current buffer  * language-detection-string
               (method git-fetch)
               (uri (git-reference
                     (url "https://github.com/ahyatt/llm.git")
-                    (commit "0.9.1")))
+                    (commit version)))
+              (file-name (git-file-name name version))
               (sha256 (base32
                        "0xkxanxhszrwh9b82phq1z68qz5ck7x6wpidlagk1miiq9rk2k9c"))))
     (build-system emacs-build-system)
