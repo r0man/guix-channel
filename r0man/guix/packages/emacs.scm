@@ -273,23 +273,23 @@ with consult, such as vertico.")
     (source (origin
               (method git-fetch)
               (uri (git-reference
-                    (url "https://github.com/s-kostyaev/ellama.git")
+                    (url "https://github.com/s-kostyaev/ellama")
                     (commit version)))
               (file-name (git-file-name name version))
               (sha256 (base32
                        "1gcg02s1dkpg2pxypmjld4fgndlpzcx4dvgsjyq31h4swwgkjxyg"))))
     (build-system emacs-build-system)
     (propagated-inputs (list emacs-dash emacs-llm emacs-spinner))
-    (home-page "http://github.com/s-kostyaev/ellama")
+    (home-page "https://github.com/s-kostyaev/ellama")
     (synopsis "Tool for interacting with LLMs")
     (description
-     "Ellama is a tool for interacting with large language models from Emacs.  It
-allows you to ask questions and receive responses from the
-LLMs. Ellama can perform various tasks such as translation, code
+     "Ellama is a tool for interacting with large language models from
+Emacs.  It allows you to ask questions and receive responses from the
+LLMs.  Ellama can perform various tasks such as translation, code
 review, summarization, enhancing grammar/spelling or wording and more
 through the Emacs interface.  Ellama natively supports streaming
 output, making it effortless to use with your preferred text editor.")
-    (license #f)))
+    (license license:gpl3+)))
 
 (define-public emacs-eval-expr
   (package
