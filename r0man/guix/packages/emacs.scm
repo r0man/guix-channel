@@ -214,7 +214,7 @@ with consult, such as vertico.")
     (license license:gpl3+)))
 
 (define-public emacs-copilot
-  (let ((commit "8f5e45405ead77fcbe85b5c02193f23449d2d518"))
+  (let ((commit "0e24423cfef2993b3a9633c8cbb654079f2652a9"))
     (package
       (name "emacs-copilot")
       (version (git-version "0.0.1" "3" commit))
@@ -226,24 +226,10 @@ with consult, such as vertico.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "0g2iqndi97m9y6mk3hj6nn4a1zvaivxqrbbv0nwdvxhxpywx9kdp"))))
+          (base32 "1nbrpcqf217sf14lfc8lkd86p5aja6ayw6zif0bwhr6rjbccw4ns"))))
       (build-system emacs-build-system)
-      (arguments
-       (list
-        #:phases
-        #~(modify-phases %standard-phases
-            (add-before 'install 'patch-base-dir
-              (lambda _
-                (substitute* (find-files "." "\\.el")
-                  (("\\(or load-file-name")
-                   (string-append "(or \"" #$output "/share/emacs/\"")))))
-            (add-after 'install 'install-dist
-              (lambda* (#:key outputs #:allow-other-keys)
-                (let* ((dist (string-append #$output "/share/emacs/dist")))
-                  (mkdir-p dist)
-                  (copy-recursively "dist" dist)))))))
-      (propagated-inputs (list emacs-dash emacs-editorconfig emacs-jsonrpc emacs-s))
-      (home-page "https://github.com/zerolfx/copilot.el")
+      (propagated-inputs (list emacs-dash emacs-f emacs-editorconfig emacs-jsonrpc emacs-s))
+      (home-page "https://github.com/copilot-emacs/copilot.el")
       (synopsis "Unofficial Github Copilot mode for Emacs")
       (description "An unofficial Emacs mode for Github Copilot.")
       (license license:gpl3+))))
