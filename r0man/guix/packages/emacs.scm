@@ -277,6 +277,34 @@ through the Emacs interface.  Ellama natively supports streaming
 output, making it effortless to use with your preferred text editor.")
     (license license:gpl3+)))
 
+(define-public emacs-elisa
+  (package
+    (name "emacs-elisa")
+    (version "0.1.0")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/s-kostyaev/elisa")
+                    (commit version)))
+              (file-name (git-file-name name version))
+              (sha256 (base32
+                       "1j8yxvwcbfnj1f8mpr1pffd3q97719qwzbxsh76x96lbc4bhxars"))))
+    (build-system emacs-build-system)
+    (propagated-inputs (list emacs-async emacs-ellama))
+    (home-page "https://github.com/s-kostyaev/elisa")
+    (synopsis "Emacs Lisp Information System Assistant")
+    (description
+     "ELISA (Emacs Lisp Information System Assistant) is a project designed
+to help Emacs users quickly find answers to their questions related to
+Emacs and Emacs Lisp.  Utilizing the powerful Ellama package, ELISA
+provides accurate and relevant responses to user queries, enhancing
+productivity and efficiency in the Emacs environment.  By integrating
+links to the Emacs info manual after answering a question, ELISA
+ensures that users have easy access to additional information on the
+topic, making it an essential tool for both beginners and advanced
+Emacs users.")
+    (license license:gpl3+)))
+
 (define-public emacs-eval-expr
   (package
     (name "emacs-eval-expr")
