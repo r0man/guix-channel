@@ -1722,15 +1722,16 @@ completion familiar to Emacs users.")
 (define-public emacs-whisper
   (package
     (name "emacs-whisper")
-    (version "20231114.1")
+    (version "20240228.1")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
              (url "https://github.com/natrys/whisper.el")
-             (commit "fb0ab898b2d01f7d5c5b2dd4379121c1dcfdbae1")))
+             (commit "fc7512bf5a17b72c033c8231ed2a3291dff191e1")))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "0ci72s9qsgp224ms2mg0jbp7m6wl8s0d5wrl1pj3gawmikbpmf1w"))))
+        (base32 "0m873c3fm5knrsc8g5xdydhg7icnr8cjd44a65373k325ximvrwx"))))
     (build-system emacs-build-system)
     (home-page "https://github.com/natrys/whisper.el")
     (synopsis "Speech-to-Text interface for Emacs using OpenAI's whisper model and
