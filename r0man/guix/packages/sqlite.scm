@@ -25,10 +25,17 @@
               (modules '((guix build utils)))
               (snippet
                '(substitute* "CMakeLists.txt"
-                  (("add_subdirectory.*/vendor/faiss.*") "")
+                  ;; Don't use vendored faiss
+                  (("add_subdirectory.*/vendor/faiss.*")
+                   "")
+                  (("target_link_libraries.*sqlite-vss faiss_avx2.*)")
+                   "target_link_libraries(sqlite-vss-static PUBLIC faiss)")
+                  ;; Don't use vendored sqlite
                   (("include_directories.*vendor/sqlite.*") "")
                   (("link_directories.*BEFORE vendor/sqlite.*") "")
-                  (("add_subdirectory.*vendor/json.*") "")))))
+                  ;; Don't use vendored nlohmann_json
+                  (("add_subdirectory.*vendor/json.*")
+                   "")))))
     (build-system cmake-build-system)
     (inputs (list faiss libomp-17 lapack nlohmann-json sqlite))
     (home-page "https://github.com/asg017/sqlite-vss")
