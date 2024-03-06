@@ -862,7 +862,7 @@ returns the language of the      current buffer  * language-detection-string
 (define-public emacs-llm
   (package
     (name "emacs-llm")
-    (version "0.9.1")
+    (version "0.10.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -870,7 +870,7 @@ returns the language of the      current buffer  * language-detection-string
                     (commit version)))
               (file-name (git-file-name name version))
               (sha256 (base32
-                       "0xkxanxhszrwh9b82phq1z68qz5ck7x6wpidlagk1miiq9rk2k9c"))))
+                       "09l1jabc24y1sl8sh8yviqypxbnc6ny3zyipw0bf7v4kcdb7l59z"))))
     (build-system emacs-build-system)
     (home-page "https://github.com/ahyatt/llm")
     (synopsis "Interface to pluggable llm backends")
