@@ -281,7 +281,7 @@ output, making it effortless to use with your preferred text editor.")
 (define-public emacs-elisa
   (package
     (name "emacs-elisa")
-    (version "0.1.0")
+    (version "0.1.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -289,7 +289,7 @@ output, making it effortless to use with your preferred text editor.")
                     (commit version)))
               (file-name (git-file-name name version))
               (sha256 (base32
-                       "1j8yxvwcbfnj1f8mpr1pffd3q97719qwzbxsh76x96lbc4bhxars"))))
+                       "0mk7rg2nmi7qc91fml0ahiwpc0xkhaf2w6mla8kxavjpx0051i3n"))))
     (build-system emacs-build-system)
     (propagated-inputs (list emacs-async emacs-ellama))
     (home-page "https://github.com/s-kostyaev/elisa")
