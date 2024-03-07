@@ -13,6 +13,53 @@
   #:use-module (guix git-download)
   #:use-module (guix packages))
 
+(define-public emacs-29.2
+  (package
+    (inherit emacs)
+    (name "emacs-29.2")
+    (version "29.2")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append "mirror://gnu/emacs/emacs-"
+                                  version ".tar.xz"))
+              (sha256
+               (base32
+                "1p3h4sz8da8vhix5140g2qkdy8mz11d7mmvsym5vy847k1428gbx"))
+              (patches (search-patches "emacs-exec-path.patch"
+                                       "emacs-fix-scheme-indent-function.patch"
+                                       "emacs-native-comp-driver-options.patch"
+                                       "emacs-pgtk-super-key-fix.patch"))
+              (modules '((guix build utils)))
+              (snippet
+               '(with-directory-excursion "lisp"
+                  ;; Delete the bundled byte-compiled elisp files and generated
+                  ;; autoloads.
+                  (for-each delete-file
+                            (append (find-files "." "\\.elc$")
+                                    (find-files "." "loaddefs\\.el$")
+                                    (find-files "eshell" "^esh-groups\\.el$")))
+
+                  ;; Make sure Tramp looks for binaries in the right places on
+                  ;; remote Guix System machines, where 'getconf PATH' returns
+                  ;; something bogus.
+                  (substitute* "net/tramp.el"
+                    ;; Patch the line after "(defcustom tramp-remote-path".
+                    (("\\(tramp-default-remote-path")
+                     (format #f "(tramp-default-remote-path ~s ~s ~s ~s "
+                             "~/.guix-profile/bin" "~/.guix-profile/sbin"
+                             "/run/current-system/profile/bin"
+                             "/run/current-system/profile/sbin")))
+
+                  ;; Make sure Man looks for C header files in the right
+                  ;; places.
+                  (substitute* "man.el"
+                    (("\"/usr/local/include\"" line)
+                     (string-join
+                      (list line
+                            "\"~/.guix-profile/include\""
+                            "\"/var/guix/profiles/system/profile/include\"")
+                      " ")))))))))
+
 (define-public emacs-avy-menu
   (let ((commit "bb694fd3dde6507f06f76dd862b888ba9c3b544d")
         (revision "1"))
@@ -94,6 +141,34 @@ ALGOL 60 report.")
 development cycle.")
     (license license:gpl3+)))
 
+(define-public emacs-chatgpt
+  (let ((commit "882fc956b5ecf63e8b1b5fd2cc29b37eb4c608e9")
+        (revision "2"))
+    (package
+      (name "emacs-chatgpt")
+      (version (git-version "0.1.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/emacs-openai/chatgpt")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "0falksb1ljv0m6imzzflws60akg34rf3v7z4r3l7v5y5hixhdmfa"))))
+      (build-system emacs-build-system)
+      (propagated-inputs (list emacs-ht
+                               emacs-hydra
+                               emacs-markdown-mode
+                               emacs-openai
+                               emacs-spinner))
+      (home-page "https://github.com/emacs-openai/chatgpt")
+      (synopsis "Use ChatGPT inside Emacs")
+      (description "This Emacs Code extension allows you to use the official OpenAI API to
+generate code or natural language responses from OpenAI's ChatGPT to
+your questions, right within the editor.")
+      (license license:gpl3+))))
+
 (define-public emacs-clojure-mode-extra-font-locking
   (package
     (name "emacs-clojure-mode-extra-font-locking")
@@ -121,6 +196,59 @@ font-locks symbols without any regard for what they resolve to).  CIDER provides
 much more reliable font-locking, that's based on the runtime state of your
 Clojure application.")
     (license license:gpl3+)))
+
+(define-public emacs-codegpt
+  (let ((commit "be35070c133e89fbaa7bccb5a276cb074bf6dc68")
+        (revision "3"))
+    (package
+      (name "emacs-codegpt")
+      (version (git-version "0.1.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/emacs-openai/codegpt")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1xwkms00nh8c3lzy04ag4lyjcr3jiq58qjwsjbxlw8gn7qg04b8h"))))
+      (build-system emacs-build-system)
+      (propagated-inputs (list emacs-chatgpt
+                               emacs-markdown-mode
+                               emacs-openai
+                               emacs-spinner))
+      (home-page "https://github.com/emacs-openai/codegpt")
+      (synopsis "Use GPT-3 inside Emacs")
+      (description "This Emacs Code extension allows you to use the official OpenAI API to
+generate code or natural language responses from OpenAI's GPT-3 to
+your questions, right within the editor.")
+      (license license:gpl3+))))
+
+(define-public emacs-consult-gh
+  (let ((commit "92dea3c7bb4d831888415de37389c97bc6be7902")
+        (revision "1"))
+    (package
+      (name "emacs-consult-gh")
+      (version (git-version "0.12" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/armindarvish/consult-gh")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "13hiisr0hh2w5md5iw2znz1zmq50455dpsxal8is9lzq5glghm8i"))))
+      (build-system emacs-build-system)
+      (propagated-inputs (list emacs-consult emacs-embark))
+      (home-page "https://github.com/armindarvish/consult-gh")
+      (synopsis "An Interactive interface for GitHub CLI client inside GNU Emacs using Consult")
+      (description "Consult-GH provides an interface to interact with GitHub
+repositories (search, view files and issues, clone, fork, etc) from
+inside Emacs. It uses the consult package and the GitHub CLI and
+optionally Embark and provides an intuitive UI using minibuffer
+completion familiar to Emacs users.")
+      (license license:gpl3+))))
 
 (define-public emacs-color-theme
   (package
@@ -241,6 +369,27 @@ with consult, such as vertico.")
       (home-page "https://github.com/copilot-emacs/copilot.el")
       (synopsis "Unofficial Github Copilot mode for Emacs")
       (description "An unofficial Emacs mode for Github Copilot.")
+      (license license:gpl3+))))
+
+(define-public emacs-eglot-java
+  (let ((commit "4cb3bdfaa954ad02e6eaac77c578987355db90cf")
+        (revision "1"))
+    (package
+      (name "emacs-eglot-java")
+      (version "20231228.2257")
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                      (url "https://github.com/yveszoundi/eglot-java")
+                      (commit commit)))
+                (file-name (git-file-name name version))
+                (sha256 (base32
+                         "0wsyd2yiz1air2aiwqvprz89qgm05ak8zksh1jg4m5w5gbg9rlrj"))))
+      (build-system emacs-build-system)
+      (propagated-inputs (list emacs-eglot emacs-jsonrpc))
+      (home-page "https://github.com/yveszoundi/eglot-java")
+      (synopsis "Eglot Java package for Emacs")
+      (description "Java extension for the Eglot LSP client")
       (license license:gpl3+))))
 
 (define-public emacs-eldoc-box
@@ -998,6 +1147,39 @@ local LLM or is paying for API access.")
 Emacs built-in tabulated list mode, but with less boilerplate.")
       (license license:gpl3+))))
 
+(define-public emacs-ox-tufte
+  (let ((commit "7bd86582afb7d8d504322dcba9848c478579990b")
+        (revision "1"))
+    (package
+      (name "emacs-ox-tufte")
+      (version (git-version "4.0.4" revision commit))
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                      (url "https://github.com/ox-tufte/ox-tufte")
+                      (commit commit)))
+                (sha256 (base32
+                         "0pyhbwsqsby52h740jvkrip1d78dkssymiyr31dnqzv3yg7qzj0k"))))
+      (build-system emacs-build-system)
+      (propagated-inputs (list emacs-org))
+      (arguments '(#:include '("^[^/]+.el$" "^[^/]+.el.in$"
+                               "^dir$"
+                               "^[^/]+.info$"
+                               "^[^/]+.texi$"
+                               "^[^/]+.texinfo$"
+                               "^doc/dir$"
+                               "^doc/[^/]+.info$"
+                               "^doc/[^/]+.texi$"
+                               "^doc/[^/]+.texinfo$"
+                               "^src$")
+                   #:exclude '("^.dir-locals.el$" "^test.el$" "^tests.el$"
+                               "^[^/]+-test.el$" "^[^/]+-tests.el$")))
+      (home-page "https://github.com/ox-tufte/ox-tufte")
+      (synopsis "Emacs Org-mode export backend for Tufte HTML")
+      (description "This package provides an export backend for Org mode that exports
+buffers to HTML that is compatible with Tufte CSS.")
+      (license license:gpl3+))))
+
 (define-public emacs-openai
   (let ((commit "e12330c217bb3358736f5534e9becba1ebaef0d4")
         (revision "2"))
@@ -1021,60 +1203,25 @@ Emacs built-in tabulated list mode, but with less boilerplate.")
 from applications written in the Elisp language.")
       (license license:gpl3+))))
 
-(define-public emacs-chatgpt
-  (let ((commit "882fc956b5ecf63e8b1b5fd2cc29b37eb4c608e9")
-        (revision "2"))
-    (package
-      (name "emacs-chatgpt")
-      (version (git-version "0.1.0" revision commit))
-      (source
-       (origin
-         (method git-fetch)
-         (uri (git-reference
-               (url "https://github.com/emacs-openai/chatgpt")
-               (commit commit)))
-         (file-name (git-file-name name version))
-         (sha256
-          (base32 "0falksb1ljv0m6imzzflws60akg34rf3v7z4r3l7v5y5hixhdmfa"))))
-      (build-system emacs-build-system)
-      (propagated-inputs (list emacs-ht
-                               emacs-hydra
-                               emacs-markdown-mode
-                               emacs-openai
-                               emacs-spinner))
-      (home-page "https://github.com/emacs-openai/chatgpt")
-      (synopsis "Use ChatGPT inside Emacs")
-      (description "This Emacs Code extension allows you to use the official OpenAI API to
-generate code or natural language responses from OpenAI's ChatGPT to
-your questions, right within the editor.")
-      (license license:gpl3+))))
-
-(define-public emacs-codegpt
-  (let ((commit "be35070c133e89fbaa7bccb5a276cb074bf6dc68")
-        (revision "3"))
-    (package
-      (name "emacs-codegpt")
-      (version (git-version "0.1.0" revision commit))
-      (source
-       (origin
-         (method git-fetch)
-         (uri (git-reference
-               (url "https://github.com/emacs-openai/codegpt")
-               (commit commit)))
-         (file-name (git-file-name name version))
-         (sha256
-          (base32 "1xwkms00nh8c3lzy04ag4lyjcr3jiq58qjwsjbxlw8gn7qg04b8h"))))
-      (build-system emacs-build-system)
-      (propagated-inputs (list emacs-chatgpt
-                               emacs-markdown-mode
-                               emacs-openai
-                               emacs-spinner))
-      (home-page "https://github.com/emacs-openai/codegpt")
-      (synopsis "Use GPT-3 inside Emacs")
-      (description "This Emacs Code extension allows you to use the official OpenAI API to
-generate code or natural language responses from OpenAI's GPT-3 to
-your questions, right within the editor.")
-      (license license:gpl3+))))
+(define-public emacs-ox-slack
+  (package
+    (name "emacs-ox-slack")
+    (version "20200108.1546")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/titaniumbones/ox-slack.git")
+                    (commit "bd797dcc58851d5051dc3516c317706967a44721")))
+              (sha256 (base32
+                       "1kh2v08fqmsmfj44ik8pljs3fz47fg9zf6q4mr99c0m5ccj5ck7w"))))
+    (build-system emacs-build-system)
+    (propagated-inputs (list emacs-org emacs-ox-gfm))
+    (home-page "https://github.com/titaniumbones/ox-slack")
+    (synopsis "Slack Exporter for org-mode")
+    (description
+     "This library implements a Slack backend for the Org exporter, based on the `md
+and `gfm back-ends.")
+    (license license:gpl3+)))
 
 (define-public emacs-dall-e
   (let ((commit "9e2cd3baa733622e35116b4385fe5e6026b7d59b")
@@ -1546,6 +1693,30 @@ documentation at https://github.com/porterjamesj/virtualenvwrapper.el for more
 details.")
     (license license:gpl3+)))
 
+(define-public emacs-whisper
+  (package
+    (name "emacs-whisper")
+    (version "20240228.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/natrys/whisper.el")
+             (commit "fc7512bf5a17b72c033c8231ed2a3291dff191e1")))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0m873c3fm5knrsc8g5xdydhg7icnr8cjd44a65373k325ximvrwx"))))
+    (build-system emacs-build-system)
+    (home-page "https://github.com/natrys/whisper.el")
+    (synopsis "Speech-to-Text interface for Emacs using OpenAI's whisper model and
+whisper.cpp as inference engine.")
+    (description
+     "Speech-to-Text interface for Emacs using OpenAI’s whisper speech
+recognition model. For the inference engine it uses the awesome C/C++
+port whisper.cpp that can run on consumer grade CPU (without requiring
+a high end GPU).")
+    (license license:gpl3+)))
+
 (define-public emacs-wsd-mode
   (package
     (name "emacs-wsd-mode")
@@ -1633,174 +1804,3 @@ modern-blue) - wsd-indent-offset (default 4) - wsd-font-lock-keywords")
       (description "Major mode for viewing certificates, CRLs, keys, DH-parameters and
 ASN.1 using OpenSSL.")
       (license license:gpl3+))))
-
-(define-public emacs-ox-tufte
-  (let ((commit "7bd86582afb7d8d504322dcba9848c478579990b")
-        (revision "1"))
-    (package
-      (name "emacs-ox-tufte")
-      (version (git-version "4.0.4" revision commit))
-      (source (origin
-                (method git-fetch)
-                (uri (git-reference
-                      (url "https://github.com/ox-tufte/ox-tufte")
-                      (commit commit)))
-                (sha256 (base32
-                         "0pyhbwsqsby52h740jvkrip1d78dkssymiyr31dnqzv3yg7qzj0k"))))
-      (build-system emacs-build-system)
-      (propagated-inputs (list emacs-org))
-      (arguments '(#:include '("^[^/]+.el$" "^[^/]+.el.in$"
-                               "^dir$"
-                               "^[^/]+.info$"
-                               "^[^/]+.texi$"
-                               "^[^/]+.texinfo$"
-                               "^doc/dir$"
-                               "^doc/[^/]+.info$"
-                               "^doc/[^/]+.texi$"
-                               "^doc/[^/]+.texinfo$"
-                               "^src$")
-                   #:exclude '("^.dir-locals.el$" "^test.el$" "^tests.el$"
-                               "^[^/]+-test.el$" "^[^/]+-tests.el$")))
-      (home-page "https://github.com/ox-tufte/ox-tufte")
-      (synopsis "Emacs Org-mode export backend for Tufte HTML")
-      (description "This package provides an export backend for Org mode that exports
-buffers to HTML that is compatible with Tufte CSS.")
-      (license license:gpl3+))))
-
-(define-public emacs-consult-gh
-  (let ((commit "92dea3c7bb4d831888415de37389c97bc6be7902")
-        (revision "1"))
-    (package
-      (name "emacs-consult-gh")
-      (version (git-version "0.12" revision commit))
-      (source
-       (origin
-         (method git-fetch)
-         (uri (git-reference
-               (url "https://github.com/armindarvish/consult-gh")
-               (commit commit)))
-         (file-name (git-file-name name version))
-         (sha256
-          (base32 "13hiisr0hh2w5md5iw2znz1zmq50455dpsxal8is9lzq5glghm8i"))))
-      (build-system emacs-build-system)
-      (propagated-inputs (list emacs-consult emacs-embark))
-      (home-page "https://github.com/armindarvish/consult-gh")
-      (synopsis "An Interactive interface for GitHub CLI client inside GNU Emacs using Consult")
-      (description "Consult-GH provides an interface to interact with GitHub
-repositories (search, view files and issues, clone, fork, etc) from
-inside Emacs. It uses the consult package and the GitHub CLI and
-optionally Embark and provides an intuitive UI using minibuffer
-completion familiar to Emacs users.")
-      (license license:gpl3+))))
-
-(define-public emacs-eglot-java
-  (let ((commit "4cb3bdfaa954ad02e6eaac77c578987355db90cf")
-        (revision "1"))
-    (package
-      (name "emacs-eglot-java")
-      (version "20231228.2257")
-      (source (origin
-                (method git-fetch)
-                (uri (git-reference
-                      (url "https://github.com/yveszoundi/eglot-java")
-                      (commit commit)))
-                (file-name (git-file-name name version))
-                (sha256 (base32
-                         "0wsyd2yiz1air2aiwqvprz89qgm05ak8zksh1jg4m5w5gbg9rlrj"))))
-      (build-system emacs-build-system)
-      (propagated-inputs (list emacs-eglot emacs-jsonrpc))
-      (home-page "https://github.com/yveszoundi/eglot-java")
-      (synopsis "Eglot Java package for Emacs")
-      (description "Java extension for the Eglot LSP client")
-      (license license:gpl3+))))
-
-(define-public emacs-whisper
-  (package
-    (name "emacs-whisper")
-    (version "20240228.1")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/natrys/whisper.el")
-             (commit "fc7512bf5a17b72c033c8231ed2a3291dff191e1")))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "0m873c3fm5knrsc8g5xdydhg7icnr8cjd44a65373k325ximvrwx"))))
-    (build-system emacs-build-system)
-    (home-page "https://github.com/natrys/whisper.el")
-    (synopsis "Speech-to-Text interface for Emacs using OpenAI's whisper model and
-whisper.cpp as inference engine.")
-    (description
-     "Speech-to-Text interface for Emacs using OpenAI’s whisper speech
-recognition model. For the inference engine it uses the awesome C/C++
-port whisper.cpp that can run on consumer grade CPU (without requiring
-a high end GPU).")
-    (license license:gpl3+)))
-
-(define-public emacs-ox-slack
-  (package
-    (name "emacs-ox-slack")
-    (version "20200108.1546")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/titaniumbones/ox-slack.git")
-                    (commit "bd797dcc58851d5051dc3516c317706967a44721")))
-              (sha256 (base32
-                       "1kh2v08fqmsmfj44ik8pljs3fz47fg9zf6q4mr99c0m5ccj5ck7w"))))
-    (build-system emacs-build-system)
-    (propagated-inputs (list emacs-org emacs-ox-gfm))
-    (home-page "https://github.com/titaniumbones/ox-slack")
-    (synopsis "Slack Exporter for org-mode")
-    (description
-     "This library implements a Slack backend for the Org exporter, based on the `md
-and `gfm back-ends.")
-    (license license:gpl3+)))
-
-(define-public emacs-29.2
-  (package
-    (inherit emacs)
-    (name "emacs-29.2")
-    (version "29.2")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "mirror://gnu/emacs/emacs-"
-                                  version ".tar.xz"))
-              (sha256
-               (base32
-                "1p3h4sz8da8vhix5140g2qkdy8mz11d7mmvsym5vy847k1428gbx"))
-              (patches (search-patches "emacs-exec-path.patch"
-                                       "emacs-fix-scheme-indent-function.patch"
-                                       "emacs-native-comp-driver-options.patch"
-                                       "emacs-pgtk-super-key-fix.patch"))
-              (modules '((guix build utils)))
-              (snippet
-               '(with-directory-excursion "lisp"
-                  ;; Delete the bundled byte-compiled elisp files and generated
-                  ;; autoloads.
-                  (for-each delete-file
-                            (append (find-files "." "\\.elc$")
-                                    (find-files "." "loaddefs\\.el$")
-                                    (find-files "eshell" "^esh-groups\\.el$")))
-
-                  ;; Make sure Tramp looks for binaries in the right places on
-                  ;; remote Guix System machines, where 'getconf PATH' returns
-                  ;; something bogus.
-                  (substitute* "net/tramp.el"
-                    ;; Patch the line after "(defcustom tramp-remote-path".
-                    (("\\(tramp-default-remote-path")
-                     (format #f "(tramp-default-remote-path ~s ~s ~s ~s "
-                             "~/.guix-profile/bin" "~/.guix-profile/sbin"
-                             "/run/current-system/profile/bin"
-                             "/run/current-system/profile/sbin")))
-
-                  ;; Make sure Man looks for C header files in the right
-                  ;; places.
-                  (substitute* "man.el"
-                    (("\"/usr/local/include\"" line)
-                     (string-join
-                      (list line
-                            "\"~/.guix-profile/include\""
-                            "\"/var/guix/profiles/system/profile/include\"")
-                      " ")))))))))
