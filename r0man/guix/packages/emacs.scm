@@ -783,24 +783,27 @@ Run the tests with:
     (license #f)))
 
 (define-public emacs-json-process-client
-  (package
-    (name "emacs-json-process-client")
-    (version "20230903.1305")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url
-                     "https://github.com/DamienCassou/json-process-client.git")
-                    (commit "c4385859ada9b7803698a1f0199fea7fc8880214")))
-              (sha256 (base32
-                       "1n4spfyv7g88mkvca0cxc34qvp3x8vc838hmyp7x4ijr87lp8inm"))))
-    (build-system emacs-build-system)
-    (home-page "https://gitlab.petton.fr/nico/json-process-client")
-    (synopsis "Interact with a TCP process using JSON")
-    (description
-     "This library starts a process and communicates with it through JSON over TCP.
-The process must output one JSON message per line.")
-    (license #f)))
+  (let ((commit "c4385859ada9b7803698a1f0199fea7fc8880214")
+        (revision "1"))
+    (package
+      (name "emacs-json-process-client")
+      (version (git-version "0.2.0" revision commit))
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                      (url
+                       "https://github.com/DamienCassou/json-process-client")
+                      (commit commit)))
+                (file-name (git-file-name name version))
+                (sha256 (base32
+                         "1n4spfyv7g88mkvca0cxc34qvp3x8vc838hmyp7x4ijr87lp8inm"))))
+      (build-system emacs-build-system)
+      (home-page "https://github.com/DamienCassou/json-process-client")
+      (synopsis "Interact with a TCP process using JSON")
+      (description
+       "This library starts a process and communicates with it through JSON
+over TCP.  The process must output one JSON message per line.")
+      (license license:gpl3+))))
 
 (define-public emacs-kubel
   (package
