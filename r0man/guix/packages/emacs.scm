@@ -14,36 +14,39 @@
   #:use-module (guix packages))
 
 (define-public emacs-avy-menu
-  (package
-    (name "emacs-avy-menu")
-    (version "20230606.1519")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/mrkkrp/avy-menu.git")
-             (commit "bb694fd3dde6507f06f76dd862b888ba9c3b544d")))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "12ywbhba9sf4a4r49w2y63asgfi616krybzllc7h7b5ww62x7c42"))))
-    (build-system emacs-build-system)
-    (propagated-inputs (list emacs-avy))
-    (home-page "https://github.com/mrkkrp/avy-menu")
-    (synopsis "Library providing avy-powered popup menu")
-    (description
-     "The library provides an Avy-powered popup menu.  It is used in (at least) the
+  (let ((commit "bb694fd3dde6507f06f76dd862b888ba9c3b544d")
+        (revision "1"))
+    (package
+      (name "emacs-avy-menu")
+      (version (git-version "20230606.1519" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/mrkkrp/avy-menu.git")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "12ywbhba9sf4a4r49w2y63asgfi616krybzllc7h7b5ww62x7c42"))))
+      (build-system emacs-build-system)
+      (propagated-inputs (list emacs-avy))
+      (home-page "https://github.com/mrkkrp/avy-menu")
+      (synopsis "Library providing avy-powered popup menu")
+      (description
+       "The library provides an Avy-powered popup menu.  It is used in (at least) the
 following packages:
 
 * `ace-popup-menu' * `char-menu' * `hasky-extensions'
 
 It can also be used directly.")
-    (license #f)))
+      (license #f))))
 
 (define-public emacs-bnf-mode
-  (let ((commit "1a7e177c282b8e07a2c33bd89232464b347dfc17"))
+  (let ((commit "1a7e177c282b8e07a2c33bd89232464b347dfc17")
+        (revision "1"))
     (package
       (name "emacs-bnf-mode")
-      (version (git-version "20221205.1451" "0" commit))
+      (version (git-version "20221205.1451" revision commit))
       (source (origin
                 (method git-fetch)
                 (uri (git-reference
