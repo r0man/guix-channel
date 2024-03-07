@@ -1407,28 +1407,32 @@ and outputs from within Emacs.")
     (license license:asl2.0)))
 
 (define-public emacs-sql-indent
-  (package
-    (name "emacs-sql-indent")
-    (version "1.6")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "https://elpa.gnu.org/packages/sql-indent-"
-                                  version ".tar"))
-              (sha256
-               (base32
-                "000pimlg0k4mrv2wpqq8w8l51wpr1lzlaq6ai8iaximm2a92ap5b"))))
-    (build-system emacs-build-system)
-    (home-page "https://github.com/alex-hhh/emacs-sql-indent")
-    (synopsis "Support for indenting code in SQL files.")
-    (description
-     "`sqlind-minor-mode is a minor mode that enables syntax-based indentation for
+  (let ((commit "323ece64acaac7f27b7806db9dba0757d6e57885")
+        (revision "0"))
+    (package
+      (name "emacs-sql-indent")
+      (version (git-version "1.7" revision commit))
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                      (url "https://github.com/alex-hhh/emacs-sql-indent")
+                      (commit commit)))
+                (file-name (git-file-name name version))
+                (sha256
+                 (base32
+                  "16nfnyjblcaly8idajpwv0gbzzn9n7h7dda8yqbpg9zalja2gvsh"))))
+      (build-system emacs-build-system)
+      (home-page "https://github.com/alex-hhh/emacs-sql-indent")
+      (synopsis "Support for indenting code in SQL files.")
+      (description
+       "`sqlind-minor-mode is a minor mode that enables syntax-based indentation for
 `sql-mode buffers: the TAB key indents the current line based on the SQL code on
 previous lines.  To setup syntax-based indentation for every SQL buffer, add
 `sqlind-minor-mode to `sql-mode-hook'.  Indentation rules are flexible and can
 be customized to match your personal coding style.  For more information, see
 the \"sql-indent.org\" file.  The package also defines align rules so that the
 `align function works for SQL statements, see `sqlind-align-rules'.")
-    (license license:gpl3+)))
+      (license license:gpl3+))))
 
 (define-public emacs-sqlite3
   (let ((version "0.0.1")
