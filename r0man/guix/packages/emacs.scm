@@ -16,15 +16,15 @@
 (define-public emacs-avy-menu
   (package
     (name "emacs-avy-menu")
-    (version "20210321.1732")
+    (version "20230606.1519")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
              (url "https://github.com/mrkkrp/avy-menu.git")
-             (commit "18bb320f395b7e412f7e377cf4c46d205d4b4e1a")))
+             (commit "bb694fd3dde6507f06f76dd862b888ba9c3b544d")))
        (sha256
-        (base32 "0p96kxyq1pk9cnwxis80vr6xnklcg2n8gp7pj8z41kz1i2fn960m"))))
+        (base32 "12ywbhba9sf4a4r49w2y63asgfi616krybzllc7h7b5ww62x7c42"))))
     (build-system emacs-build-system)
     (propagated-inputs (list emacs-avy))
     (home-page "https://github.com/mrkkrp/avy-menu")
