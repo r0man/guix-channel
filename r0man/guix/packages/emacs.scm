@@ -1273,49 +1273,27 @@ See the README.md for more details.")
     (license license:gpl3+)))
 
 (define-public emacs-timesheet
-  (package
-    (name "emacs-timesheet")
-    (version "20191024.151")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/tmarble/timesheet.el.git")
-             (commit "5098dc87d3d4f289b6c1b6532070dacbfe6de9fd")))
-       (sha256
-        (base32 "0wqxlb4a7fzf14629zw021216qyzz56xwr8hfh2fy6kj90m9br4c"))))
-    (build-system emacs-build-system)
-    (propagated-inputs (list emacs-s emacs-org emacs-auctex))
-    (arguments '(#:include '("^[^/]+.el$" "^bin$" "^share$") #:exclude '()))
-    (home-page "https://github.com/tmarble/timesheet.el")
-    (synopsis "Timesheet management add-on for org-mode")
-    (description
-     "Debian-depends: emacs24 make gawk sed git tar rubber texlive-latex-extra
-texlive-fonts-recommended texlive-fonts-extra evince
-
-This library adds timetracking and invoice generation to org-mode and relies
-heavily on org clocking http://orgmode.org/org.html#Clocking-work-time and TODO
-items http://orgmode.org/org.html#TODO-Items and org spreadsheets
-http://orgmode.org/org.html#The-spreadsheet
-
-This library attempts to conform to packaging conventions:
-https://www.gnu.org/software/emacs/manual/html_node/elisp/Packaging.html Bugs,
-enhancements welcome!
-
-; Usage
-
-Ensure TEXINPUTS is set to (in your ~/.bashrc) export
-TEXINPUTS=.:$HOME/.emacs.d/elpa/auctex-11.87.4/latex:
-
-Start by creating an example client...    M-x timesheet-example   You will be
-viewing the buffer yoyodyne.org that already has some example   time entries...
-Create an invoice with   M-x timesheet-invoice-this
-
-Next steps...  - customize your name (in defs.tex) and logo (in logo.pdf).  -
-update some time entries.
-
-Example key bindings  see example.emacs.d/foo/bindings.el")
-    (license license:gpl3+)))
+  (let ((commit "511751b239c84d7619ec1c61d7f108b732b64442")
+        (revision "1"))
+    (package
+      (name "emacs-timesheet")
+      (version (git-version "0.5.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/tmarble/timesheet.el.git")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "01j8wps938mjjlq55w9lgky3f51k260ipjqv8072x0n73mwf9008"))))
+      (build-system emacs-build-system)
+      (propagated-inputs (list emacs-s emacs-org emacs-auctex))
+      (arguments '(#:include '("^[^/]+.el$" "^bin$" "^share$") #:exclude '()))
+      (home-page "https://github.com/tmarble/timesheet.el")
+      (synopsis "Timesheet management add-on for org-mode")
+      (description "Timesheet management add-on for Emacs org-mode")
+      (license license:gpl3+))))
 
 (define-public emacs-paimon
   (let ((commit "4c71bea56d0cfdca8ea90c5a6d8d584647d053af"))
