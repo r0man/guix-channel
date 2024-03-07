@@ -39,7 +39,7 @@ following packages:
 * `ace-popup-menu' * `char-menu' * `hasky-extensions'
 
 It can also be used directly.")
-      (license #f))))
+      (license license:gpl3+))))
 
 (define-public emacs-bnf-mode
   (let ((commit "1a7e177c282b8e07a2c33bd89232464b347dfc17")
@@ -64,7 +64,7 @@ It can also be used directly.")
 Presently itprovides basic syntax and font-locking for BNF files.  BNF
 notation is supportedexactly form as it was first announced in the
 ALGOL 60 report.")
-      (license #f))))
+      (license license:gpl3+))))
 
 (define-public emacs-cask
   (package
@@ -181,7 +181,7 @@ color-theme-library ideas and code All the users that contributed their color
 themes.
 
 \f")
-    (license #f)))
+    (license license:gpl3+)))
 
 (define-public emacs-color-theme-solarized-r0man
   (package
@@ -372,7 +372,7 @@ didn't work in XEmacs at all.
 
 This rewrite should work in Emacs 19.18 or later and any version of XEmacs.
 However it will not work in Emacs 18.")
-    (license #f)))
+    (license license:gpl3+)))
 
 (define-public emacs-emacsql-sqlite
   (package
@@ -394,7 +394,7 @@ However it will not work in Emacs 18.")
     (description
      "During package installation EmacSQL will attempt to compile a custom native
 binary for communicating with a SQLite database.")
-    (license #f)))
+    (license license:gpl3+)))
 
 (define-public emacs-docopt
   (package
@@ -439,7 +439,7 @@ binary for communicating with a SQLite database.")
     (home-page "https://github.com/r0man/docopt.el")
     (synopsis "A Docopt implementation in Elisp")
     (description "This package provides a Docopt implementation in Elisp")
-    (license #f)))
+    (license license:gpl3+)))
 
 (define-public emacs-flycheck-clj-kondo
   (let ((commit "e38c67ba9db1ea1cbe1b61ab39b506c05efdcdbf")
@@ -533,7 +533,7 @@ your favourite browser.  When you finished, close the browser page and kill the
 markdwon buffer.
 
 Please go https://github.com/mola-T/flymd for more info")
-    (license #f)))
+    (license license:gpl3+)))
 
 (define-public emacs-github-browse-file
   (package
@@ -554,7 +554,7 @@ Please go https://github.com/mola-T/flymd for more info")
      "Call `github-browse-file' (for the git blob) or `github-browse-file-blame' (for
 the git blame) to view current file on GitHub.  With a prefix argument (C-u),
 you can force them to use the \"master\" branch.")
-    (license #f)))
+    (license license:gpl3+)))
 
 (define-public emacs-guess-language
   (let ((commit "bccca49bbb27a3dff02c660d7cda8cdf83333d6e")
@@ -649,7 +649,7 @@ Jira References:
 
 Primary reference (on current Jira, only REST is supported):
 https://docs.atlassian.com/jira/REST/cloud/")
-    (license #f)))
+    (license license:gpl3+)))
 
 (define-public emacs-js2-refactor
   (package
@@ -780,7 +780,7 @@ update
 Run the tests with:
 
     $ ./util/ecukes/ecukes features")
-    (license #f)))
+    (license license:gpl3+)))
 
 (define-public emacs-json-process-client
   (let ((commit "c4385859ada9b7803698a1f0199fea7fc8880214")
@@ -880,7 +880,7 @@ Entrypoints:
 of the current      buffer to the echo area    - When called non-interactively,
 returns the language of the      current buffer  * language-detection-string
 - Non-interactive function, returns the language of its argument")
-    (license #f)))
+    (license license:gpl3+)))
 
 (define-public emacs-llm
   (package
@@ -955,7 +955,7 @@ local LLM or is paying for API access.")
       (home-page "https://github.com/emacs-lsp/lsp-docker")
       (synopsis "LSP Docker integration")
       (description "Run language servers in containers")
-      (license #f))))
+      (license license:gpl3+))))
 
 (define-public emacs-markdown-preview-eww
   (package
@@ -973,7 +973,7 @@ local LLM or is paying for API access.")
     (home-page "https://github.com/niku/markdown-preview-eww")
     (synopsis "Realtime preview by eww")
     (description "This package provides the realtime markdown preview by eww.")
-    (license #f)))
+    (license license:gpl3+)))
 
 (define-public emacs-tblui
   (let ((commit "62ab5f62982c061a902fd3e54d94a68a4706572c")
@@ -1123,7 +1123,7 @@ generate generate digital images from natural language descriptions.")
       (home-page "https://github.com/jcs-elpa/reveal-in-folder")
       (synopsis "Reveal current file in folder")
       (description "Reveal current file in folder.")
-      (license #f))))
+      (license license:gpl3+))))
 
 (define-public emacs-org-gcal
   (let ((commit "c954d3b1a8f7a23ec5c4410e56dfa7b08a45f769")
@@ -1179,25 +1179,28 @@ Org files to JIRA markup for pasting into JIRA tickets & comments.")
       (license license:gpl3+))))
 
 (define-public emacs-request-deferred
-  (package
-    (name "emacs-request-deferred")
-    (version "20210214.37")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/tkf/emacs-request.git")
-             (commit "3336eaa97de923f74b90dda3e35985e122d40805")))
-       (sha256
-        (base32 "0jckwy5zhz95d6l3lz8b9b34pppcjjzy97fg1wn8mqzhf3h460ac"))))
-    (build-system emacs-build-system)
-    (propagated-inputs (list emacs-deferred emacs-request))
-    (arguments '(#:include '("^request-deferred.el$") #:exclude '()))
-    (home-page "https://github.com/tkf/emacs-request")
-    (synopsis "Wrap request.el by deferred")
-    (description
-     "Trivial wrapper to request library returing kiwanami deferred object.")
-    (license #f)))
+  (let ((commit "01e338c335c07e4407239619e57361944a82cb8a")
+        (revision "1"))
+    (package
+      (name "emacs-request-deferred")
+      (version (git-version "0.3.2" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/tkf/emacs-request")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1arhjsybb1nhq14p06jzbvp25pyp1pddq1ldyq25vj1qrsh81rjq"))))
+      (build-system emacs-build-system)
+      (propagated-inputs (list emacs-deferred emacs-request))
+      (arguments '(#:include '("^request-deferred.el$") #:exclude '()))
+      (home-page "https://github.com/tkf/emacs-request")
+      (synopsis "Wrap request.el by deferred")
+      (description
+       "Trivial wrapper to request library returing kiwanami deferred object.")
+      (license license:gpl3+))))
 
 (define-public emacs-scss-mode
   (package
@@ -1220,7 +1223,7 @@ sass: gem install sass
 
 Also make sure sass location is in emacs PATH, example: (setq exec-path (cons
 (expand-file-name \"~/.gem/ruby/1.8/bin\") exec-path)) or customize\n`scss-sass-command' to point to your sass executable.")
-    (license #f)))
+    (license license:gpl3+)))
 
 (define-public emacs-smooth-scrolling
   (package
@@ -1267,7 +1270,7 @@ package auto-adjusts the margin in each buffer to never exceed half the window
 height, so the top and bottom margins never overlap.
 
 See the README.md for more details.")
-    (license #f)))
+    (license license:gpl3+)))
 
 (define-public emacs-timesheet
   (package
@@ -1312,7 +1315,7 @@ Next steps...  - customize your name (in defs.tex) and logo (in logo.pdf).  -
 update some time entries.
 
 Example key bindings  see example.emacs.d/foo/bindings.el")
-    (license #f)))
+    (license license:gpl3+)))
 
 (define-public emacs-paimon
   (let ((commit "4c71bea56d0cfdca8ea90c5a6d8d584647d053af"))
@@ -1367,7 +1370,7 @@ Example key bindings  see example.emacs.d/foo/bindings.el")
       (home-page "https://github.com/r0man/paimon.el")
       (synopsis "A major mode for Splunk")
       (description "This package provides a major mode for Splunk")
-      (license #f))))
+      (license license:gpl3+))))
 
 (define-public emacs-popwin
   (package
@@ -1416,7 +1419,7 @@ like:
 See also `popwin:keymap' documentation.
 
 Enjoy!")
-    (license #f)))
+    (license license:gpl3+)))
 
 (define-public emacs-sayid
   (package
@@ -1584,7 +1587,7 @@ the functionality of Doug Hellmann's
 [virtualenvwrapper](https://bitbucket.org/dhellmann/virtualenvwrapper/) See
 documentation at https://github.com/porterjamesj/virtualenvwrapper.el for more
 details.")
-    (license #f)))
+    (license license:gpl3+)))
 
 (define-public emacs-wsd-mode
   (package
@@ -1630,7 +1633,7 @@ A short summary of customizable variables:
 - wsd-api-key (default blank.  required for premium-features.) - wsd-format
 (default png.  svg requires premium, thus api-key.) - wsd-style (default
 modern-blue) - wsd-indent-offset (default 4) - wsd-font-lock-keywords")
-    (license #f)))
+    (license license:gpl3+)))
 
 (define-public emacs-x509-mode
   (package
@@ -1675,7 +1678,7 @@ Usage: Open a file containing a certificate, either PEM or DER encode.  Now use
 M-x `x509-viewcert' to create a new buffer that displays the decoded
 certificate.  Use M-x `x509-viewcrl', M-X `x509-viewasn1', M-x `x509-viewkey'
 and M-x `x509-viewdh' in a similar manner.")
-    (license #f)))
+    (license license:gpl3+)))
 
 (define-public emacs-ox-tufte
   (package
@@ -1710,7 +1713,7 @@ compatible with Tufte CSS - <https://edwardtufte.github.io/tufte-css/>.  The
 design goal is to \"minimally\" change the HTML structure as generated by `ox-html
 (with additional CSS as needed) to get behaviour that is equivalent to Tufte
 CSS.")
-    (license #f)))
+    (license license:gpl3+)))
 
 (define-public emacs-consult-gh
   (let ((commit "a035eac54a3be270168e86f32075e5f6f426c103"))
@@ -1753,7 +1756,7 @@ completion familiar to Emacs users.")
     (home-page "https://github.com/yveszoundi/eglot-java")
     (synopsis "Eglot Java package for Emacs")
     (description "Java extension for the Eglot LSP client")
-    (license #f)))
+    (license license:gpl3+)))
 
 (define-public emacs-whisper
   (package
