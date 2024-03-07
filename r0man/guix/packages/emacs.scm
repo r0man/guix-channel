@@ -1668,10 +1668,11 @@ buffers to HTML that is compatible with Tufte CSS.")
       (license license:gpl3+))))
 
 (define-public emacs-consult-gh
-  (let ((commit "a035eac54a3be270168e86f32075e5f6f426c103"))
+  (let ((commit "92dea3c7bb4d831888415de37389c97bc6be7902")
+        (revision "1"))
     (package
       (name "emacs-consult-gh")
-      (version (git-version "0.12" "0" commit))
+      (version (git-version "0.12" revision commit))
       (source
        (origin
          (method git-fetch)
@@ -1680,7 +1681,7 @@ buffers to HTML that is compatible with Tufte CSS.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "1lnxnf0dc5wp3lkildib8p5iyzramsxdldqzgm1w149wqimyp7m9"))))
+          (base32 "13hiisr0hh2w5md5iw2znz1zmq50455dpsxal8is9lzq5glghm8i"))))
       (build-system emacs-build-system)
       (propagated-inputs (list emacs-consult emacs-embark))
       (home-page "https://github.com/armindarvish/consult-gh")
