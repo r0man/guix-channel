@@ -1351,53 +1351,28 @@ See the README.md for more details.")
       (license license:gpl3+))))
 
 (define-public emacs-popwin
-  (package
-    (name "emacs-popwin")
-    (version "20210215.1849")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/emacsorphanage/popwin.git")
-             (commit "1184368d3610bd0d0ca4a3db4068048c562c2b50")))
-       (sha256
-        (base32 "0inm6wbfkw6b9bwikd77d0zmk6ma9fzfs11acblp5imq202v76ra"))))
-    (build-system emacs-build-system)
-    (home-page "https://github.com/emacsorphanage/popwin")
-    (synopsis "Popup Window Manager")
-    (description
-     "Popwin makes you free from the hell of annoying buffers such like *Help*,
-*Completions*, *compilation*, and etc.
-
-To use popwin, just add the following code into your .emacs:
-
-    (require 'popwin)     (popwin-mode 1)
-
-Then try to show some buffer, for example *Help* or *Completeions*.  Unlike
-standard behavior, their buffers may be shown in a popup window at the bottom of
-the frame.  And you can close the popup window seamlessly by typing C-g or
-selecting other windows.
-
-`popwin:display-buffer' displays special buffers in a popup window and displays
-normal buffers as unsual.  Special buffers are specified in
-`popwin:special-display-config', which tells popwin how to display such buffers.
- See docstring of `popwin:special-display-config' for more information.
-
-The default width/height/position of popup window can be changed by setting
-`popwin:popup-window-width', `popwin:popup-window-height', and
-`popwin:popup-window-position'.  You can also change the behavior for a specific
-buffer.  See docstring of `popwin:special-display-config'.
-
-If you want to use some useful commands such like `popwin:popup-buffer' and
-`popwin:find-file' easily.  You may bind `popwin:keymap' to `C-z', for example,
-like:
-
-    (global-set-key (kbd \"C-z\") popwin:keymap)
-
-See also `popwin:keymap' documentation.
-
-Enjoy!")
-    (license license:gpl3+)))
+  (let ((commit "f4bf2e4cbda328359b06d89e233c951cba30363e")
+        (revision "1"))
+    (package
+      (name "emacs-popwin")
+      (version (git-version "1.0.2" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/emacsorphanage/popwin")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "0hjj3qxampmgqak8y99ci200q4grvgsyhfacyzqm2qc9iw8kha3i"))))
+      (build-system emacs-build-system)
+      (home-page "https://github.com/emacsorphanage/popwin")
+      (synopsis "Popup Window Manager for Emacs")
+      (description
+       "Popwin is a popup window manager for Emacs which makes you free from
+the hell of annoying buffers such like *Help*, *Completions*,
+*compilation*, and etc.")
+      (license license:gpl3+))))
 
 (define-public emacs-sayid
   (package
