@@ -1050,10 +1050,11 @@ your questions, right within the editor.")
       (license license:gpl3+))))
 
 (define-public emacs-codegpt
-  (let ((commit "d5de204b6438eafeaa667d3007699f84ac87f5f9"))
+  (let ((commit "be35070c133e89fbaa7bccb5a276cb074bf6dc68")
+        (revision "3"))
     (package
       (name "emacs-codegpt")
-      (version (git-version "0.1.0" "0" commit))
+      (version (git-version "0.1.0" revision commit))
       (source
        (origin
          (method git-fetch)
@@ -1062,7 +1063,7 @@ your questions, right within the editor.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "0k10g64qcnz0w808plg81dydbc2bcfnvd4vzcwjv6djh0w93crbi"))))
+          (base32 "1xwkms00nh8c3lzy04ag4lyjcr3jiq58qjwsjbxlw8gn7qg04b8h"))))
       (build-system emacs-build-system)
       (propagated-inputs (list emacs-chatgpt
                                emacs-markdown-mode
