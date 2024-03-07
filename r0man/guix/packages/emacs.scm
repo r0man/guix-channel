@@ -935,24 +935,27 @@ local LLM or is paying for API access.")
     (license license:gpl3+)))
 
 (define-public emacs-lsp-docker
-  (package
-    (name "emacs-lsp-docker")
-    (version "20211203.1659")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/emacs-lsp/lsp-docker.git")
-             (commit "c2da2a65cb11e92d23c480dcc12387aa53997181")))
-       (sha256
-        (base32 "067bc37v14mvrmayah95qkcmi8gh3fdhdh8493wabm47kgszsfh4"))))
-    (build-system emacs-build-system)
-    (propagated-inputs
-     (list emacs-dash emacs-lsp-mode emacs-f emacs-yaml emacs-ht))
-    (home-page "https://github.com/emacs-lsp/lsp-docker")
-    (synopsis "LSP Docker integration")
-    (description "Run language servers in containers")
-    (license #f)))
+  (let ((commit "f5eb3f47a083d8d1eec397264fbb47cebda20532")
+        (revision "1"))
+    (package
+      (name "emacs-lsp-docker")
+      (version (git-version "0.0.1" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/emacs-lsp/lsp-docker.git")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "033a5zzwmnfsd6nqzg485hpv9njiypgp46zs18yk3p15m8i60avi"))))
+      (build-system emacs-build-system)
+      (propagated-inputs
+       (list emacs-dash emacs-lsp-mode emacs-f emacs-yaml emacs-ht))
+      (home-page "https://github.com/emacs-lsp/lsp-docker")
+      (synopsis "LSP Docker integration")
+      (description "Run language servers in containers")
+      (license #f))))
 
 (define-public emacs-markdown-preview-eww
   (package
