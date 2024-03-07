@@ -806,43 +806,46 @@ over TCP.  The process must output one JSON message per line.")
       (license license:gpl3+))))
 
 (define-public emacs-kubel
-  (package
-    (name "emacs-kubel")
-    (version "20220104.2320")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/abrochard/kubel.git")
-             (commit "68d2925c7942039e3fb3eb6c113adec5369c6c72")))
-       (sha256
-        (base32 "173ympabfa14rc6y4f3rjxapj7py0dsnzp8zg7q2gkyxv1iwhh55"))))
-    (build-system emacs-build-system)
-    (propagated-inputs (list emacs-transient emacs-dash emacs-s emacs-yaml-mode))
-    (arguments
-     '(#:include
-       '("^[^/]+.el$"
-         "^[^/]+.el.in$"
-         "^dir$"
-         "^[^/]+.info$"
-         "^[^/]+.texi$"
-         "^[^/]+.texinfo$"
-         "^doc/dir$"
-         "^doc/[^/]+.info$"
-         "^doc/[^/]+.texi$"
-         "^doc/[^/]+.texinfo$")
-       #:exclude
-       '("^.dir-locals.el$"
-         "^test.el$"
-         "^tests.el$"
-         "^[^/]+-test.el$"
-         "^[^/]+-tests.el$"
-         "^kubel-evil.el$")))
-    (home-page "https://github.com/abrochard/kubel")
-    (synopsis "Control Kubernetes with limited permissions")
-    (description
-     "Emacs extension for controlling Kubernetes with limited permissions.")
-    (license #f)))
+  (let ((commit "b7f852a5bd1f49bcf590ace59f7bfb7c54a96cfa")
+        (revision "1"))
+    (package
+      (name "emacs-kubel")
+      (version (git-version "3.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/abrochard/kubel.git")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1mkvbxhgmlwc4w0wmqpzrc0m4gpjqwn9xffibvgkj01grflp1dwd"))))
+      (build-system emacs-build-system)
+      (propagated-inputs (list emacs-transient emacs-dash emacs-s emacs-yaml-mode))
+      (arguments
+       '(#:include
+         '("^[^/]+.el$"
+           "^[^/]+.el.in$"
+           "^dir$"
+           "^[^/]+.info$"
+           "^[^/]+.texi$"
+           "^[^/]+.texinfo$"
+           "^doc/dir$"
+           "^doc/[^/]+.info$"
+           "^doc/[^/]+.texi$"
+           "^doc/[^/]+.texinfo$")
+         #:exclude
+         '("^.dir-locals.el$"
+           "^test.el$"
+           "^tests.el$"
+           "^[^/]+-test.el$"
+           "^[^/]+-tests.el$"
+           "^kubel-evil.el$")))
+      (home-page "https://github.com/abrochard/kubel")
+      (synopsis "Control Kubernetes with limited permissions")
+      (description
+       "Emacs extension for controlling Kubernetes with limited permissions.")
+      (license #f))))
 
 (define-public emacs-language-detection
   (package
