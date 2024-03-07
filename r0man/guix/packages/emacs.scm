@@ -97,15 +97,16 @@ development cycle.")
 (define-public emacs-clojure-mode-extra-font-locking
   (package
     (name "emacs-clojure-mode-extra-font-locking")
-    (version "20211230.817")
+    (version "5.18.1")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
              (url "https://github.com/clojure-emacs/clojure-mode.git")
-             (commit "e31186843d06ea86f3771244d1cde0112f9e2079")))
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "0dlbwz0vkn2sf394r86s7vbc78jkq7wd3ldziqkwf57ci2068nyi"))))
+        (base32 "1d5kkq2i8d04k2qfrb31zyjpij92ckbccnzvz01mls3xrvpr57m5"))))
     (build-system emacs-build-system)
     (propagated-inputs (list emacs-clojure-mode))
     (arguments
@@ -119,7 +120,7 @@ removed due to its unreliable nature (the implementation is quite primitive and
 font-locks symbols without any regard for what they resolve to).  CIDER provides
 much more reliable font-locking, that's based on the runtime state of your
 Clojure application.")
-    (license #f)))
+    (license license:gpl3+)))
 
 (define-public emacs-color-theme
   (package
