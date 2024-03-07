@@ -244,22 +244,27 @@ with consult, such as vertico.")
       (license license:gpl3+))))
 
 (define-public emacs-eldoc-box
-  (package
-    (name "emacs-eldoc-box")
-    (version "20230228.237")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/casouri/eldoc-box.git")
-                    (commit "16fbf1f17f09a8308d5e5df3a3a97277baa5736a")))
-              (sha256
-               (base32
-                "100dlzzwaf09i3vp0dj8maf1is0pnp3r21iix41ymxrfcafx6hi1"))))
-    (build-system emacs-build-system)
-    (home-page "https://github.com/casouri/eldoc-box")
-    (synopsis "Display ElDoc documentation in childframe")
-    (description "This package displays ElDoc documentations in a childframe.")
-    (license license:gpl3+)))
+  (let ((commit "c36f31074b09930e8425963f39d5508da6d2c32d")
+        (revision "1"))
+    (package
+      (name "emacs-eldoc-box")
+      (version (git-version "20230606.1519" revision commit))
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                      (url "https://github.com/casouri/eldoc-box.git")
+                      (commit commit)))
+                (file-name (git-file-name name version))
+                (sha256
+                 (base32
+                  "0vglh3sp9x6z537jngh5jh9j3szbfadryzlwhmrlq7asiinnjq01"))))
+      (build-system emacs-build-system)
+      (home-page "https://github.com/casouri/eldoc-box")
+      (synopsis "Display ElDoc documentation in a childframe")
+      (description "This package displays ElDoc documentations in a childframe.  The
+childframe is selectable and scrollable with mouse, even though the
+cursor is hidden.")
+      (license license:gpl3+))))
 
 (define-public emacs-ellama
   (package
