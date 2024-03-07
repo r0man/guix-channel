@@ -1022,10 +1022,11 @@ from applications written in the Elisp language.")
       (license license:gpl3+))))
 
 (define-public emacs-chatgpt
-  (let ((commit "73a1d192b2eae9fb65e0688d7c99e91bc4101d38"))
+  (let ((commit "882fc956b5ecf63e8b1b5fd2cc29b37eb4c608e9")
+        (revision "2"))
     (package
       (name "emacs-chatgpt")
-      (version (git-version "0.1.0" "0" commit))
+      (version (git-version "0.1.0" revision commit))
       (source
        (origin
          (method git-fetch)
@@ -1034,7 +1035,7 @@ from applications written in the Elisp language.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "1hvjqcngywjw109rma0mb7a79wbczr8hhfpz94krfwrs5vck9pxa"))))
+          (base32 "0falksb1ljv0m6imzzflws60akg34rf3v7z4r3l7v5y5hixhdmfa"))))
       (build-system emacs-build-system)
       (propagated-inputs (list emacs-ht
                                emacs-hydra
