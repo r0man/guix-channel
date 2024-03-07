@@ -1155,30 +1155,28 @@ generate generate digital images from natural language descriptions.")
       (license license:gpl3+))))
 
 (define-public emacs-ox-jira
-  (package
-    (name "emacs-ox-jira")
-    (version "20220121.1015")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/stig/ox-jira.el.git")
-             (commit "a8019237a8f5e016a7c952fc2f673a2498a0e779")))
-       (sha256
-        (base32 "0pa7pwk0yjcgak3f9w9jggj3ghlig1azf15ng954r646810j9i4v"))))
-    (build-system emacs-build-system)
-    (propagated-inputs (list emacs-org))
-    (home-page "https://github.com/stig/ox-jira.el")
-    (synopsis "JIRA Backend for Org Export Engine")
-    (description
-     "This module plugs into the regular Org Export Engine and transforms Org files to
-JIRA markup for pasting into JIRA tickets & comments.
-
-In an Org buffer, hit `C-c C-e j j' to bring up *Org Export Dispatcher* and
-export it as a JIRA buffer.  I usually use `C-x h' to mark the whole buffer,
-then `M-w' to save it to the kill ring (and global pasteboard) for pasting into
-JIRA issues.")
-    (license #f)))
+  (let ((commit "00184f8fdef02a3a359a253712e8769cbfbea3ba")
+        (revision "1"))
+    (package
+      (name "emacs-ox-jira")
+      (version (git-version "0.0.1" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/stig/ox-jira.el")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1zyq4d0fvyawvb3w6072zl4zgbnrpzmxlz2l731wqrgnwm0l80gy"))))
+      (build-system emacs-build-system)
+      (propagated-inputs (list emacs-org))
+      (home-page "https://github.com/stig/ox-jira.el")
+      (synopsis "Org-mode export backend for JIRA markup")
+      (description
+       "This module plugs into the regular Org Export Engine and transforms
+Org files to JIRA markup for pasting into JIRA tickets & comments.")
+      (license license:gpl3+))))
 
 (define-public emacs-request-deferred
   (package
