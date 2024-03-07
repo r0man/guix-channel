@@ -200,14 +200,14 @@ themes.
 (define-public emacs-consult-recoll
   (package
     (name "emacs-consult-recoll")
-    (version "0.8")
+    (version "0.8.1")
     (source (origin
               (method url-fetch)
               (uri (string-append
                     "https://elpa.gnu.org/packages/consult-recoll-" version
                     ".tar"))
               (sha256 (base32
-                       "02vg1rr2fkcqrrivqgggdjdq0ywvlyzazwq1xd02yah3j4sbv4ag"))))
+                       "0z2vlnv0q6hzvj6hk2a5flhp1gmm71c65j8nrpk4a18aq5gir213"))))
     (build-system emacs-build-system)
     (propagated-inputs (list emacs-consult))
     (home-page "https://codeberg.org/jao/consult-recoll")
