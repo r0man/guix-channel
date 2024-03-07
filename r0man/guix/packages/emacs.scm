@@ -557,24 +557,27 @@ you can force them to use the \"master\" branch.")
     (license #f)))
 
 (define-public emacs-guess-language
-  (package
-    (name "emacs-guess-language")
-    (version "20210623.1505")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/tmalsburg/guess-language.el.git")
-             (commit "e6b78ed2a36bf5debd3d07ffd99a5a8ca60609d6")))
-       (sha256
-        (base32 "0g0vdz42s6hns249lfxcha7l7ihqpyay3n5iijziwrbrrhqi6rx6"))))
-    (build-system emacs-build-system)
-    (arguments
-     '(#:include '("^guess-language.el$" "^trigrams/[^/]+$") #:exclude '()))
-    (home-page "https://github.com/tmalsburg/guess-language.el")
-    (synopsis "Robust automatic language detection")
-    (description
-     "Guess-language is a buffer-local minor mode.  It guesses the language of the
+  (let ((commit "bccca49bbb27a3dff02c660d7cda8cdf83333d6e")
+        (revision "1"))
+    (package
+      (name "emacs-guess-language")
+      (version (git-version "0.0.1" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/tmalsburg/guess-language.el.git")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "0hq3nsjwvjxjrpqv57q8krw59gdd14qmkpm4pii49ca8iyx65v54"))))
+      (build-system emacs-build-system)
+      (arguments
+       '(#:include '("^guess-language.el$" "^trigrams/[^/]+$") #:exclude '()))
+      (home-page "https://github.com/tmalsburg/guess-language.el")
+      (synopsis "Robust automatic language detection")
+      (description
+       "Guess-language is a buffer-local minor mode.  It guesses the language of the
 current paragraph when flyspell detects an incorrect word and changes Ispell's
 dictionary and typo-mode (if present) accordingly.  If the language settings
 change, flyspell is rerun but only on the current paragraph.  Guess-language
@@ -592,7 +595,7 @@ Finnish, French, German, Italian, Norwegian, Polish, Portuguese, Russian,
 Serbian, Slovak, Slovenian, Spanish, Swedish and Vietnamese.  Adding further
 languages is very easy and this package already contains language statistics for
 49 additional languages.")
-    (license #f)))
+      (license license:gpl3+))))
 
 (define-public emacs-grip-mode
   (package
