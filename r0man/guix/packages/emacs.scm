@@ -845,7 +845,7 @@ over TCP.  The process must output one JSON message per line.")
       (synopsis "Control Kubernetes with limited permissions")
       (description
        "Emacs extension for controlling Kubernetes with limited permissions.")
-      (license #f))))
+      (license license:gpl3+))))
 
 (define-public emacs-language-detection
   (package
@@ -911,15 +911,16 @@ local LLM or is paying for API access.")
 (define-public emacs-lsp-dart
   (package
     (name "emacs-lsp-dart")
-    (version "20220129.1427")
+    (version "1.24.3")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
              (url "https://github.com/emacs-lsp/lsp-dart.git")
-             (commit "5cef1b6a34327bf236c8b7b23c44bdd968b4585b")))
+             (commit version)))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "0kvjkpv0yvahmlkqyzl9ayl3mmmr4gcmi3p5pp8092ah0xgys86p"))))
+        (base32 "0spc9wmqllb4kcn4cvyj2f7k6lzaz2gd86msf49raqddf023665f"))))
     (build-system emacs-build-system)
     (propagated-inputs
      (list emacs-lsp-treemacs
@@ -931,7 +932,7 @@ local LLM or is paying for API access.")
     (home-page "https://emacs-lsp.github.io/lsp-dart")
     (synopsis "Dart support lsp-mode")
     (description "Dart analysis server client for LSP mode")
-    (license #f)))
+    (license license:gpl3+)))
 
 (define-public emacs-lsp-docker
   (package
