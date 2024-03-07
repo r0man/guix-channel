@@ -1593,49 +1593,46 @@ modern-blue) - wsd-indent-offset (default 4) - wsd-font-lock-keywords")
     (license license:gpl3+)))
 
 (define-public emacs-x509-mode
-  (package
-    (name "emacs-x509-mode")
-    (version "20210407.627")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/jobbflykt/x509-mode.git")
-             (commit "470769edba111aed8eabce58a3f2a02da0767624")))
-       (sha256
-        (base32 "19xvfzmsnc271a2zhjbnspb269c5mnps4l94ifrdlqn7y886qr4r"))))
-    (build-system emacs-build-system)
-    (arguments
-     '(#:include
-       '("^[^/]+.el$"
-         "^[^/]+.el.in$"
-         "^dir$"
-         "^[^/]+.info$"
-         "^[^/]+.texi$"
-         "^[^/]+.texinfo$"
-         "^doc/dir$"
-         "^doc/[^/]+.info$"
-         "^doc/[^/]+.texi$"
-         "^doc/[^/]+.texinfo$"
-         "^[^/]+.txt$")
-       #:exclude
-       '("^.dir-locals.el$"
-         "^test.el$"
-         "^tests.el$"
-         "^[^/]+-test.el$"
-         "^[^/]+-tests.el$")))
-    (home-page "https://github.com/jobbflykt/x509-mode")
-    (synopsis "View certificates, CRLs and keys using OpenSSL.")
-    (description
-     "Major for viewing certificates, CRLs, keys and DH-parameters.
-
-Uses OpenSSL for viewing PEM and DER encoded PKI entities.
-
-Usage: Open a file containing a certificate, either PEM or DER encode.  Now use
-M-x `x509-viewcert' to create a new buffer that displays the decoded
-certificate.  Use M-x `x509-viewcrl', M-X `x509-viewasn1', M-x `x509-viewkey'
-and M-x `x509-viewdh' in a similar manner.")
-    (license license:gpl3+)))
+  (let ((commit "b19260d9863f1f7e310154fef71b1f3bd0871241")
+        (revision "1"))
+    (package
+      (name "emacs-x509-mode")
+      (version (git-version "0.0.1" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/jobbflykt/x509-mode")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1angyjpr28zjsw5blsjrqn7vfvlz02pkqxx9ckrjjq14mx2yi125"))))
+      (build-system emacs-build-system)
+      (arguments
+       '(#:include
+         '("^[^/]+.el$"
+           "^[^/]+.el.in$"
+           "^dir$"
+           "^[^/]+.info$"
+           "^[^/]+.texi$"
+           "^[^/]+.texinfo$"
+           "^doc/dir$"
+           "^doc/[^/]+.info$"
+           "^doc/[^/]+.texi$"
+           "^doc/[^/]+.texinfo$"
+           "^[^/]+.txt$")
+         #:exclude
+         '("^.dir-locals.el$"
+           "^test.el$"
+           "^tests.el$"
+           "^[^/]+-test.el$"
+           "^[^/]+-tests.el$")))
+      (propagated-inputs (list emacs-compat))
+      (home-page "https://github.com/jobbflykt/x509-mode")
+      (synopsis "View certificates, CRLs and keys using OpenSSL.")
+      (description "Major mode for viewing certificates, CRLs, keys, DH-parameters and
+ASN.1 using OpenSSL.")
+      (license license:gpl3+))))
 
 (define-public emacs-ox-tufte
   (package
