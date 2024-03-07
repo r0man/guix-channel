@@ -976,25 +976,27 @@ local LLM or is paying for API access.")
     (license #f)))
 
 (define-public emacs-tblui
-  (package
-    (name "emacs-tblui")
-    (version "0.1.0")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/Yuki-Inoue/tblui.el")
-                    (commit "bb29323bb3e27093d50cb42db3a9329a096b6e4d")))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "1pja9v4h3abqc2iydm7wwjxrg7ni1pn94yb4azrgjq5qc0fsgn7a"))))
-    (build-system emacs-build-system)
-    (propagated-inputs (list emacs-dash emacs-magit-popup emacs-tablist))
-    (home-page "https://github.com/Yuki-Inoue/tblui.el")
-    (synopsis "Define tabulated list mode based UIs more easily")
-    (description "This package can be used to define user interfaces that are similar to
+  (let ((commit "62ab5f62982c061a902fd3e54d94a68a4706572c")
+        (revision "1"))
+    (package
+      (name "emacs-tblui")
+      (version (git-version "0.0.1" revision commit))
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                      (url "https://github.com/Yuki-Inoue/tblui.el")
+                      (commit commit)))
+                (file-name (git-file-name name version))
+                (sha256
+                 (base32
+                  "1fq0dsvh9a8h7n4d4cj7sn73nzbg5chqjby9pzpbs5grx4kf0zi6"))))
+      (build-system emacs-build-system)
+      (propagated-inputs (list emacs-dash emacs-magit-popup emacs-tablist))
+      (home-page "https://github.com/Yuki-Inoue/tblui.el")
+      (synopsis "Define tabulated list mode based UIs more easily")
+      (description "This package can be used to define user interfaces that are similar to
 Emacs built-in tabulated list mode, but with less boilerplate.")
-    (license license:gpl3+)))
+      (license license:gpl3+))))
 
 (define-public emacs-openai
   (let ((commit "6a1d270fcdf89226f22122df930afe17f85d3209"))
