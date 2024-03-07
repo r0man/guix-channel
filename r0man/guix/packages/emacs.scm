@@ -471,23 +471,26 @@ see https://github.com/borkdude/clj-kondo.")
       (license license:gpl3+))))
 
 (define-public emacs-flycheck-elsa
-  (package
-    (name "emacs-flycheck-elsa")
-    (version "20200203.1758")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/emacs-elsa/flycheck-elsa.git")
-             (commit "6274e6d5391bcdca46164b3238b045ca21c353a2")))
-       (sha256
-        (base32 "0dr52dqxsgswswbkdbv0dax57k41j58n5wf3gny6yz52626kv8n8"))))
-    (build-system emacs-build-system)
-    (propagated-inputs (list emacs-flycheck))
-    (home-page "https://github.com/emacs-elsa/flycheck-elsa")
-    (synopsis "Flycheck for Elsa.")
-    (description "Flycheck integration for Elsa.  See README.md")
-    (license #f)))
+  (let ((commit "d60db9544d0c4213f2478bcea0fd0e668e31cf34")
+        (revision "1"))
+    (package
+      (name "emacs-flycheck-elsa")
+      (version (git-version "0.0.1" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/emacs-elsa/flycheck-elsa.git")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1ig9dc7ch3cdxp4p24v21h7hrdph9y5jy9421bfww6agymbj8i85"))))
+      (build-system emacs-build-system)
+      (propagated-inputs (list emacs-flycheck))
+      (home-page "https://github.com/emacs-elsa/flycheck-elsa")
+      (synopsis "Flycheck for Elsa.")
+      (description "Flycheck integration for Elsa.  See README.md")
+      (license license:gpl3+))))
 
 (define-public emacs-flymd
   (package
