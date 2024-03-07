@@ -598,30 +598,25 @@ languages is very easy and this package already contains language statistics for
       (license license:gpl3+))))
 
 (define-public emacs-grip-mode
-  (package
-    (name "emacs-grip-mode")
-    (version "20220228.1516")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/seagle0128/grip-mode.git")
-             (commit "c0b45c3a0bf2f6ea51b166020aaf27050f4d3c66")))
-       (sha256
-        (base32 "1zcrzy47lxk5p6qk0d9x2gpy2pza8kjwcp7aqnad7gl6jr257cac"))))
-    (build-system emacs-build-system)
-    (home-page "https://github.com/seagle0128/grip-mode")
-    (synopsis "Instant GitHub-flavored Markdown/Org preview using grip.")
-    (description
-     "Instant GitHub-flavored Markdown/Org preview using a grip subprocess.
-
-Install: From melpa, `M-x package-install RET grip-mode RET`.  ;; Make a
-keybinding: `C-c C-c g' (define-key markdown-mode-command-map (kbd \"g\")
-#'grip-mode) ;; or start grip when opening a markdown file (add-hook
-'markdown-mode-hook #'grip-mode) or (use-package grip-mode   :ensure t   :bind
-(:map markdown-mode-command-map          (\"g\" .  grip-mode))) Run `M-x
-grip-mode` to preview the markdown file with the default browser.")
-    (license #f)))
+  (let ((commit "e145adb22593a88249d964f77174207bcf755493")
+        (revision "1"))
+    (package
+      (name "emacs-grip-mode")
+      (version (git-version "2.3.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/seagle0128/grip-mode")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1jn15mid6qgqd9cam0afydka0k99ml9dwbr2g24zwfp0hzyblqkf"))))
+      (build-system emacs-build-system)
+      (home-page "https://github.com/seagle0128/grip-mode")
+      (synopsis "Instant GitHub-flavored Markdown/Org preview using grip.")
+      (description "Instant GitHub-flavored Markdown/Org preview using a grip subprocess.")
+      (license license:gpl3+))))
 
 (define-public emacs-jiralib2
   (package
