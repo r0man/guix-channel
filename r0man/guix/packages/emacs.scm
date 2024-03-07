@@ -1379,12 +1379,14 @@ the hell of annoying buffers such like *Help*, *Completions*,
     (name "emacs-sayid")
     (version "0.1.0")
     (source (origin
-              (method url-fetch)
-              (uri (string-append "https://github.com/clojure-emacs/sayid/archive"
-                                  "/refs/tags/v" version ".tar.gz"))
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/clojure-emacs/sayid")
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
               (sha256
                (base32
-                "1bscg0s5rv62p8a8pmniyqadrbvrq3lj1kza5lbp00ds3w55y0w1"))))
+                "0vdz3dxwi02an5k956apq3ah0dpzly9zd44fhmrqlcjimxc69m7p"))))
     (build-system emacs-build-system)
     (arguments
      (list
