@@ -442,30 +442,33 @@ binary for communicating with a SQLite database.")
     (license #f)))
 
 (define-public emacs-flycheck-clj-kondo
-  (package
-    (name "emacs-flycheck-clj-kondo")
-    (version "20211227.2226")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/borkdude/flycheck-clj-kondo.git")
-             (commit "d8a6ee9a16aa24b5be01f1edf9843d41bdc75555")))
-       (sha256
-        (base32 "010gzxwvr2p2wv358r76ajkn48ilgmkmv7z6bckqbap0cjhrqq43"))))
-    (build-system emacs-build-system)
-    (propagated-inputs (list emacs-flycheck))
-    (home-page "https://github.com/borkdude/flycheck-clj-kondo")
-    (synopsis "Add clj-kondo linter to flycheck")
-    (description
-     "This package integrates clj-kondo with Emacs via flycheck.  To use it, add to
+  (let ((commit "e38c67ba9db1ea1cbe1b61ab39b506c05efdcdbf")
+        (revision "1"))
+    (package
+      (name "emacs-flycheck-clj-kondo")
+      (version (git-version "0.0.3" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/borkdude/flycheck-clj-kondo.git")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1pxlb8axgmc8cw4id40z576kd041qb1irq8rkjn6xbda585ix58f"))))
+      (build-system emacs-build-system)
+      (propagated-inputs (list emacs-flycheck))
+      (home-page "https://github.com/borkdude/flycheck-clj-kondo")
+      (synopsis "Add clj-kondo linter to flycheck")
+      (description
+       "This package integrates clj-kondo with Emacs via flycheck.  To use it, add to
 your init.el:
 
 (require 'flycheck-clj-kondo)
 
 Make sure the clj-kondo binary is on your path.  For installation instructions,
 see https://github.com/borkdude/clj-kondo.")
-    (license #f)))
+      (license license:gpl3+))))
 
 (define-public emacs-flycheck-elsa
   (package
