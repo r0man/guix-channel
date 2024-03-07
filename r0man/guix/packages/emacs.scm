@@ -1126,29 +1126,33 @@ generate generate digital images from natural language descriptions.")
       (license #f))))
 
 (define-public emacs-org-gcal
-  (package
-    (name "emacs-org-gcal")
-    (version "20220119.2142")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/kidd/org-gcal.el.git")
-             (commit "6e26ae75aea521ea5dae67e34265da534bdad2d1")))
-       (sha256
-        (base32 "1814w5bgf9zwvsga4926i002q2xg2qgyrmb2jlkc7gzv0j86ccv9"))))
-    (build-system emacs-build-system)
-    (propagated-inputs
-     (list emacs-request
-           emacs-request-deferred
-           emacs-alert
-           emacs-persist
-           emacs-org))
-    (home-page "https://github.com/kidd/org-gcal.el")
-    (synopsis "Org sync with Google Calendar")
-    (description
-     " Put the org-gcal.el to your load-path.  Add to .emacs: (require 'org-gcal)")
-    (license #f)))
+  (let ((commit "c954d3b1a8f7a23ec5c4410e56dfa7b08a45f769")
+        (revision "1"))
+    (package
+      (name "emacs-org-gcal")
+      (version (git-version "0.4.2" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/kidd/org-gcal.el")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1ji4xgnbnn85xaw4wpg3r37nh7ncihl36xl87ag7l3vhbw1bwzcm"))))
+      (build-system emacs-build-system)
+      (propagated-inputs
+       (list emacs-aio
+             emacs-dash
+             emacs-request
+             emacs-request-deferred
+             emacs-alert
+             emacs-persist
+             emacs-org))
+      (home-page "https://github.com/kidd/org-gcal.el")
+      (synopsis "Org sync with Google Calendar")
+      (description "Org sync with Google Calendar")
+      (license license:gpl3+))))
 
 (define-public emacs-ox-jira
   (package
