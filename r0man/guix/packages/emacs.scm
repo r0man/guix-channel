@@ -1694,22 +1694,25 @@ completion familiar to Emacs users.")
       (license license:gpl3+))))
 
 (define-public emacs-eglot-java
-  (package
-    (name "emacs-eglot-java")
-    (version "20231228.2257")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/yveszoundi/eglot-java.git")
-                    (commit "1abf8d547aaedce7307f3bd86145af0f2054bc9a")))
-              (sha256 (base32
-                       "0mnd0wy1kdnfniw1dkw1i7c623kmh4p0jj2pdf3q6xn51677209x"))))
-    (build-system emacs-build-system)
-    (propagated-inputs (list emacs-eglot emacs-jsonrpc))
-    (home-page "https://github.com/yveszoundi/eglot-java")
-    (synopsis "Eglot Java package for Emacs")
-    (description "Java extension for the Eglot LSP client")
-    (license license:gpl3+)))
+  (let ((commit "4cb3bdfaa954ad02e6eaac77c578987355db90cf")
+        (revision "1"))
+    (package
+      (name "emacs-eglot-java")
+      (version "20231228.2257")
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                      (url "https://github.com/yveszoundi/eglot-java")
+                      (commit commit)))
+                (file-name (git-file-name name version))
+                (sha256 (base32
+                         "0wsyd2yiz1air2aiwqvprz89qgm05ak8zksh1jg4m5w5gbg9rlrj"))))
+      (build-system emacs-build-system)
+      (propagated-inputs (list emacs-eglot emacs-jsonrpc))
+      (home-page "https://github.com/yveszoundi/eglot-java")
+      (synopsis "Eglot Java package for Emacs")
+      (description "Java extension for the Eglot LSP client")
+      (license license:gpl3+))))
 
 (define-public emacs-whisper
   (package
