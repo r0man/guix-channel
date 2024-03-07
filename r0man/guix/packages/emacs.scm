@@ -69,15 +69,15 @@ ALGOL 60 report.")
 (define-public emacs-cask
   (package
     (name "emacs-cask")
-    (version "20211103.1654")
+    (version "0.9.0")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
              (url "https://github.com/cask/cask.git")
-             (commit "751435bd56c7123d8244d9d156309e21e63cd5c0")))
+             (commit (string-append "v" version))))
        (sha256
-        (base32 "0jxwsaam7hqvqbxrkzd7hy09l87yjsg7z89jikzs6vzc72h02g8x"))))
+        (base32 "1013cp97074ghjm3z7ah1xpgjwcr95pfibwg4lzvjj3nr8bcjnpp"))))
     (build-system emacs-build-system)
     (propagated-inputs
      (list emacs-s
@@ -92,7 +92,7 @@ ALGOL 60 report.")
     (description
      "Cask is a project management tool for Emacs that helps automate the package
 development cycle.")
-    (license #f)))
+    (license license:gpl3+)))
 
 (define-public emacs-clojure-mode-extra-font-locking
   (package
