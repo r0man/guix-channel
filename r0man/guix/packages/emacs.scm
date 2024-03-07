@@ -1077,19 +1077,20 @@ your questions, right within the editor.")
       (license license:gpl3+))))
 
 (define-public emacs-dall-e
-  (let ((commit "f8f93843a333fac63a0722cd4c710f0db408f28f"))
+  (let ((commit "9e2cd3baa733622e35116b4385fe5e6026b7d59b")
+        (revision "1"))
     (package
       (name "emacs-dall-e")
-      (version (git-version "0.1.0" "0" commit))
+      (version (git-version "0.1.0" revision commit))
       (source
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/emacs-openai/dall-e.git")
+               (url "https://github.com/emacs-openai/dall-e")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "0xvgzvkf5bw0mi3v7q19qq9mb6kgqm5kdr4b3dvasxyfjrqafbj0"))))
+          (base32 "018alzk3lzl23jhsmzqzxs8wg43pz85wc2yjha0cz95s3pw48qhv"))))
       (build-system emacs-build-system)
       (propagated-inputs (list emacs-async
                                emacs-ht
