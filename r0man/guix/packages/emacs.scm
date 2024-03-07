@@ -999,10 +999,11 @@ Emacs built-in tabulated list mode, but with less boilerplate.")
       (license license:gpl3+))))
 
 (define-public emacs-openai
-  (let ((commit "6a1d270fcdf89226f22122df930afe17f85d3209"))
+  (let ((commit "e12330c217bb3358736f5534e9becba1ebaef0d4")
+        (revision "2"))
     (package
       (name "emacs-openai")
-      (version (git-version "0.1.0" "1" commit))
+      (version (git-version "0.1.0" revision commit))
       (source
        (origin
          (method git-fetch)
@@ -1011,7 +1012,7 @@ Emacs built-in tabulated list mode, but with less boilerplate.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "06slixip262lxwl1vdk225yk9lg5ildnl123drm4rdl3yzapc4xn"))))
+          (base32 "05w6pgqp62xf48z9zm3bjh5c91pwfs0rbkc9bx2dc9qp2hy5dfpv"))))
       (build-system emacs-build-system)
       (propagated-inputs (list emacs-dash emacs-request emacs-tblui))
       (home-page "https://github.com/emacs-openai/openai")
