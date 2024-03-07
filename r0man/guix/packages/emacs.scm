@@ -1480,12 +1480,11 @@ the \"sql-indent.org\" file.  The package also defines align rules so that the
       (license license:gpl3+))))
 
 (define-public emacs-sqlite3-api
-  (let ((version "0.0.1")
-        (revision "0")
-        (commit "88dfeae8f9612cb3564a7393aa8a5c867aacbaf8"))
+  (let ((commit "a601c9965e4d0178705a64b7d4f88709ca9aea66")
+        (revision "0"))
     (package
       (name "emacs-sqlite3-api")
-      (version (git-version version revision commit))
+      (version (git-version "0.18" revision commit))
       (source (origin
                 (method git-fetch)
                 (uri (git-reference
@@ -1494,7 +1493,7 @@ the \"sql-indent.org\" file.  The package also defines align rules so that the
                 (file-name (git-file-name name version))
                 (sha256
                  (base32
-                  "0sj1fsgcgfzz6dfpmp8r5gmdwpbdzpk5g5lm8j7c3nqj6wqgg7g6"))))
+                  "1d1r65ybcf5idbs8sv0l3dna4l1wy3jba9dvv1kkz7zj6qhr48fs"))))
       (build-system emacs-build-system)
       (arguments
        `(#:modules ((guix build emacs-build-system)
