@@ -23,6 +23,7 @@
        (uri (git-reference
              (url "https://github.com/mrkkrp/avy-menu.git")
              (commit "bb694fd3dde6507f06f76dd862b888ba9c3b544d")))
+       (file-name (git-file-name name version))
        (sha256
         (base32 "12ywbhba9sf4a4r49w2y63asgfi616krybzllc7h7b5ww62x7c42"))))
     (build-system emacs-build-system)
@@ -39,26 +40,28 @@ It can also be used directly.")
     (license #f)))
 
 (define-public emacs-bnf-mode
-  (package
-    (name "emacs-bnf-mode")
-    (version "20200323.1348")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/sergeyklay/bnf-mode.git")
-                    (commit "d9329dd90e5d4f629295e85898362d9682047898")))
-              (sha256
-               (base32
-                "11ka3qb3wz6bs9b9bc6kwyxcxzrsmq9s8292lyzd0kknd162qx2z"))))
-    (build-system emacs-build-system)
-    (home-page "https://github.com/sergeyklay/bnf-mode")
-    (synopsis "Major mode for editing BNF grammars.")
-    (description
-     "BNF Mode is a GNU Emacs major mode for editing BNF grammars.
+  (let ((commit "1a7e177c282b8e07a2c33bd89232464b347dfc17"))
+    (package
+      (name "emacs-bnf-mode")
+      (version (git-version "20221205.1451" "0" commit))
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                      (url "https://github.com/sergeyklay/bnf-mode.git")
+                      (commit commit)))
+                (file-name (git-file-name name version))
+                (sha256
+                 (base32
+                  "1r23hrl258v7r0y785p2jrjz0y0bpd4lpl9ji91pqzrm6amvbkn4"))))
+      (build-system emacs-build-system)
+      (home-page "https://github.com/sergeyklay/bnf-mode")
+      (synopsis "Major mode for editing BNF grammars.")
+      (description
+       "BNF Mode is a GNU Emacs major mode for editing BNF grammars.
 Presently itprovides basic syntax and font-locking for BNF files.  BNF
 notation is supportedexactly form as it was first announced in the
 ALGOL 60 report.")
-    (license #f)))
+      (license #f))))
 
 (define-public emacs-cask
   (package
