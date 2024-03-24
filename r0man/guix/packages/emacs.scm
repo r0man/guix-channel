@@ -4,13 +4,14 @@
   #:use-module (gnu packages databases)
   #:use-module (gnu packages emacs)
   #:use-module (gnu packages emacs-xyz)
+  #:use-module (gnu packages pv)
   #:use-module (gnu packages sqlite)
   #:use-module (gnu packages)
   #:use-module (guix build-system emacs)
-  #:use-module (guix gexp)
-  #:use-module (guix utils)
   #:use-module (guix download)
+  #:use-module (guix gexp)
   #:use-module (guix git-download)
+  #:use-module (guix utils)
   #:use-module (guix packages))
 
 (define-public emacs-29.2
@@ -1496,6 +1497,36 @@ See the README.md for more details.")
       (synopsis "A major mode for Splunk")
       (description "This package provides a major mode for Splunk")
       (license license:gpl3+))))
+
+(define-public emacs-plz-media-type
+  (package
+    (name "emacs-plz-media-type")
+    (version "0.0.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/r0man/plz-media-type")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "07d947cshsc20y2bq5da9i1rysq066lpc8jxp98k17yili01xjjh"))))
+    (build-system emacs-build-system)
+    (native-inputs (list pv))
+    (propagated-inputs (list emacs-plz))
+    (arguments
+     (list #:tests? #f))
+    (home-page "https://github.com/r0man/plz-media-type")
+    (synopsis "Media type support for plz.el")
+    (description "The plz-media-type library enhances MIME type
+handling for HTTP requests within Emacs.  It leverages the plz.el HTTP
+library for networking calls and introduces a mechanism to process
+responses based on the content type header.  This library defines
+various classes and methods for parsing and processing standard MIME
+types, including JSON, XML, HTML, and binary data.  It is used in the
+LLM library to handle decoding of various streaming and non-streaming
+media type formats.")
+    (license license:gpl3+)))
 
 (define-public emacs-popwin
   (let ((commit "f4bf2e4cbda328359b06d89e233c951cba30363e")
