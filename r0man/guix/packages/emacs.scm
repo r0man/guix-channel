@@ -4,7 +4,6 @@
   #:use-module (gnu packages databases)
   #:use-module (gnu packages emacs)
   #:use-module (gnu packages emacs-xyz)
-  #:use-module (gnu packages pv)
   #:use-module (gnu packages sqlite)
   #:use-module (gnu packages)
   #:use-module (guix build-system emacs)
@@ -1512,10 +1511,8 @@ See the README.md for more details.")
        (sha256
         (base32 "07d947cshsc20y2bq5da9i1rysq066lpc8jxp98k17yili01xjjh"))))
     (build-system emacs-build-system)
-    (native-inputs (list pv))
     (propagated-inputs (list emacs-plz))
-    (arguments
-     (list #:tests? #f))
+    (arguments (list #:tests? #f))
     (home-page "https://github.com/r0man/plz-media-type")
     (synopsis "Media type support for plz.el")
     (description "The plz-media-type library enhances MIME type
@@ -1526,6 +1523,29 @@ various classes and methods for parsing and processing standard MIME
 types, including JSON, XML, HTML, and binary data.  It is used in the
 LLM library to handle decoding of various streaming and non-streaming
 media type formats.")
+    (license license:gpl3+)))
+
+(define-public emacs-plz-event-source
+  (package
+    (name "emacs-plz-event-source")
+    (version "0.0.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/r0man/plz-event-source")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0ird7j3mvxz1a5sszn4mw9vl32qp2b8xmmcs36yzr56dpm0l8qhh"))))
+    (build-system emacs-build-system)
+    (propagated-inputs (list emacs-plz-media-type))
+    (arguments (list #:tests? #f))
+    (home-page "https://github.com/r0man/plz-event-source")
+    (synopsis "Media type support for plz.el")
+    (description "The plz-event-source library provides a plz-media-type, a parser and
+an event source implementation for the Server Sent Event (SSE)
+protocol.  It is used in the LLM library to handle server sent events.")
     (license license:gpl3+)))
 
 (define-public emacs-popwin
