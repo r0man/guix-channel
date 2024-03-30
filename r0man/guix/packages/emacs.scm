@@ -1124,6 +1124,25 @@ local LLM or is paying for API access.")
     (description "This package provides the realtime markdown preview by eww.")
     (license license:gpl3+)))
 
+(define-public emacs-mermaid-mode
+  (package
+    (name "emacs-mermaid-mode")
+    (version "20240123.1729")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/abrochard/mermaid-mode.git")
+             (commit "d8bfb8c819cda9ead19c871842f6b0b8d56c56c0")))
+       (sha256
+        (base32 "0vsnyn2g8525k9vgmifzix9gd1g3149h54ni6rrc1y05h91883fv"))))
+    (build-system emacs-build-system)
+    (home-page "https://github.com/abrochard/mermaid-mode")
+    (synopsis "major mode for working with mermaid graphs")
+    (description
+     "Major mode for working with mermaid graphs.  See https://mermaid-js.github.io/")
+    (license #f)))
+
 (define-public emacs-tblui
   (let ((commit "62ab5f62982c061a902fd3e54d94a68a4706572c")
         (revision "1"))
