@@ -418,7 +418,7 @@ cursor is hidden.")
 (define-public emacs-ellama
   (package
     (name "emacs-ellama")
-    (version "0.8.13")
+    (version "0.9.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -426,7 +426,7 @@ cursor is hidden.")
                     (commit version)))
               (file-name (git-file-name name version))
               (sha256 (base32
-                       "0pwhr9xqakhhlvv7aab33lba3dpx4byh1clg6wfiyyl6xr2a48js"))))
+                       "11jj4cw2idmys8vysskr6y8l02yh9vfclpvzr6wnkqz7m8r68skd"))))
     (build-system emacs-build-system)
     (propagated-inputs (list emacs-dash emacs-llm emacs-spinner))
     (home-page "https://github.com/s-kostyaev/ellama")
