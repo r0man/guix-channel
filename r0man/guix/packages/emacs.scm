@@ -197,6 +197,34 @@ much more reliable font-locking, that's based on the runtime state of your
 Clojure application.")
     (license license:gpl3+)))
 
+(define-public emacs-clojure-ts-mode
+  (package
+    (name "emacs-clojure-ts-mode")
+    (version "20240314.552")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/clojure-emacs/clojure-ts-mode.git")
+             (commit "8afa5656955814193b3b27020faf4edf00abda88")))
+       (sha256
+        (base32 "0jxfzcmqlmc88ib483n6y445xs7bpaqw3b1w0z3nmcdfk512d0fr"))))
+    (build-system emacs-build-system)
+    (home-page "http://github.com/clojure-emacs/clojure-ts-mode")
+    (synopsis "Major mode for Clojure code")
+    (description
+     "This package provides font-lock, indentation, and navigation for the Clojure
+programming language (http://clojure.org).  For the tree-sitter grammar this
+mode is based on, see https://github.com/sogaiu/tree-sitter-clojure.  Using
+clojure-ts-mode with paredit or smartparens is highly recommended.  Here are
+some example configurations: ;; require or autoload paredit-mode (add-hook
+clojure-ts-mode-hook #'paredit-mode) ;; require or autoload smartparens
+(add-hook clojure-ts-mode-hook #'smartparens-strict-mode) See inf-clojure
+(http://github.com/clojure-emacs/inf-clojure) for basic interaction with Clojure
+subprocesses.  See CIDER (http://github.com/clojure-emacs/cider) for better
+interaction with subprocesses via @code{nREPL}.")
+    (license license:gpl3+)))
+
 (define-public emacs-codegpt
   (let ((commit "be35070c133e89fbaa7bccb5a276cb074bf6dc68")
         (revision "3"))
