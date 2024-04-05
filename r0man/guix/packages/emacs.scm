@@ -13,53 +13,6 @@
   #:use-module (guix utils)
   #:use-module (guix packages))
 
-(define-public emacs-29.2
-  (package
-    (inherit emacs)
-    (name "emacs-29.2")
-    (version "29.2")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "mirror://gnu/emacs/emacs-"
-                                  version ".tar.xz"))
-              (sha256
-               (base32
-                "1p3h4sz8da8vhix5140g2qkdy8mz11d7mmvsym5vy847k1428gbx"))
-              (patches (search-patches "emacs-exec-path.patch"
-                                       "emacs-fix-scheme-indent-function.patch"
-                                       "emacs-native-comp-driver-options.patch"
-                                       "emacs-pgtk-super-key-fix.patch"))
-              (modules '((guix build utils)))
-              (snippet
-               '(with-directory-excursion "lisp"
-                  ;; Delete the bundled byte-compiled elisp files and generated
-                  ;; autoloads.
-                  (for-each delete-file
-                            (append (find-files "." "\\.elc$")
-                                    (find-files "." "loaddefs\\.el$")
-                                    (find-files "eshell" "^esh-groups\\.el$")))
-
-                  ;; Make sure Tramp looks for binaries in the right places on
-                  ;; remote Guix System machines, where 'getconf PATH' returns
-                  ;; something bogus.
-                  (substitute* "net/tramp.el"
-                    ;; Patch the line after "(defcustom tramp-remote-path".
-                    (("\\(tramp-default-remote-path")
-                     (format #f "(tramp-default-remote-path ~s ~s ~s ~s "
-                             "~/.guix-profile/bin" "~/.guix-profile/sbin"
-                             "/run/current-system/profile/bin"
-                             "/run/current-system/profile/sbin")))
-
-                  ;; Make sure Man looks for C header files in the right
-                  ;; places.
-                  (substitute* "man.el"
-                    (("\"/usr/local/include\"" line)
-                     (string-join
-                      (list line
-                            "\"~/.guix-profile/include\""
-                            "\"/var/guix/profiles/system/profile/include\"")
-                      " ")))))))))
-
 (define-public emacs-avy-menu
   (let ((commit "bb694fd3dde6507f06f76dd862b888ba9c3b544d")
         (revision "1"))
