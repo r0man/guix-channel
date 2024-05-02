@@ -1064,29 +1064,6 @@ local LLM or is paying for API access.")
     (description "Dart analysis server client for LSP mode")
     (license license:gpl3+)))
 
-(define-public emacs-lsp-docker
-  (let ((commit "f5eb3f47a083d8d1eec397264fbb47cebda20532")
-        (revision "1"))
-    (package
-      (name "emacs-lsp-docker")
-      (version (git-version "0.0.1" revision commit))
-      (source
-       (origin
-         (method git-fetch)
-         (uri (git-reference
-               (url "https://github.com/emacs-lsp/lsp-docker.git")
-               (commit commit)))
-         (file-name (git-file-name name version))
-         (sha256
-          (base32 "033a5zzwmnfsd6nqzg485hpv9njiypgp46zs18yk3p15m8i60avi"))))
-      (build-system emacs-build-system)
-      (propagated-inputs
-       (list emacs-dash emacs-lsp-mode emacs-f emacs-yaml emacs-ht))
-      (home-page "https://github.com/emacs-lsp/lsp-docker")
-      (synopsis "LSP Docker integration")
-      (description "Run language servers in containers")
-      (license license:gpl3+))))
-
 (define-public emacs-markdown-preview-eww
   (package
     (name "emacs-markdown-preview-eww")
