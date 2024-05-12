@@ -2,7 +2,7 @@
 
 [[https://github.com/r0man/guix-channel/actions/workflows/test.yml][https://github.com/r0man/guix-channel/actions/workflows/test.yml/badge.svg]]
 
-[[https://guix.gnu.org/static/blog/img/test-pilot.png]]
+[[https://guix.gnu.org/static/blog/img/gnu-guix-a-frogs-dream.jpg]]
 
 * Usage
 
@@ -11,7 +11,7 @@ Add this channel to =~/.config/guix/channels.scm=
 #+begin_src scheme
   (cons* (channel
           (name 'r0man)
-          (url "https://github.com/r0man/guix-channel.git")
+          (url "https://github.com/r0man/guix-channel")
           (branch "main")
           (introduction
            (make-channel-introduction
