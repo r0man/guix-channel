@@ -1124,6 +1124,26 @@ local LLM or is paying for API access.")
 Emacs built-in tabulated list mode, but with less boilerplate.")
       (license license:gpl3+))))
 
+(define-public emacs-ob-mermaid
+  (package
+    (name "emacs-ob-mermaid")
+    (version "20200320.1504")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/arnm/ob-mermaid.git")
+             (commit "b4ce25699e3ebff054f523375d1cf5a17bd0dbaf")))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0fhj3241gpj6qj2sawr8pgyn5b7320vjfb7idsy23kh4jvmj2wb8"))))
+    (build-system emacs-build-system)
+    (home-page "https://github.com/arnm/ob-mermaid")
+    (synopsis "Org-babel support for Mermaid diagrams")
+    (description "Generate Mermaid diagrams using org-mode, org-babel and the Mermaid
+CLI.")
+    (license license:gpl3+)))
+
 (define-public emacs-ox-tufte
   (let ((commit "7bd86582afb7d8d504322dcba9848c478579990b")
         (revision "1"))
