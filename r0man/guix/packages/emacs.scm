@@ -396,31 +396,6 @@ childframe is selectable and scrollable with mouse, even though the
 cursor is hidden.")
       (license license:gpl3+))))
 
-(define-public emacs-ellama
-  (package
-    (name "emacs-ellama")
-    (version "0.9.1")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/s-kostyaev/ellama")
-                    (commit version)))
-              (file-name (git-file-name name version))
-              (sha256 (base32
-                       "1nwwqvl91c65r45yxa2dcl4a41r3ahw6294h79riya48nrp8kn54"))))
-    (build-system emacs-build-system)
-    (propagated-inputs (list emacs-dash emacs-llm emacs-spinner))
-    (home-page "https://github.com/s-kostyaev/ellama")
-    (synopsis "Tool for interacting with LLMs")
-    (description
-     "Ellama is a tool for interacting with large language models from
-Emacs.  It allows you to ask questions and receive responses from the
-LLMs.  Ellama can perform various tasks such as translation, code
-review, summarization, enhancing grammar/spelling or wording and more
-through the Emacs interface.  Ellama natively supports streaming
-output, making it effortless to use with your preferred text editor.")
-    (license license:gpl3+)))
-
 (define-public emacs-elisa
   (package
     (name "emacs-elisa")
@@ -1010,32 +985,6 @@ Entrypoints:
 of the current      buffer to the echo area    - When called non-interactively,
 returns the language of the      current buffer  * language-detection-string
 - Non-interactive function, returns the language of its argument")
-    (license license:gpl3+)))
-
-(define-public emacs-llm
-  (package
-    (name "emacs-llm")
-    (version "0.13.0")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/ahyatt/llm.git")
-                    (commit version)))
-              (file-name (git-file-name name version))
-              (sha256 (base32
-                       "1q7djz4zx1br4d3g46f1m5cbxwl050qjmsm2cy7zcww64rrkcj0l"))))
-    (build-system emacs-build-system)
-    (home-page "https://github.com/ahyatt/llm")
-    (synopsis "Interface to pluggable llm backends")
-    (description
-     "This is a library for interfacing with Large Language Models. It
-allows elisp code to use LLMs, but allows gives the end-user an option
-to choose which LLM they would prefer. This is especially useful for
-LLMs, since there are various high-quality ones that in which API
-access costs money, as well as locally installed ones that are free,
-but of medium quality. Applications using LLMs can use this library to
-make sure their application works regardless of whether the user has a
-local LLM or is paying for API access.")
     (license license:gpl3+)))
 
 (define-public emacs-lsp-dart
