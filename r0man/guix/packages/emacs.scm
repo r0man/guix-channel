@@ -316,7 +316,7 @@ themes.
                     "https://elpa.gnu.org/packages/consult-recoll-" version
                     ".tar"))
               (sha256 (base32
-                       "0z2vlnv0q6hzvj6hk2a5flhp1gmm71c65j8nrpk4a18aq5gir213"))))
+                       "1zdmkq9cjb6kb0hf3ngm07r3mhrjal27x34i1bm7ri3089wbsp8v"))))
     (build-system emacs-build-system)
     (propagated-inputs (list emacs-consult))
     (home-page "https://codeberg.org/jao/consult-recoll")
