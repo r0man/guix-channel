@@ -1474,7 +1474,7 @@ media type formats.")
 (define-public emacs-plz-event-source
   (package
     (name "emacs-plz-event-source")
-    (version "0.0.1")
+    (version "0.1.1")
     (source
      (origin
        (method git-fetch)
@@ -1483,7 +1483,7 @@ media type formats.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0ird7j3mvxz1a5sszn4mw9vl32qp2b8xmmcs36yzr56dpm0l8qhh"))))
+        (base32 "1rg3dmaqnhzvzqsyfnk3y77s88jrjpwpzkj1fyz40j8b184q3qcs"))))
     (build-system emacs-build-system)
     (propagated-inputs (list emacs-plz-media-type))
     (arguments (list #:tests? #f))
