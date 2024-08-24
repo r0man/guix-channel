@@ -1460,7 +1460,7 @@ See the README.md for more details.")
     (propagated-inputs (list emacs-plz))
     (arguments (list #:tests? #f))
     (home-page "https://github.com/r0man/plz-media-type")
-    (synopsis "A plz.el extension to handle HTTP media types")
+    (synopsis "HTTP media type extension for plz.el")
     (description "The plz-media-type library enhances MIME type
 handling for HTTP requests within Emacs.  It leverages the plz.el HTTP
 library for networking calls and introduces a mechanism to process
@@ -1488,10 +1488,10 @@ non-streaming media type formats.")
     (propagated-inputs (list emacs-plz-media-type))
     (arguments (list #:tests? #f))
     (home-page "https://github.com/r0man/plz-event-source")
-    (synopsis "A plz.el extension to handle Server-Sent Events")
+    (synopsis "Server-Sent Events extension for plz.el")
     (description "The plz-event-source library provides a @code{plz-media-type}, a
 parser and an event source implementation for the @acronym{SSE, Server
-Sent Event} protocol. It is used in the Emacs LLM library to handle
+Sent Event} protocol.  It is used in the Emacs LLM library to handle
 server sent events.")
     (license license:gpl3+)))
 
