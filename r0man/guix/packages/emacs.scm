@@ -1389,59 +1389,58 @@ See the README.md for more details.")
       (license license:gpl3+))))
 
 (define-public emacs-paimon
-  (let ((commit "4c71bea56d0cfdca8ea90c5a6d8d584647d053af"))
-    (package
-      (name "emacs-paimon")
-      (version (git-version "0.1.6" "0" commit))
-      (source
-       (origin
-         (method git-fetch)
-         (uri (git-reference
-               (url "https://github.com/r0man/paimon.el.git")
-               (commit commit)))
-         (file-name (git-file-name name version))
-         (sha256
-          (base32 "0bb66rzr3hzz9xyxw80vh7vrlsb6630n401dim47qqbi5xzbgr45"))))
-      (build-system emacs-build-system)
-      (native-inputs
-       (list sqlite))
-      (propagated-inputs
-       (list emacs-aio
-             emacs-closql
-             emacs-emacsql
-             emacs-f
-             emacs-ht
-             emacs-transient
-             emacs-request))
-      (arguments
-       `(#:include
-         '("^[^/]+.el$"
-           "^[^/]+.el.in$"
-           "^dir$"
-           "^[^/]+.info$"
-           "^[^/]+.texi$"
-           "^[^/]+.texinfo$"
-           "^doc/dir$"
-           "^doc/[^/]+.info$"
-           "^doc/[^/]+.texi$"
-           "^doc/[^/]+.texinfo$"
-           "^src/[^/]+.el$")
-         #:exclude
-         '("^.dir-locals.el$"
-           "^test.el$"
-           "^tests.el$"
-           "^[^/]+-test.el$"
-           "^[^/]+-tests.el$")
-         #:phases
-         (modify-phases %standard-phases
-           (add-after 'unpack 'move-source-files
-             (lambda _
-               (let ((el-files (find-files "./src" ".*\\.el$")))
-                 (for-each (lambda (f) (rename-file f (basename f))) el-files)))))))
-      (home-page "https://github.com/r0man/paimon.el")
-      (synopsis "A major mode for Splunk")
-      (description "This package provides a major mode for Splunk")
-      (license license:gpl3+))))
+  (package
+    (name "emacs-paimon")
+    (version "0.2.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/r0man/paimon.el.git")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1x3xqgmkba6hqsdbp71wmd9fx6lji40y1kprpg8jxxvax1m4vpi3"))))
+    (build-system emacs-build-system)
+    (native-inputs
+     (list sqlite))
+    (propagated-inputs
+     (list emacs-aio
+           emacs-closql
+           emacs-emacsql
+           emacs-f
+           emacs-ht
+           emacs-transient
+           emacs-request))
+    (arguments
+     `(#:include
+       '("^[^/]+.el$"
+         "^[^/]+.el.in$"
+         "^dir$"
+         "^[^/]+.info$"
+         "^[^/]+.texi$"
+         "^[^/]+.texinfo$"
+         "^doc/dir$"
+         "^doc/[^/]+.info$"
+         "^doc/[^/]+.texi$"
+         "^doc/[^/]+.texinfo$"
+         "^src/[^/]+.el$")
+       #:exclude
+       '("^.dir-locals.el$"
+         "^test.el$"
+         "^tests.el$"
+         "^[^/]+-test.el$"
+         "^[^/]+-tests.el$")
+       #:phases
+       (modify-phases %standard-phases
+         (add-after 'unpack 'move-source-files
+           (lambda _
+             (let ((el-files (find-files "./src" ".*\\.el$")))
+               (for-each (lambda (f) (rename-file f (basename f))) el-files)))))))
+    (home-page "https://github.com/r0man/paimon.el")
+    (synopsis "A major mode for Splunk")
+    (description "This package provides a major mode for Splunk")
+    (license license:gpl3+)))
 
 (define-public emacs-plz-media-type
   (package
