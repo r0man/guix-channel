@@ -316,7 +316,7 @@ themes.
                     "https://elpa.gnu.org/packages/consult-recoll-" version
                     ".tar"))
               (sha256 (base32
-                       "0z2vlnv0q6hzvj6hk2a5flhp1gmm71c65j8nrpk4a18aq5gir213"))))
+                       "1zdmkq9cjb6kb0hf3ngm07r3mhrjal27x34i1bm7ri3089wbsp8v"))))
     (build-system emacs-build-system)
     (propagated-inputs (list emacs-consult))
     (home-page "https://codeberg.org/jao/consult-recoll")
@@ -1389,64 +1389,63 @@ See the README.md for more details.")
       (license license:gpl3+))))
 
 (define-public emacs-paimon
-  (let ((commit "4c71bea56d0cfdca8ea90c5a6d8d584647d053af"))
-    (package
-      (name "emacs-paimon")
-      (version (git-version "0.1.6" "0" commit))
-      (source
-       (origin
-         (method git-fetch)
-         (uri (git-reference
-               (url "https://github.com/r0man/paimon.el.git")
-               (commit commit)))
-         (file-name (git-file-name name version))
-         (sha256
-          (base32 "0bb66rzr3hzz9xyxw80vh7vrlsb6630n401dim47qqbi5xzbgr45"))))
-      (build-system emacs-build-system)
-      (native-inputs
-       (list sqlite))
-      (propagated-inputs
-       (list emacs-aio
-             emacs-closql
-             emacs-emacsql
-             emacs-f
-             emacs-ht
-             emacs-transient
-             emacs-request))
-      (arguments
-       `(#:include
-         '("^[^/]+.el$"
-           "^[^/]+.el.in$"
-           "^dir$"
-           "^[^/]+.info$"
-           "^[^/]+.texi$"
-           "^[^/]+.texinfo$"
-           "^doc/dir$"
-           "^doc/[^/]+.info$"
-           "^doc/[^/]+.texi$"
-           "^doc/[^/]+.texinfo$"
-           "^src/[^/]+.el$")
-         #:exclude
-         '("^.dir-locals.el$"
-           "^test.el$"
-           "^tests.el$"
-           "^[^/]+-test.el$"
-           "^[^/]+-tests.el$")
-         #:phases
-         (modify-phases %standard-phases
-           (add-after 'unpack 'move-source-files
-             (lambda _
-               (let ((el-files (find-files "./src" ".*\\.el$")))
-                 (for-each (lambda (f) (rename-file f (basename f))) el-files)))))))
-      (home-page "https://github.com/r0man/paimon.el")
-      (synopsis "A major mode for Splunk")
-      (description "This package provides a major mode for Splunk")
-      (license license:gpl3+))))
+  (package
+    (name "emacs-paimon")
+    (version "0.2.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/r0man/paimon.el.git")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1x3xqgmkba6hqsdbp71wmd9fx6lji40y1kprpg8jxxvax1m4vpi3"))))
+    (build-system emacs-build-system)
+    (native-inputs
+     (list sqlite))
+    (propagated-inputs
+     (list emacs-aio
+           emacs-closql
+           emacs-emacsql
+           emacs-f
+           emacs-ht
+           emacs-transient
+           emacs-request))
+    (arguments
+     `(#:include
+       '("^[^/]+.el$"
+         "^[^/]+.el.in$"
+         "^dir$"
+         "^[^/]+.info$"
+         "^[^/]+.texi$"
+         "^[^/]+.texinfo$"
+         "^doc/dir$"
+         "^doc/[^/]+.info$"
+         "^doc/[^/]+.texi$"
+         "^doc/[^/]+.texinfo$"
+         "^src/[^/]+.el$")
+       #:exclude
+       '("^.dir-locals.el$"
+         "^test.el$"
+         "^tests.el$"
+         "^[^/]+-test.el$"
+         "^[^/]+-tests.el$")
+       #:phases
+       (modify-phases %standard-phases
+         (add-after 'unpack 'move-source-files
+           (lambda _
+             (let ((el-files (find-files "./src" ".*\\.el$")))
+               (for-each (lambda (f) (rename-file f (basename f))) el-files)))))))
+    (home-page "https://github.com/r0man/paimon.el")
+    (synopsis "A major mode for Splunk")
+    (description "This package provides a major mode for Splunk")
+    (license license:gpl3+)))
 
 (define-public emacs-plz-media-type
   (package
     (name "emacs-plz-media-type")
-    (version "0.0.1")
+    (version "0.2.1")
     (source
      (origin
        (method git-fetch)
@@ -1455,26 +1454,26 @@ See the README.md for more details.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "07d947cshsc20y2bq5da9i1rysq066lpc8jxp98k17yili01xjjh"))))
+        (base32 "1bxrinp276rzz1jwnqrs5xginm96vzxr0b1k5q3y56lnin8sp18x"))))
     (build-system emacs-build-system)
     (propagated-inputs (list emacs-plz))
     (arguments (list #:tests? #f))
     (home-page "https://github.com/r0man/plz-media-type")
-    (synopsis "Media type support for plz.el")
+    (synopsis "HTTP media type extension for plz.el")
     (description "The plz-media-type library enhances MIME type
 handling for HTTP requests within Emacs.  It leverages the plz.el HTTP
 library for networking calls and introduces a mechanism to process
 responses based on the content type header.  This library defines
 various classes and methods for parsing and processing standard MIME
 types, including JSON, XML, HTML, and binary data.  It is used in the
-LLM library to handle decoding of various streaming and non-streaming
-media type formats.")
+Emacs LLM library to handle decoding of various streaming and
+non-streaming media type formats.")
     (license license:gpl3+)))
 
 (define-public emacs-plz-event-source
   (package
     (name "emacs-plz-event-source")
-    (version "0.0.1")
+    (version "0.1.1")
     (source
      (origin
        (method git-fetch)
@@ -1483,15 +1482,16 @@ media type formats.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0ird7j3mvxz1a5sszn4mw9vl32qp2b8xmmcs36yzr56dpm0l8qhh"))))
+        (base32 "1rg3dmaqnhzvzqsyfnk3y77s88jrjpwpzkj1fyz40j8b184q3qcs"))))
     (build-system emacs-build-system)
     (propagated-inputs (list emacs-plz-media-type))
     (arguments (list #:tests? #f))
     (home-page "https://github.com/r0man/plz-event-source")
-    (synopsis "Media type support for plz.el")
-    (description "The plz-event-source library provides a plz-media-type, a parser and
-an event source implementation for the Server Sent Event (SSE)
-protocol.  It is used in the LLM library to handle server sent events.")
+    (synopsis "Server-Sent Events extension for plz.el")
+    (description "The plz-event-source library provides a @code{plz-media-type}, a
+parser and an event source implementation for the @acronym{SSE, Server
+Sent Event} protocol.  It is used in the Emacs LLM library to handle
+server sent events.")
     (license license:gpl3+)))
 
 (define-public emacs-popwin
