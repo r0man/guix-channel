@@ -1801,3 +1801,20 @@ modern-blue) - wsd-indent-offset (default 4) - wsd-font-lock-keywords")
       (description "Major mode for viewing certificates, CRLs, keys, DH-parameters and
 ASN.1 using OpenSSL.")
       (license license:gpl3+))))
+
+(define-public emacs-show-font
+  (package
+    (name "emacs-show-font")
+    (version "0.1.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://elpa.gnu.org/packages/show-font-" version
+                           ".tar"))
+       (sha256
+        (base32 "0l7l2kx5kq5p5kzigj0h3dwsf2hbcz8xlj06bz5m91gjblm3q6pd"))))
+    (build-system emacs-build-system)
+    (home-page "https://github.com/protesilaos/show-font")
+    (synopsis "Show font features in an Emacs buffer")
+    (description "This package lets you preview a font inside of Emacs.")
+    (license license:gpl3+)))
