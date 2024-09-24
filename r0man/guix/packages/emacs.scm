@@ -1818,3 +1818,24 @@ ASN.1 using OpenSSL.")
     (synopsis "Show font features in an Emacs buffer")
     (description "This package lets you preview a font inside of Emacs.")
     (license license:gpl3+)))
+
+(define-public emacs-pgemacs
+  (package
+    (name "emacs-pgemacs")
+    (version "0.42")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/emarsden/pgmacs")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0pf8y64hka1fl47dphmh4xgxiwfsd0g4q2fazq5yc48zwr9nsf02"))))
+    (build-system emacs-build-system)
+    (home-page "https://github.com/emarsden/pgmacs")
+    (propagated-inputs (list emacs-pg))
+    (synopsis "Emacs editing PostgreSQL databases")
+    (description "PGmacs provides an editing interface for the PostgreSQL
+object-relational DBMS from Emacs.")
+    (license license:gpl3+)))
