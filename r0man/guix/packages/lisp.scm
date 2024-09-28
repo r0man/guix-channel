@@ -222,3 +222,35 @@ hash tables.")
 
 (define-public ecl-cl-hash-util
   (sbcl-package->ecl-package sbcl-cl-hash-util))
+
+(define-public sbcl-cl-semver
+  (let ((commit "b125d2c49ea6d370302dde73a6e0841c0e928184")
+        (revision "1"))
+    (package
+      (name "sbcl-cl-semver")
+      (version "0.0.1")
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/cldm/cl-semver")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1zlcn7lrpvjiixgqm4yxnqqwak1hxfmxmchkpvrly41yhl586ril"))))
+      (build-system asdf-build-system/sbcl)
+      (inputs (list sbcl-alexandria
+                    sbcl-esrap
+                    sbcl-named-readtables))
+      (native-inputs (list sbcl-stefil))
+      (home-page "https://github.com/cldm/cl-semver")
+      (synopsis "Semantic Versions handling in Common Lisp")
+      (description "This package provides a Common Lisp implementation of the
+Semantic Versioning Specification.")
+      (license (list license:expat)))))
+
+(define-public cl-semver
+  (sbcl-package->cl-source-package sbcl-cl-semver))
+
+(define-public ecl-cl-semver
+  (sbcl-package->ecl-package sbcl-cl-semver))
