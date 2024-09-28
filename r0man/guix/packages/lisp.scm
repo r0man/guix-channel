@@ -164,3 +164,32 @@ CLOS for event handling.")
 
 (define-public ecl-cl-state-machine
   (sbcl-package->ecl-package sbcl-cl-state-machine))
+
+(define-public sbcl-cl-str
+  (package
+    (name "sbcl-cl-str")
+    (version "0.21")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/vindarel/cl-str")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0r9niyvkj7jyc93rxys6pgqazzpl1ybfryjn8jig721xhjxrsblm"))))
+    (build-system asdf-build-system/sbcl)
+    (arguments `(#:asd-systems '("str" "str.test")))
+    (inputs (list sbcl-cl-ppcre
+                  sbcl-cl-ppcre-unicode
+                  sbcl-cl-change-case))
+    (home-page "https://github.com/vindarel/cl-str")
+    (synopsis " Common Lisp string manipulation library")
+    (description "Modern, simple and consistent Common Lisp string manipulation library.")
+    (license (list license:expat))))
+
+(define-public cl-str
+  (sbcl-package->cl-source-package sbcl-cl-str))
+
+(define-public ecl-cl-str
+  (sbcl-package->ecl-package sbcl-cl-str))
