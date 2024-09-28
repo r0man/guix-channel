@@ -193,3 +193,32 @@ CLOS for event handling.")
 
 (define-public ecl-cl-str
   (sbcl-package->ecl-package sbcl-cl-str))
+
+(define-public sbcl-cl-hash-util
+  (let ((commit "7f88cb7579b2af8c21022554f46dddd6ce6a5fc2")
+        (revision "1"))
+    (package
+      (name "sbcl-cl-hash-util")
+      (version "0.0.1")
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/orthecreedence/cl-hash-util")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1xab7v2mav241rs8w68qmg485g4f75nrac3hjcnm0cb19ickbs1m"))))
+      (build-system asdf-build-system/sbcl)
+      (native-inputs (list sbcl-fiveam))
+      (home-page "https://github.com/orthecreedence/cl-hash-util")
+      (synopsis "Small hash utility library for Common Lisp")
+      (description "This package provides a basic library for dealing with Common Lisp's
+hash tables.")
+      (license (list license:expat)))))
+
+(define-public cl-hash-util
+  (sbcl-package->cl-source-package sbcl-cl-hash-util))
+
+(define-public ecl-cl-hash-util
+  (sbcl-package->ecl-package sbcl-cl-hash-util))
