@@ -254,3 +254,35 @@ Semantic Versioning Specification.")
 
 (define-public ecl-cl-semver
   (sbcl-package->ecl-package sbcl-cl-semver))
+
+(define-public sbcl-json-mop
+  (let ((commit "66705776dec7056fabba09646d726782baf019d9")
+        (revision "1"))
+    (package
+      (name "sbcl-json-mop")
+      (version "0.0.1")
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/gschjetne/json-mop")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1q6mmq64hf4v448bnzfh8nxsxg5h18a9snh785r1fnvv1aij3fi1"))))
+      (build-system asdf-build-system/sbcl)
+      (inputs (list sbcl-anaphora
+                    sbcl-closer-mop
+                    sbcl-yason))
+      (home-page "https://github.com/gschjetne/json-mop")
+      (synopsis "Metaclass for bridging CLOS and JSON objects")
+      (description "JSON-MOP is a small library aiming to cut down time spent moving data
+between CLOS and JSON objects. It depends on YASON and it should be
+possible to use it alongside straight calls to functions from YASON.")
+      (license (list license:expat)))))
+
+(define-public json-mop
+  (sbcl-package->cl-source-package sbcl-json-mop))
+
+(define-public ecl-json-mop
+  (sbcl-package->ecl-package sbcl-json-mop))
