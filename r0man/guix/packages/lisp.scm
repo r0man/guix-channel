@@ -286,3 +286,57 @@ possible to use it alongside straight calls to functions from YASON.")
 
 (define-public ecl-json-mop
   (sbcl-package->ecl-package sbcl-json-mop))
+
+(define-public sbcl-openapi-generator
+  (let ((commit "28c399154c5589fd3d4303dfe4725243349cfdb7")
+        (revision "1"))
+    (package
+      (name "sbcl-openapi-generator")
+      (version "0.0.1")
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://codeberg.org/kilianmh/openapi-generator")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "0zc0y8frcnsqj76sqmqsgfv0zhdz5kkpynwan3sigc78fl1nrs3q"))))
+      (build-system asdf-build-system/sbcl)
+      (arguments
+       (list
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-after 'unpack 'patch-module-load
+              (lambda* (#:key outputs #:allow-other-keys)
+                (substitute* "code/collections.lisp"
+                  (("\\(get-api-guru-apis\\)")
+                   "(make-hash-table)")))))))
+      (inputs (list sbcl-alexandria
+                    sbcl-cl-hash-util
+                    sbcl-cl-json-pointer
+                    sbcl-cl-project
+                    sbcl-cl-semver
+                    sbcl-cl-str
+                    sbcl-cl-yaml
+                    sbcl-dexador
+                    sbcl-json-mop
+                    sbcl-jzon
+                    sbcl-listopia
+                    sbcl-moptilities
+                    sbcl-parse-float
+                    sbcl-pathname-utils
+                    sbcl-quri
+                    sbcl-serapeum
+                    sbcl-yason))
+      (native-inputs (list sbcl-fiveam))
+      (home-page "https://codeberg.org/kilianmh/openapi-generator")
+      (synopsis "Common Lisp OpenAPI Generator")
+      (description "This package provides an OpenAPI client system generator.")
+      (license (list license:gpl3+)))))
+
+(define-public openapi-generator
+  (sbcl-package->cl-source-package sbcl-openapi-generator))
+
+(define-public ecl-openapi-generator
+  (sbcl-package->ecl-package sbcl-openapi-generator))
