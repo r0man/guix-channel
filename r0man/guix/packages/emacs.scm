@@ -356,7 +356,7 @@ with consult, such as vertico.")
     (license license:gpl3+)))
 
 (define-public emacs-copilot
-  (let ((commit "edf517a57f539eb41eaa2f92c6752538f3a62b72")
+  (let ((commit "8ddfbee370d4c6705b3bbd9532d0c722a78ba844")
         (revision "5"))
     (package
       (name "emacs-copilot")
@@ -369,7 +369,7 @@ with consult, such as vertico.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "1vwrj0dsh4zyhz2r8350bph6ix9vprblk19rk0wv74k5d5glcw77"))))
+          (base32 "162i2j92c2sr30bbsmhy2ybvzh1jnnjdnn3200wyn3bzaw82vjw8"))))
       (build-system emacs-build-system)
       (propagated-inputs (list emacs-dash emacs-f emacs-editorconfig emacs-jsonrpc emacs-s))
       (home-page "https://github.com/copilot-emacs/copilot.el")
@@ -1826,3 +1826,41 @@ modern-blue) - wsd-indent-offset (default 4) - wsd-font-lock-keywords")
       (description "Major mode for viewing certificates, CRLs, keys, DH-parameters and
 ASN.1 using OpenSSL.")
       (license license:gpl3+))))
+
+(define-public emacs-show-font
+  (package
+    (name "emacs-show-font")
+    (version "0.1.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://elpa.gnu.org/packages/show-font-" version
+                           ".tar"))
+       (sha256
+        (base32 "0l7l2kx5kq5p5kzigj0h3dwsf2hbcz8xlj06bz5m91gjblm3q6pd"))))
+    (build-system emacs-build-system)
+    (home-page "https://github.com/protesilaos/show-font")
+    (synopsis "Show font features in an Emacs buffer")
+    (description "This package lets you preview a font inside of Emacs.")
+    (license license:gpl3+)))
+
+(define-public emacs-pgemacs
+  (package
+    (name "emacs-pgemacs")
+    (version "0.42")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/emarsden/pgmacs")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0pf8y64hka1fl47dphmh4xgxiwfsd0g4q2fazq5yc48zwr9nsf02"))))
+    (build-system emacs-build-system)
+    (home-page "https://github.com/emarsden/pgmacs")
+    (propagated-inputs (list emacs-pg))
+    (synopsis "Emacs editing PostgreSQL databases")
+    (description "PGmacs provides an editing interface for the PostgreSQL
+object-relational DBMS from Emacs.")
+    (license license:gpl3+)))
