@@ -13,6 +13,31 @@
   #:use-module (guix utils)
   #:use-module (guix packages))
 
+(define-public emacs-aider
+  (let ((commit "9fc3b047754a4ef3fe1d5c664f84170a86a09a4b")
+        (revision "1"))
+    (package
+      (name "emacs-aider")
+      (version (git-version "0.0.1" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/tninja/aider.el")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1407jx9wab2x4sjcnswfxq00wx3g5ap8ssrn0acvyn818gdnz7d9"))))
+      (build-system emacs-build-system)
+      (propagated-inputs (list emacs-transient))
+      (native-inputs (list emacs-helm))
+      (home-page "https://github.com/tninja/aider.el")
+      (synopsis "Emacs user interface for Aider")
+      (description
+       "This package provides an interactive interface to communicate with
+Aider, an AI pair programming environment in your terminal.")
+      (license license:asl2.0))))
+
 (define-public emacs-avy-menu
   (let ((commit "bb694fd3dde6507f06f76dd862b888ba9c3b544d")
         (revision "1"))
