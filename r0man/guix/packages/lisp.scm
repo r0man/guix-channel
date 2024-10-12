@@ -292,7 +292,7 @@ possible to use it alongside straight calls to functions from YASON.")
         (revision "1"))
     (package
       (name "sbcl-openapi-generator")
-      (version "0.0.1")
+      (version (git-version "0.0.1" revision commit))
       (source
        (origin
          (method git-fetch)
