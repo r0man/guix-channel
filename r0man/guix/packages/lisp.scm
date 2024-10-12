@@ -228,7 +228,7 @@ hash tables.")
         (revision "1"))
     (package
       (name "sbcl-cl-semver")
-      (version "0.0.1")
+      (version (git-version "0.0.1" revision commit))
       (source
        (origin
          (method git-fetch)
