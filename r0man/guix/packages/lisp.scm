@@ -67,37 +67,6 @@
 (define-public cl-bnf
   (sbcl-package->cl-source-package sbcl-cl-bnf))
 
-(define-public sbcl-cl-ewkb
-  (let ((commit "e2c7976cdc2074d63038ecd7179025ccb8d8f0b7")
-        (revision "0"))
-    (package
-      (name "sbcl-cl-ewkb")
-      (version (git-version "0.2" revision commit))
-      (source
-       (origin
-         (method git-fetch)
-         (uri (git-reference
-               (url "https://github.com/filonenko-mikhail/cl-ewkb")
-               (commit commit)))
-         (file-name (git-file-name name version))
-         (sha256
-          (base32 "1n1zm4i11638vh1a4m71690p4lpikkk0rp42j2yfvs5d9wi67cr1"))))
-      (build-system asdf-build-system/sbcl)
-      (inputs (list sbcl-ieee-floats sbcl-flexi-streams))
-      (home-page "https://github.com/filonenko-mikhail/cl-ewkb")
-      (synopsis "Common Lisp PostGIS EWKB library")
-      (description "cl-ewkb is a geospatial library, based on cl-wkb, that implements the
-OGC Well-Known Binary geographic geometry data model with PostGIS 3d,
-4d extensions, and provides WKB and EWKB encoding and decoding
-functionality.")
-      (license (list license:expat)))))
-
-(define-public cl-ewkb
-  (sbcl-package->cl-source-package sbcl-cl-ewkb))
-
-(define-public ecl-cl-ewkb
-  (sbcl-package->ecl-package sbcl-cl-ewkb))
-
 (define-public sbcl-cl-state-machine
   (let ((commit "7f8d1e05f34f6906a9aa7eabb0cdeabb11ace1a5")
         (revision "1"))
