@@ -260,7 +260,7 @@ Semantic Versioning Specification.")
         (revision "1"))
     (package
       (name "sbcl-json-mop")
-      (version "0.0.1")
+      (version (git-version "0.0.1" revision commit))
       (source
        (origin
          (method git-fetch)
