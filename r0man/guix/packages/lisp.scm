@@ -98,41 +98,6 @@ functionality.")
 (define-public ecl-cl-ewkb
   (sbcl-package->ecl-package sbcl-cl-ewkb))
 
-(define-public sbcl-birch
-  (let ((commit "30cd24260675c6c4e276daaf28be8d02ac15dd8f")
-        (revision "0"))
-    (package
-      (name "sbcl-birch")
-      (version (git-version "1.0.1" revision commit))
-      (source
-       (origin
-         (method git-fetch)
-         (uri (git-reference
-               (url "https://github.com/jorams/birch")
-               (commit commit)))
-         (file-name (git-file-name name version))
-         (sha256
-          (base32 "1b24xng92ra7420s3zy44pybk4h7xg4kjwdk35arl46badgi28r1"))))
-      (build-system asdf-build-system/sbcl)
-      (inputs (list sbcl-alexandria
-                    sbcl-cl+ssl
-                    sbcl-flexi-streams
-                    sbcl-split-sequence
-                    sbcl-usocket))
-      (native-inputs (list sbcl-prove))
-      (arguments '(#:asd-systems '("birch")))
-      (home-page "https://github.com/jorams/birch")
-      (synopsis "Common Lisp IRC client library")
-      (description "Birch is a simple Common Lisp IRC client library.  It makes use of
-CLOS for event handling.")
-      (license (list license:expat)))))
-
-(define-public cl-birch
-  (sbcl-package->cl-source-package sbcl-birch))
-
-(define-public ecl-birch
-  (sbcl-package->ecl-package sbcl-birch))
-
 (define-public sbcl-cl-state-machine
   (let ((commit "7f8d1e05f34f6906a9aa7eabb0cdeabb11ace1a5")
         (revision "1"))
