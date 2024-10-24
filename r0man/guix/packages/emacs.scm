@@ -398,29 +398,6 @@ with consult, such as vertico.")
       (description "Java extension for the Eglot LSP client")
       (license license:gpl3+))))
 
-(define-public emacs-eldoc-box
-  (let ((commit "c36f31074b09930e8425963f39d5508da6d2c32d")
-        (revision "1"))
-    (package
-      (name "emacs-eldoc-box")
-      (version (git-version "20230606.1519" revision commit))
-      (source (origin
-                (method git-fetch)
-                (uri (git-reference
-                      (url "https://github.com/casouri/eldoc-box.git")
-                      (commit commit)))
-                (file-name (git-file-name name version))
-                (sha256
-                 (base32
-                  "0vglh3sp9x6z537jngh5jh9j3szbfadryzlwhmrlq7asiinnjq01"))))
-      (build-system emacs-build-system)
-      (home-page "https://github.com/casouri/eldoc-box")
-      (synopsis "Display ElDoc documentation in a childframe")
-      (description "This package displays ElDoc documentations in a childframe.  The
-childframe is selectable and scrollable with mouse, even though the
-cursor is hidden.")
-      (license license:gpl3+))))
-
 (define-public emacs-elisa
   (package
     (name "emacs-elisa")
@@ -570,35 +547,6 @@ binary for communicating with a SQLite database.")
     (synopsis "A Docopt implementation in Elisp")
     (description "This package provides a Docopt implementation in Elisp")
     (license license:gpl3+)))
-
-(define-public emacs-flycheck-clj-kondo
-  (let ((commit "e38c67ba9db1ea1cbe1b61ab39b506c05efdcdbf")
-        (revision "1"))
-    (package
-      (name "emacs-flycheck-clj-kondo")
-      (version (git-version "0.0.3" revision commit))
-      (source
-       (origin
-         (method git-fetch)
-         (uri (git-reference
-               (url "https://github.com/borkdude/flycheck-clj-kondo.git")
-               (commit commit)))
-         (file-name (git-file-name name version))
-         (sha256
-          (base32 "1pxlb8axgmc8cw4id40z576kd041qb1irq8rkjn6xbda585ix58f"))))
-      (build-system emacs-build-system)
-      (propagated-inputs (list emacs-flycheck))
-      (home-page "https://github.com/borkdude/flycheck-clj-kondo")
-      (synopsis "Add clj-kondo linter to flycheck")
-      (description
-       "This package integrates clj-kondo with Emacs via flycheck.  To use it, add to
-your init.el:
-
-(require 'flycheck-clj-kondo)
-
-Make sure the clj-kondo binary is on your path.  For installation instructions,
-see https://github.com/borkdude/clj-kondo.")
-      (license license:gpl3+))))
 
 (define-public emacs-flycheck-elsa
   (let ((commit "d60db9544d0c4213f2478bcea0fd0e668e31cf34")
@@ -1519,30 +1467,6 @@ Sent Event} protocol.  It is used in the Emacs LLM library to handle
 server sent events.")
     (license license:gpl3+)))
 
-(define-public emacs-popwin
-  (let ((commit "f4bf2e4cbda328359b06d89e233c951cba30363e")
-        (revision "1"))
-    (package
-      (name "emacs-popwin")
-      (version (git-version "1.0.2" revision commit))
-      (source
-       (origin
-         (method git-fetch)
-         (uri (git-reference
-               (url "https://github.com/emacsorphanage/popwin")
-               (commit commit)))
-         (file-name (git-file-name name version))
-         (sha256
-          (base32 "0hjj3qxampmgqak8y99ci200q4grvgsyhfacyzqm2qc9iw8kha3i"))))
-      (build-system emacs-build-system)
-      (home-page "https://github.com/emacsorphanage/popwin")
-      (synopsis "Popup Window Manager for Emacs")
-      (description
-       "Popwin is a popup window manager for Emacs which makes you free from
-the hell of annoying buffers such like *Help*, *Completions*,
-*compilation*, and etc.")
-      (license license:gpl3+))))
-
 (define-public emacs-sayid
   (package
     (name "emacs-sayid")
@@ -1574,34 +1498,6 @@ functions.  This package is the Emacs front-end to it, which allows
 the user to select functions to trace, and display the recorded inputs
 and outputs from within Emacs.")
     (license license:asl2.0)))
-
-(define-public emacs-sql-indent
-  (let ((commit "323ece64acaac7f27b7806db9dba0757d6e57885")
-        (revision "0"))
-    (package
-      (name "emacs-sql-indent")
-      (version (git-version "1.7" revision commit))
-      (source (origin
-                (method git-fetch)
-                (uri (git-reference
-                      (url "https://github.com/alex-hhh/emacs-sql-indent")
-                      (commit commit)))
-                (file-name (git-file-name name version))
-                (sha256
-                 (base32
-                  "16nfnyjblcaly8idajpwv0gbzzn9n7h7dda8yqbpg9zalja2gvsh"))))
-      (build-system emacs-build-system)
-      (home-page "https://github.com/alex-hhh/emacs-sql-indent")
-      (synopsis "Support for indenting code in SQL files.")
-      (description
-       "`sqlind-minor-mode is a minor mode that enables syntax-based indentation for
-`sql-mode buffers: the TAB key indents the current line based on the SQL code on
-previous lines.  To setup syntax-based indentation for every SQL buffer, add
-`sqlind-minor-mode to `sql-mode-hook'.  Indentation rules are flexible and can
-be customized to match your personal coding style.  For more information, see
-the \"sql-indent.org\" file.  The package also defines align rules so that the
-`align function works for SQL statements, see `sqlind-align-rules'.")
-      (license license:gpl3+))))
 
 (define-public emacs-sqlite3
   (let ((commit "8509f05938cfc946ad1d3927ce1c3b88f8500281")
@@ -1783,65 +1679,6 @@ A short summary of customizable variables:
 - wsd-api-key (default blank.  required for premium-features.) - wsd-format
 (default png.  svg requires premium, thus api-key.) - wsd-style (default
 modern-blue) - wsd-indent-offset (default 4) - wsd-font-lock-keywords")
-    (license license:gpl3+)))
-
-(define-public emacs-x509-mode
-  (let ((commit "b19260d9863f1f7e310154fef71b1f3bd0871241")
-        (revision "1"))
-    (package
-      (name "emacs-x509-mode")
-      (version (git-version "0.0.1" revision commit))
-      (source
-       (origin
-         (method git-fetch)
-         (uri (git-reference
-               (url "https://github.com/jobbflykt/x509-mode")
-               (commit commit)))
-         (file-name (git-file-name name version))
-         (sha256
-          (base32 "1angyjpr28zjsw5blsjrqn7vfvlz02pkqxx9ckrjjq14mx2yi125"))))
-      (build-system emacs-build-system)
-      (arguments
-       '(#:include
-         '("^[^/]+.el$"
-           "^[^/]+.el.in$"
-           "^dir$"
-           "^[^/]+.info$"
-           "^[^/]+.texi$"
-           "^[^/]+.texinfo$"
-           "^doc/dir$"
-           "^doc/[^/]+.info$"
-           "^doc/[^/]+.texi$"
-           "^doc/[^/]+.texinfo$"
-           "^[^/]+.txt$")
-         #:exclude
-         '("^.dir-locals.el$"
-           "^test.el$"
-           "^tests.el$"
-           "^[^/]+-test.el$"
-           "^[^/]+-tests.el$")))
-      (propagated-inputs (list emacs-compat))
-      (home-page "https://github.com/jobbflykt/x509-mode")
-      (synopsis "View certificates, CRLs and keys using OpenSSL.")
-      (description "Major mode for viewing certificates, CRLs, keys, DH-parameters and
-ASN.1 using OpenSSL.")
-      (license license:gpl3+))))
-
-(define-public emacs-show-font
-  (package
-    (name "emacs-show-font")
-    (version "0.1.1")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (string-append "https://elpa.gnu.org/packages/show-font-" version
-                           ".tar"))
-       (sha256
-        (base32 "0l7l2kx5kq5p5kzigj0h3dwsf2hbcz8xlj06bz5m91gjblm3q6pd"))))
-    (build-system emacs-build-system)
-    (home-page "https://github.com/protesilaos/show-font")
-    (synopsis "Show font features in an Emacs buffer")
-    (description "This package lets you preview a font inside of Emacs.")
     (license license:gpl3+)))
 
 (define-public emacs-pgemacs
