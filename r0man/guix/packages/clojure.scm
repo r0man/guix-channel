@@ -1,7 +1,0 @@
-(define-module (r0man guix packages clojure)
-  #:use-module (gnu packages gcc)
-  #:use-module ((guix licenses) #:prefix license:)
-  #:use-module (guix build-system copy)
-  #:use-module (gnu packages compression)
-  #:use-module (guix download)
-  #:use-module (guix packages))
