@@ -33,12 +33,14 @@
                 (cond ((target-aarch64?)
                        "0sxv0dqfvn98p6ki6m0awrcww3zgj5c1qx4s0sdphsj3pwg4w754")
                       ((target-x86-64?)
-                       "1l6w55aragyf8rzy087iqw97xnpih5syjwhf0jwbgrqps2k44ms5"))))))
+                       "0m0p3zq7m9zaj24rx7qm2sdxncg112yayy6l22dsxlxj6fpylf1b"))))))
     (build-system binary-build-system)
     (arguments
      (list
       #:patchelf-plan
-      `'(("bb" ("gcc" "libc" "zlib")))
+      (if (target-aarch64?)
+          `'(("bb" ("gcc" "libc" "zlib")))
+          #f)
       #:install-plan
       `'(("./bb" "/bin/"))
       #:phases
@@ -63,25 +65,27 @@ be using bash otherwise.")
               (method url-fetch/zipbomb)
               (uri (string-append "https://github.com/clojure-lsp/clojure-lsp"
                                   "/releases/download/" version
-                                  "/clojure-lsp-native-linux-"
+                                  "/clojure-lsp-"
                                   (cond ((target-aarch64?)
                                          "aarch64")
                                         ((target-x86-64?)
-                                         "amd64"))
+                                         "native-linux-amd64"))
                                   ".zip"))
               (sha256
                (base32
                 (cond ((target-aarch64?)
                        "0y9inzyw30vnp10r1kmm0f1gkrq0bc63vwiq7lqc1wqjqv1211r4")
                       ((target-x86-64?)
-                       "1l6w55aragyf8rzy087iqw97xnpih5syjwhf0jwbgrqps2k44ms5"))))))
+                       "1ixcisndcgr8i58rlf6ayvh6sjmvs4y1j1gnk4dhvssh7h66flhw"))))))
     (build-system binary-build-system)
     (arguments
      (list
       #:install-plan
       `'(("./clojure-lsp" "/bin/"))
       #:patchelf-plan
-      `'(("clojure-lsp" ("gcc" "libc" "zlib")))
+      (if (target-aarch64?)
+          `'(("clojure-lsp" ("gcc" "libc" "zlib")))
+          #f)
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'chmod
