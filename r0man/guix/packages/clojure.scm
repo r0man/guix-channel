@@ -65,11 +65,11 @@ be using bash otherwise.")
               (method url-fetch/zipbomb)
               (uri (string-append "https://github.com/clojure-lsp/clojure-lsp"
                                   "/releases/download/" version
-                                  "/clojure-lsp-"
+                                  "/clojure-lsp-native-linux-"
                                   (cond ((target-aarch64?)
                                          "aarch64")
                                         ((target-x86-64?)
-                                         "native-linux-amd64"))
+                                         "amd64"))
                                   ".zip"))
               (sha256
                (base32
