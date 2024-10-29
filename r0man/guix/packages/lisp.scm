@@ -254,3 +254,46 @@ is needed for a new entry.")
 
 (define-public ecl-cacle
   (sbcl-package->ecl-package sbcl-cacle))
+
+(define-public sbcl-clx-truetype-stumpwm
+  (let ((commit "2378039ada60f1e7a338a7c00d66f8513e3b91ab")
+        (revision "2"))
+    (package
+      (name "sbcl-clx-truetype")
+      (version (git-version "0.0.1" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/stumpwm/clx-truetype")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32
+           "0gab24gc0ghcbyi2frylpns51jv1mvypyff0wwq48rzww5gx7fyc"))
+         (modules '((guix build utils)))
+         (snippet
+          '(begin
+             (substitute* "package.lisp"
+               ((":export") ":export\n   :+font-cache-filename+"))
+             #t))))
+      (build-system asdf-build-system/sbcl)
+      (inputs
+       (list sbcl-clx
+             sbcl-cacle
+             sbcl-zpb-ttf
+             sbcl-cl-vectors
+             sbcl-cl-fad
+             sbcl-cl-store
+             sbcl-trivial-features))
+      (home-page "https://github.com/stumpwm/clx-truetype")
+      (synopsis "Antialiased TrueType font rendering using CLX and XRender")
+      (description "CLX-TrueType is pure common lisp solution for
+antialiased TrueType font rendering using CLX and XRender extension.")
+      (license license:expat))))
+
+(define-public cl-clx-truetype-stumpwm
+  (sbcl-package->cl-source-package sbcl-clx-truetype-stumpwm))
+
+(define-public ecl-clx-truetype
+  (sbcl-package->ecl-package sbcl-clx-truetype-stumpwm))
