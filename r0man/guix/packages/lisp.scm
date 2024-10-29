@@ -221,3 +221,36 @@ possible to use it alongside straight calls to functions from YASON.")
 
 (define-public ecl-openapi-generator
   (sbcl-package->ecl-package sbcl-openapi-generator))
+
+(define-public sbcl-cacle
+  (let ((commit "4cbe8cfe227d2e097eaced14766f4f37aa05e617")
+        (revision "1"))
+    (package
+      (name "sbcl-cacle")
+      (version (git-version "1.0.1" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/jlahd/cacle")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "0h0dk0sfkfl8g0sbrs76ydb9l4znssqhx8nc5k1sg7zxpni5a4qy"))))
+      (build-system asdf-build-system/sbcl)
+      (inputs
+       (list sbcl-bordeaux-threads))
+      (home-page "https://github.com/jlahd/cacle")
+      (synopsis "Extensible cache services for Common Lisp")
+      (description "This package provides implements a generic cache management facility
+with configurable and extensible cache replacement policies.  The
+actual cached data can be stored anywhere, with cacle taking charge of
+keeping track of which entry is to be discarded next when more space
+is needed for a new entry.")
+      (license (list license:expat)))))
+
+(define-public cl-cacle
+  (sbcl-package->cl-source-package sbcl-cacle))
+
+(define-public ecl-cacle
+  (sbcl-package->ecl-package sbcl-cacle))
