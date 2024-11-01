@@ -75,6 +75,42 @@
 (define-public ecl-cl-state-machine
   (sbcl-package->ecl-package sbcl-cl-state-machine))
 
+(define-public sbcl-fsm
+  (let ((commit "d528569982e1d8e4355066d38e1383fd09ddc968")
+        (revision "1"))
+    (package
+      (name "sbcl-fsm")
+      (version (git-version "0.1.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://git.sr.ht/~hdasch/fsm")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "0wx6a9mrhhklbyiskgn18bw0pj9sz7cd4r4cb5773xb2pddrs1a2"))))
+      (build-system asdf-build-system/sbcl)
+      (arguments (list #:tests? #f)) ;; Tests require network access
+      (inputs (list sbcl-alexandria
+                    sbcl-babel
+                    sbcl-cl-async
+                    sbcl-log4cl
+                    sbcl-serapeum))
+      (native-inputs (list sbcl-fiveam))
+      (home-page "https://git.sr.ht/~hdasch/fsm")
+      (synopsis "State machine library for Common Lisp")
+      (description "This package provides a port of Magnus Henoch's Emacs Lisp finite
+state machine (fsm.el) to Common Lisp.  Its primary use is managing
+network connections and transaction on a network socket.")
+      (license (list license:gpl3+)))))
+
+(define-public cl-fsm
+  (sbcl-package->cl-source-package sbcl-fsm))
+
+(define-public ecl-fsm
+  (sbcl-package->ecl-package sbcl-fsm))
+
 (define-public sbcl-cl-hash-util
   (let ((commit "7f88cb7579b2af8c21022554f46dddd6ce6a5fc2")
         (revision "1"))
