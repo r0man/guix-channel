@@ -29,14 +29,18 @@
                   ;; Don't use vendored faiss
                   (("add_subdirectory.*/vendor/faiss.*")
                    "")
-                  (("target_link_libraries.*sqlite-vss faiss_avx2.*)")
-                   "target_link_libraries(sqlite-vss-static PUBLIC faiss)")
                   ;; Don't use vendored sqlite
-                  (("include_directories.*vendor/sqlite.*") "")
-                  (("link_directories.*BEFORE vendor/sqlite.*") "")
+                  (("include_directories\\(vendor/sqlite\\)") "")
+                  (("link_directories\\(BEFORE vendor/sqlite\\)") "")
                   ;; Don't use vendored nlohmann_json
-                  (("add_subdirectory.*vendor/json.*")
-                   "")))))
+                  (("add_subdirectory\\(vendor/json\\)")
+                   "find_package(nlohmann_json REQUIRED)")
+                  ;; Use faiss instead of faiss_avx2 for sqlite-vss
+                  (("target_link_libraries\\(sqlite-vss faiss_avx2\\)")
+                   "target_link_libraries(sqlite-vss faiss)")
+                  ;; Use faiss instead of faiss_avx2 for sqlite-vss-static
+                  (("target_link_libraries\\(sqlite-vss-static PUBLIC faiss_avx2\\)")
+                   "target_link_libraries(sqlite-vss-static PUBLIC faiss)")))))
     (build-system cmake-build-system)
     (arguments
      (list
