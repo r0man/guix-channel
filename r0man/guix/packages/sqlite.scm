@@ -160,7 +160,7 @@ contains supporting code for evaluation and parameter tuning.")
                             "libsqlite_vss0.a"
                             "vector0.so"
                             "vss0.so"))))))))
-    (inputs (list faiss-1.9 libomp-17 lapack nlohmann-json sqlite openblas))
+    (inputs (list faiss-1.9 lapack libomp-17 nlohmann-json sqlite openblas))
     (home-page "https://github.com/asg017/sqlite-vss")
     (synopsis "A SQLite extension for efficient vector search, based on Faiss!")
     (description "SQLite Vector Similarity Search is a SQLite extension that brings
