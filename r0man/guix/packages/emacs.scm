@@ -5,6 +5,7 @@
   #:use-module (gnu packages emacs)
   #:use-module (gnu packages emacs-xyz)
   #:use-module (gnu packages sqlite)
+  #:use-module (gnu packages tree-sitter)
   #:use-module (gnu packages)
   #:use-module (guix build-system emacs)
   #:use-module (guix download)
@@ -178,29 +179,25 @@ Clojure application.")
 (define-public emacs-clojure-ts-mode
   (package
     (name "emacs-clojure-ts-mode")
-    (version "20240314.552")
+    (version "0.2.2")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
              (url "https://github.com/clojure-emacs/clojure-ts-mode.git")
-             (commit "8afa5656955814193b3b27020faf4edf00abda88")))
+             (commit (string-append "v" version))))
        (sha256
-        (base32 "0jxfzcmqlmc88ib483n6y445xs7bpaqw3b1w0z3nmcdfk512d0fr"))))
+        (base32 "15aisl4pzdgi5nqpjxllq053fj9011liz53ph9kqvl7mzspffgaj"))))
     (build-system emacs-build-system)
     (home-page "http://github.com/clojure-emacs/clojure-ts-mode")
-    (synopsis "Major mode for Clojure code")
+    (synopsis "Tree-sitter major mode for Clojure")
+    (propagated-inputs
+     (list tree-sitter-clojure))
     (description
-     "This package provides font-lock, indentation, and navigation for the Clojure
-programming language (http://clojure.org).  For the tree-sitter grammar this
-mode is based on, see https://github.com/sogaiu/tree-sitter-clojure.  Using
-clojure-ts-mode with paredit or smartparens is highly recommended.  Here are
-some example configurations: ;; require or autoload paredit-mode (add-hook
-clojure-ts-mode-hook #'paredit-mode) ;; require or autoload smartparens
-(add-hook clojure-ts-mode-hook #'smartparens-strict-mode) See inf-clojure
-(http://github.com/clojure-emacs/inf-clojure) for basic interaction with Clojure
-subprocesses.  See CIDER (http://github.com/clojure-emacs/cider) for better
-interaction with subprocesses via @code{nREPL}.")
+     "Emacs major mode that provides font-lock (syntax highlighting),
+indentation, and navigation support for the Clojure(Script)
+programming language, powered by the tree-sitter-clojure tree-sitter
+grammar.")
     (license license:gpl3+)))
 
 (define-public emacs-codegpt
