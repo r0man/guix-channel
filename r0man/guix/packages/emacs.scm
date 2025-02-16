@@ -1004,15 +1004,15 @@ returns the language of the      current buffer  * language-detection-string
 (define-public emacs-mermaid-mode
   (package
     (name "emacs-mermaid-mode")
-    (version "20240123.1729")
+    (version "20241213.1913")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
              (url "https://github.com/abrochard/mermaid-mode.git")
-             (commit "d8bfb8c819cda9ead19c871842f6b0b8d56c56c0")))
+             (commit "e74d4da7612c7a88e07f9dd3369e3b9fd36f396c")))
        (sha256
-        (base32 "0vsnyn2g8525k9vgmifzix9gd1g3149h54ni6rrc1y05h91883fv"))))
+        (base32 "0dqg3fyhyxn29b0fw7zr3ykhb5lpqlffhpfcbrk08h8h29mg7jvd"))))
     (build-system emacs-build-system)
     (home-page "https://github.com/abrochard/mermaid-mode")
     (synopsis "major mode for working with mermaid graphs")
@@ -1046,16 +1046,16 @@ Emacs built-in tabulated list mode, but with less boilerplate.")
 (define-public emacs-ob-mermaid
   (package
     (name "emacs-ob-mermaid")
-    (version "20200320.1504")
+    (version "20250124.1831")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
              (url "https://github.com/arnm/ob-mermaid.git")
-             (commit "b4ce25699e3ebff054f523375d1cf5a17bd0dbaf")))
+             (commit "0e7abc14f887e7da6914caf6aaa3226d00d590f7")))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0fhj3241gpj6qj2sawr8pgyn5b7320vjfb7idsy23kh4jvmj2wb8"))))
+        (base32 "0agq1nkzx62ki9n8qhyvhkvl4anxpbxm6s9smjknhzlllwr4xraj"))))
     (build-system emacs-build-system)
     (home-page "https://github.com/arnm/ob-mermaid")
     (synopsis "Org-babel support for Mermaid diagrams")
