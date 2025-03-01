@@ -374,6 +374,32 @@ with consult, such as vertico.")
       (description "An unofficial Emacs mode for Github Copilot.")
       (license license:gpl3+))))
 
+(define-public emacs-copilot-chat
+  (package
+    (name "emacs-copilot-chat")
+    (version "20250228.2322")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/chep/copilot-chat.el.git")
+             (commit "17c4bfaafe7cd7da1b333714dfa548cd08a875d7")))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "00z15s7z8qr4bd69dknxsxyczqb0nb4axlc2yy73rj1nbw8qdpb8"))))
+    (build-system emacs-build-system)
+    (propagated-inputs (list emacs-request
+                             emacs-markdown-mode
+                             emacs-magit
+                             emacs-transient
+                             emacs-org
+                             emacs-polymode
+                             emacs-shell-maker))
+    (home-page "https://github.com/chep/copilot-chat.el")
+    (synopsis "Chat with Github copilot in Emacs")
+    (description "This package allows you to chat with Github Copilot from within Emacs.")
+    (license license:expat)))
+
 (define-public emacs-eglot-java
   (let ((commit "4cb3bdfaa954ad02e6eaac77c578987355db90cf")
         (revision "1"))
