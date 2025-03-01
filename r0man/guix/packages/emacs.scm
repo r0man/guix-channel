@@ -353,8 +353,8 @@ with consult, such as vertico.")
     (license license:gpl3+)))
 
 (define-public emacs-copilot
-  (let ((commit "8ddfbee370d4c6705b3bbd9532d0c722a78ba844")
-        (revision "5"))
+  (let ((commit "7d105d708a23d16cdfd5240500be8bb02f95a46e")
+        (revision "6"))
     (package
       (name "emacs-copilot")
       (version (git-version "0.0.1" revision commit))
@@ -366,7 +366,7 @@ with consult, such as vertico.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "162i2j92c2sr30bbsmhy2ybvzh1jnnjdnn3200wyn3bzaw82vjw8"))))
+          (base32 "1gc8rnyl60wlxdhqi1a96mq0wfgpnfziyihpvcy9bmnx14s34ch1"))))
       (build-system emacs-build-system)
       (propagated-inputs (list emacs-dash emacs-f emacs-editorconfig emacs-jsonrpc emacs-s))
       (home-page "https://github.com/copilot-emacs/copilot.el")
