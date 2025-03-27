@@ -719,6 +719,30 @@ languages is very easy and this package already contains language statistics for
       (description "Instant GitHub-flavored Markdown/Org preview using a grip subprocess.")
       (license license:gpl3+))))
 
+(define-public emacs-jira
+  (package
+    (name "emacs-jira")
+    (version "20250324.1926")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/unmonoqueteclea/jira.el.git")
+             (commit "6b9cacaddbd9d23a4554231839a2cf33d30c75cc")))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1zmj0i69nzs8974y4szajhh79ximmmdgxawnyganvzq8z96yzqnr"))))
+    (build-system emacs-build-system)
+    (propagated-inputs (list emacs-request
+                             emacs-tablist
+                             emacs-transient
+                             emacs-magit))
+    (home-page "https://github.com/unmonoqueteclea/jira.el")
+    (synopsis "Emacs Interface to Jira")
+    (description
+     "This package allows you to visualuze and manipulate Jira issues from Emacs.")
+    (license #f)))
+
 (define-public emacs-jiralib2
   (package
     (name "emacs-jiralib2")
