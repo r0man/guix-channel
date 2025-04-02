@@ -39,6 +39,36 @@
 Aider, an AI pair programming environment in your terminal.")
       (license license:asl2.0))))
 
+(define-public emacs-aidermacs
+  (package
+    (name "emacs-aidermacs")
+    (version "20250401.2057")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/MatthewZMD/aidermacs.git")
+             (commit "38aa5bfa5c5a66664abb5bb9cd7f191d1ac3d915")))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "15l28149akn1xxcqbqzymyw2r84sr3dafdxil8x7m7cx3260p7ni"))))
+    (build-system emacs-build-system)
+    (propagated-inputs (list emacs-transient emacs-compat))
+    (home-page "https://github.com/MatthewZMD/aidermacs")
+    (synopsis "AI pair programming with Aider")
+    (description
+     "Aidermacs integrates with Aider (https://aider.chat/) for AI-assisted code
+modification in Emacs.  Aider lets you pair program with LLMs to edit code in
+your local git repository.  It works with both new projects and existing code
+bases, supporting Claude, @code{DeepSeek}, @code{ChatGPT}, and can connect to
+almost any LLM including local models.  Think of it as having a helpful coding
+partner that can understand your code, suggest improvements, fix bugs, and even
+write new code for you.  Whether you're working on a new feature, debugging, or
+just need help understanding some code, Aidermacs provides an intuitive way to
+collaborate with AI while staying in your familiar Emacs environment.
+Originally forked from Kang Tu <tninja@@gmail.com>'s Aider.el.")
+    (license license:asl2.0)))
+
 (define-public emacs-avy-menu
   (let ((commit "bb694fd3dde6507f06f76dd862b888ba9c3b544d")
         (revision "1"))
