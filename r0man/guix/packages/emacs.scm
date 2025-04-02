@@ -42,13 +42,13 @@ Aider, an AI pair programming environment in your terminal.")
 (define-public emacs-aidermacs
   (package
     (name "emacs-aidermacs")
-    (version "20250401.2057")
+    (version "1.2")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
              (url "https://github.com/MatthewZMD/aidermacs.git")
-             (commit "38aa5bfa5c5a66664abb5bb9cd7f191d1ac3d915")))
+             (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
         (base32 "15l28149akn1xxcqbqzymyw2r84sr3dafdxil8x7m7cx3260p7ni"))))
