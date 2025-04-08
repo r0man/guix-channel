@@ -752,16 +752,16 @@ languages is very easy and this package already contains language statistics for
 (define-public emacs-jira
   (package
     (name "emacs-jira")
-    (version "20250324.1926")
+    (version "0.7.0")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
              (url "https://github.com/unmonoqueteclea/jira.el.git")
-             (commit "6b9cacaddbd9d23a4554231839a2cf33d30c75cc")))
+             (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1zmj0i69nzs8974y4szajhh79ximmmdgxawnyganvzq8z96yzqnr"))))
+        (base32 "0zg7qx05i92xpsa43y9gsxbn08gmzng88dvkva7y70zvrzx58zz2"))))
     (build-system emacs-build-system)
     (propagated-inputs (list emacs-request
                              emacs-tablist
@@ -771,7 +771,7 @@ languages is very easy and this package already contains language statistics for
     (synopsis "Emacs Interface to Jira")
     (description
      "This package allows you to visualuze and manipulate Jira issues from Emacs.")
-    (license #f)))
+    (license license:gpl3+)))
 
 (define-public emacs-jiralib2
   (package
