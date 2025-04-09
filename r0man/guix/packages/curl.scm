@@ -7,6 +7,7 @@
 (define-public curl-with-openssl
   (package
     (inherit curl:curl)
+    (name "curl-with-openssl")
     (arguments
      (substitute-keyword-arguments (package-arguments curl:curl)
        ((#:configure-flags flags)
