@@ -1495,7 +1495,7 @@ See the README.md for more details.")
 (define-public emacs-plz-media-type
   (package
     (name "emacs-plz-media-type")
-    (version "0.2.1")
+    (version "0.2.4")
     (source
      (origin
        (method git-fetch)
@@ -1504,7 +1504,7 @@ See the README.md for more details.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1bxrinp276rzz1jwnqrs5xginm96vzxr0b1k5q3y56lnin8sp18x"))))
+        (base32 "1g9j12p8ifkp2k0lss5nx3mr1nfjsakj4d3mcq9gvzgj7qg8aw2d"))))
     (build-system emacs-build-system)
     (propagated-inputs (list emacs-plz))
     (arguments (list #:tests? #f))
