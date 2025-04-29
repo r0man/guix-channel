@@ -8,6 +8,7 @@
   #:use-module (gnu packages tree-sitter)
   #:use-module (gnu packages)
   #:use-module (guix build-system emacs)
+  #:use-module (guix build-system gnu)
   #:use-module (guix download)
   #:use-module (guix gexp)
   #:use-module (guix git-download)
@@ -1778,3 +1779,43 @@ modern-blue) - wsd-indent-offset (default 4) - wsd-font-lock-keywords")
     (description "PGmacs provides an editing interface for the PostgreSQL
 object-relational DBMS from Emacs.")
     (license license:gpl3+)))
+
+(define-public mps
+  (package
+    (name "mps")
+    (version "1.118.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/Ravenbrook/mps")
+             (commit (string-append "release-" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "078iv3fsz0dnfwb7g63apkvcksczbqfxrxm73k80jwnwca6pgafy"))))
+    (build-system gnu-build-system)
+    (home-page "https://github.com/Ravenbrook/mps")
+    (synopsis "Memory Pool System")
+    (description "This package provides the Memory Pool System from Ravenbrook.")
+    (license license:bsd-2)))
+
+(define-public emacs-igc
+  (let ((commit "7b35a5062231ec5a11c7a87d4797cfb5dba25121")
+        (revision "0"))
+    (package
+      (inherit emacs-next)
+      (name "emacs-igc")
+      (version (git-version "30.0.92" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://git.savannah.gnu.org/git/emacs.git")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "007mjdpk95d91qg742rx89rrg9rbhq7pssq29w1856gcza8wcw6z"))))
+      (arguments
+       (substitute-keyword-arguments (package-arguments emacs-next)
+         ((#:configure-flags flags)
+          #~(cons "--with-mps=yes" #$flags)))))))
