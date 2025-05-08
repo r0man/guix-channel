@@ -1576,6 +1576,30 @@ the user to select functions to trace, and display the recorded inputs
 and outputs from within Emacs.")
     (license license:asl2.0)))
 
+(define-public emacs-semext
+  (let ((commit "6d05e243d066c2f8b3cd44081ea31cb1c445e535")
+        (revision "0"))
+    (package
+      (name "emacs-semext")
+      (version (git-version "0.0.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/ahyatt/semext")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "0w4hwy25zfwbkjgg1s8n2ns2xapn4ba9miykp9l75q0lic0pa4al"))))
+      (build-system emacs-build-system)
+      (home-page "https://github.com/ahyatt/semext")
+      (propagated-inputs (list emacs-llm))
+      (synopsis "Semantic versions of existing Emacs functionality ")
+      (description "Semext aims to provide LLM-powered version of Emacs command in ways
+that feel natural to Emacs users.  The goal is to be as Emacs-like as
+possible.")
+      (license license:gpl3+))))
+
 (define-public emacs-sqlite3
   (let ((commit "8509f05938cfc946ad1d3927ce1c3b88f8500281")
         (revision "1"))
