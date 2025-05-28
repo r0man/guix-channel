@@ -1082,6 +1082,28 @@ returns the language of the      current buffer  * language-detection-string
     (description "This package provides the realtime markdown preview by eww.")
     (license license:gpl3+)))
 
+(define-public emacs-mcp
+  (let ((commit "18f762b88c49ca3cbd858525bebc223bce7512d8")
+        (revision "0"))
+    (package
+      (name "emacs-mcp")
+      (version (git-version "0.0.1" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/lizqwerscott/mcp.el")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "0x49w8j3nk1iqnwvn225ck4dc5a7k281iglacr4s7wi6a6p8a43h"))))
+      (build-system emacs-build-system)
+      (home-page "https://github.com/lizqwerscott/mcp.el")
+      (synopsis "A MCP client inside Emacs")
+      (description "Emacs client for interfacing with MCP, supporting connections to MCP
+servers.")
+      (license license:gpl3+))))
+
 (define-public emacs-mermaid-mode
   (package
     (name "emacs-mermaid-mode")
