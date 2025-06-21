@@ -1083,8 +1083,8 @@ returns the language of the      current buffer  * language-detection-string
     (license license:gpl3+)))
 
 (define-public emacs-mcp
-  (let ((commit "18f762b88c49ca3cbd858525bebc223bce7512d8")
-        (revision "0"))
+  (let ((commit "5288951946664271ded8faa26aed72ed2f2f0b64")
+        (revision "1"))
     (package
       (name "emacs-mcp")
       (version (git-version "0.0.1" revision commit))
@@ -1096,12 +1096,17 @@ returns the language of the      current buffer  * language-detection-string
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "0x49w8j3nk1iqnwvn225ck4dc5a7k281iglacr4s7wi6a6p8a43h"))))
+          (base32 "0zfchnvcy2r3hnl7qhgn7y2mf7rcaw9w6cc9sw44zzszh2jzc88j"))))
       (build-system emacs-build-system)
       (home-page "https://github.com/lizqwerscott/mcp.el")
-      (synopsis "A MCP client inside Emacs")
-      (description "Emacs client for interfacing with MCP, supporting connections to MCP
-servers.")
+      (synopsis "Emacs MCP client")
+      (description "MCP.el is an Emacs client for connecting to @acronym{MCP, Model
+Context Protocol} servers.  It supports structured communication with
+both filesystem and generic MCP servers, offers asynchronous and
+synchronous operations, and provides resource management features.
+The package includes an extensible tool and prompt system, server
+lifecycle controls, and integrates with popular Emacs packages such as
+gptel and llm.")
       (license license:gpl3+))))
 
 (define-public emacs-mermaid-mode
