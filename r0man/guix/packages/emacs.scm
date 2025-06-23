@@ -830,6 +830,7 @@ https://docs.atlassian.com/jira/REST/cloud/")
                 (sha256 (base32
                          "1n4spfyv7g88mkvca0cxc34qvp3x8vc838hmyp7x4ijr87lp8inm"))))
       (build-system emacs-build-system)
+      (arguments (list #:tests? #f)) ; tests use networking
       (home-page "https://github.com/DamienCassou/json-process-client")
       (synopsis "Interact with a TCP process using JSON")
       (description
