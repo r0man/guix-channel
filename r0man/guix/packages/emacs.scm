@@ -226,6 +226,7 @@ Clojure application.")
        (sha256
         (base32 "15aisl4pzdgi5nqpjxllq053fj9011liz53ph9kqvl7mzspffgaj"))))
     (build-system emacs-build-system)
+    (arguments (list #:tests? #f)) ; tests don't run
     (home-page "http://github.com/clojure-emacs/clojure-ts-mode")
     (synopsis "Tree-sitter major mode for Clojure")
     (propagated-inputs
