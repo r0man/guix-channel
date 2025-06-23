@@ -607,7 +607,8 @@ binary for communicating with a SQLite database.")
          (add-after 'unpack 'move-source-files
            (lambda _
              (let ((el-files (find-files "./src" ".*\\.el$")))
-               (for-each (lambda (f) (rename-file f (basename f))) el-files)))))))
+               (for-each (lambda (f) (rename-file f (basename f))) el-files)))))
+       #:tests? #f)) ; tests require cask
     (home-page "https://github.com/r0man/docopt.el")
     (synopsis "A Docopt implementation in Elisp")
     (description "This package provides a Docopt implementation in Elisp")
