@@ -144,7 +144,9 @@ ALGOL 60 report.")
            emacs-shut-up
            emacs-package-build
            emacs-ansi))
-    (arguments '(#:include '("^cask.el$" "^cask-bootstrap.el$") #:exclude '()))
+    (arguments '(#:include '("^cask.el$" "^cask-bootstrap.el$")
+                 #:exclude '()
+                 #:tests? #f)) ; tests don't run
     (home-page "http://github.com/cask/cask")
     (synopsis "Cask: Project management for package development")
     (description
