@@ -1097,6 +1097,7 @@ buffers to HTML that is compatible with Tufte CSS.")
          (sha256
           (base32 "05w6pgqp62xf48z9zm3bjh5c91pwfs0rbkc9bx2dc9qp2hy5dfpv"))))
       (build-system emacs-build-system)
+      (arguments (list #:tests? #f)) ; no tests
       (propagated-inputs (list emacs-dash emacs-request emacs-tblui))
       (home-page "https://github.com/emacs-openai/openai")
       (synopsis "Elisp library for the OpenAI API")
