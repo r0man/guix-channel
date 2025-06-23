@@ -253,6 +253,7 @@ grammar.")
          (sha256
           (base32 "1xwkms00nh8c3lzy04ag4lyjcr3jiq58qjwsjbxlw8gn7qg04b8h"))))
       (build-system emacs-build-system)
+      (arguments (list #:tests? #f)) ; no tests
       (propagated-inputs (list emacs-chatgpt
                                emacs-markdown-mode
                                emacs-openai
