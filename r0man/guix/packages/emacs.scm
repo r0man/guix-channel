@@ -170,6 +170,7 @@ development cycle.")
          (sha256
           (base32 "0falksb1ljv0m6imzzflws60akg34rf3v7z4r3l7v5y5hixhdmfa"))))
       (build-system emacs-build-system)
+      (arguments (list #:tests? #f)) ; no tests
       (propagated-inputs (list emacs-ht
                                emacs-hydra
                                emacs-markdown-mode
