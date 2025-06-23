@@ -11,7 +11,7 @@
     (origin
       (method git-fetch)
       (uri (git-reference
-            (url "https://git.savannah.gnu.org/git/guix/guix-artwork.git")
+            (url "https://codeberg.org/guix/artwork")
             (commit commit)))
       (file-name (string-append "guix-artwork-" (string-take commit 7)
                                 "-checkout"))
