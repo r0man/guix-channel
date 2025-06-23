@@ -1194,6 +1194,7 @@ generate generate digital images from natural language descriptions.")
          (sha256
           (base32 "1ji4xgnbnn85xaw4wpg3r37nh7ncihl36xl87ag7l3vhbw1bwzcm"))))
       (build-system emacs-build-system)
+      (arguments (list #:tests? #f)) ; no tests
       (propagated-inputs
        (list emacs-aio
              emacs-dash
