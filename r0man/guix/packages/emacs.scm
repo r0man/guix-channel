@@ -1400,7 +1400,8 @@ See the README.md for more details.")
          (add-after 'unpack 'move-source-files
            (lambda _
              (let ((el-files (find-files "./src" ".*\\.el$")))
-               (for-each (lambda (f) (rename-file f (basename f))) el-files)))))))
+               (for-each (lambda (f) (rename-file f (basename f))) el-files)))))
+       #:tests? #f)) ; no tests
     (home-page "https://github.com/r0man/paimon.el")
     (synopsis "A major mode for Splunk")
     (description "This package provides a major mode for Splunk")
