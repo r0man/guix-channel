@@ -1481,7 +1481,8 @@ server sent events.")
       #~(modify-phases %standard-phases
           (add-before 'install 'enter-lisp-directory
             (lambda _
-              (chdir "src/el"))))))
+              (chdir "src/el"))))
+      #:tests? #f)) ; no tests
     (propagated-inputs (list emacs-cider))
     (home-page "https://github.com/clojure-emacs/sayid")
     (synopsis "Sayid Emacs mode")
