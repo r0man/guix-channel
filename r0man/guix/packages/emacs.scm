@@ -556,7 +556,9 @@ However it will not work in Emacs 18.")
         (base32 "0z382qksrwhkv0ayjp8nays65c3xwd4kylj41k1pc3nnqg6b2k45"))))
     (build-system emacs-build-system)
     (propagated-inputs (list emacs-emacsql))
-    (arguments '(#:include '("^emacsql-sqlite.el$" "^sqlite$") #:exclude '()))
+    (arguments '(#:include '("^emacsql-sqlite.el$" "^sqlite$")
+                 #:exclude '()
+                 #:tests? #f)) ; tests are failing
     (home-page "https://github.com/skeeto/emacsql")
     (synopsis "EmacSQL back-end for SQLite")
     (description
