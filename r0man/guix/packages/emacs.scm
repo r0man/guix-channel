@@ -198,7 +198,9 @@ your questions, right within the editor.")
     (build-system emacs-build-system)
     (propagated-inputs (list emacs-clojure-mode))
     (arguments
-     '(#:include '("^clojure-mode-extra-font-locking.el$") #:exclude '()))
+     '(#:include '("^clojure-mode-extra-font-locking.el$")
+       #:exclude '()
+       #:tests? #f)) ; no tests
     (home-page "http://github.com/clojure-emacs/clojure-mode")
     (synopsis "Extra font-locking for Clojure mode")
     (description
