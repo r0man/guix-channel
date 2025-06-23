@@ -322,7 +322,8 @@ completion familiar to Emacs users.")
          "^test.el$"
          "^tests.el$"
          "^[^/]+-test.el$"
-         "^[^/]+-tests.el$")))
+         "^[^/]+-tests.el$")
+       #:tests? #f)) ; tests don't run
     (home-page "http://www.emacswiki.org/cgi-bin/wiki.pl?ColorTheme")
     (synopsis "An OBSOLETE color-theme implementation")
     (description
