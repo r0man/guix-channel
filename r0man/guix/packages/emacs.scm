@@ -1169,6 +1169,7 @@ generate generate digital images from natural language descriptions.")
                  (base32
                   "02l9f94wd3clmyrqnwz0xq63adzkpbf9gsfy66l8anarisizgk6c"))))
       (build-system emacs-build-system)
+      (arguments (list #:tests? #f)) ; no tests
       (propagated-inputs (list emacs-f emacs-s))
       (home-page "https://github.com/jcs-elpa/reveal-in-folder")
       (synopsis "Reveal current file in folder")
