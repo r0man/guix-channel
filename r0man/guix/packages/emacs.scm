@@ -1144,6 +1144,7 @@ and `gfm back-ends.")
          (sha256
           (base32 "018alzk3lzl23jhsmzqzxs8wg43pz85wc2yjha0cz95s3pw48qhv"))))
       (build-system emacs-build-system)
+      (arguments (list #:tests? #f)) ; no tests
       (propagated-inputs (list emacs-async
                                emacs-ht
                                emacs-hydra
