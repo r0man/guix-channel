@@ -114,6 +114,7 @@ It can also be used directly.")
                  (base32
                   "1r23hrl258v7r0y785p2jrjz0y0bpd4lpl9ji91pqzrm6amvbkn4"))))
       (build-system emacs-build-system)
+      (arguments (list #:tests? #f)) ; tests don't run
       (home-page "https://github.com/sergeyklay/bnf-mode")
       (synopsis "Major mode for editing BNF grammars.")
       (description
