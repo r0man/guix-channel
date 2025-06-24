@@ -1724,11 +1724,11 @@ modern-blue) - wsd-indent-offset (default 4) - wsd-font-lock-keywords")
 object-relational DBMS from Emacs.")
     (license license:gpl3+)))
 
-(define-public emacs-eca-emacs
+(define-public emacs-editor-code-assistant
   (let ((commit "e994ceaa36ec4a952e0d37d5664b3f357f2b4ee4")
         (revision "0"))
     (package
-      (name "emacs-eca-emacs")
+      (name "emacs-editor-code-assistant")
       (version (git-version "0.0.1" revision commit))
       (source
        (origin
