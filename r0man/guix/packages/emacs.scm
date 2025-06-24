@@ -1723,3 +1723,25 @@ modern-blue) - wsd-indent-offset (default 4) - wsd-font-lock-keywords")
     (description "PGmacs provides an editing interface for the PostgreSQL
 object-relational DBMS from Emacs.")
     (license license:gpl3+)))
+
+(define-public emacs-eca-emacs
+  (let ((commit "e994ceaa36ec4a952e0d37d5664b3f357f2b4ee4")
+        (revision "0"))
+    (package
+      (name "emacs-eca-emacs")
+      (version (git-version "0.0.1" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/editor-code-assistant/eca-emacs")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "14cvn3jxncqkzq1wwdp2zgl1h0vipkj534lic3czsiqhfxrnwwd0"))))
+      (build-system emacs-build-system)
+      (home-page "https://github.com/editor-code-assistant/eca-emacs")
+      (propagated-inputs (list emacs-compat emacs-dash emacs-f emacs-markdown-mode))
+      (synopsis "Editor Code Assistant for Emacs")
+      (description "Editor Code Assistant (ECA) integration for Emacs")
+      (license license:asl2.0))))
