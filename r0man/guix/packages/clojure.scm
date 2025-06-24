@@ -101,3 +101,31 @@ Clojure/Clojurescript to all editors and programatically via its CLI and API.
 It aims to work alongside you to help you navigate, identify and fix errors,
 perform refactors and more.")
     (license license:expat)))
+
+(define-public editor-code-assistant
+  (package
+    (name "editor-code-assistant")
+    (version "0.0.3")
+    (source (origin
+              (method url-fetch/zipbomb)
+              (uri (string-append "https://github.com/editor-code-assistant"
+                                  "/eca/releases/download/" version
+                                  "/eca-native-linux-"
+                                  (cond ((target-aarch64?)
+                                         "aarch64")
+                                        ((target-x86-64?)
+                                         "amd64"))
+                                  ".zip"))
+              (sha256
+               (base32
+                (cond ((target-aarch64?)
+                       "0imvb35gwg1zb6kh4b144kg039p06n9ysvsavfdzby45hq13r8lf")
+                      ((target-x86-64?)
+                       "1k5ymb3bl0af7wydmnbwhm5k8n1jvvfc072ygg0l89kb5bpwndhj"))))))
+    (build-system binary-build-system)
+    (arguments (list #:install-plan `'(("eca" "/bin/"))))
+    (supported-systems '("aarch64-linux" "x86_64-linux"))
+    (home-page "https://github.com/editor-code-assistant/eca")
+    (synopsis "Editor Code Assistant")
+    (description "AI pair programming capabilities in any editor")
+    (license license:expat)))
