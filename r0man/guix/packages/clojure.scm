@@ -105,7 +105,7 @@ perform refactors and more.")
 (define-public editor-code-assistant
   (package
     (name "editor-code-assistant")
-    (version "0.0.3-2025.06.26-15.11.32")
+    (version "0.0.4-2025.06.26-21.33.03")
     (source (origin
               (method url-fetch/zipbomb)
               (uri (string-append "https://github.com/editor-code-assistant"
@@ -121,7 +121,7 @@ perform refactors and more.")
                 (cond ((target-aarch64?)
                        "0imvb35gwg1zb6kh4b144kg039p06n9ysvsavfdzby45hq13r8lf")
                       ((target-x86-64?)
-                       "0shy4xxjx6x6c7a2rycwdqnddi00wxy65g2w96cs2vprs6sl70iv"))))))
+                       "1hqzb06zbw9izxkk6m642mjf8y0xn9xanx11rvxs56bxnl5qx6vq"))))))
     (build-system binary-build-system)
     (arguments (list #:install-plan `'(("eca" "/bin/"))))
     (supported-systems '("aarch64-linux" "x86_64-linux"))
