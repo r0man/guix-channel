@@ -1745,3 +1745,27 @@ object-relational DBMS from Emacs.")
       (synopsis "Editor Code Assistant for Emacs")
       (description "Editor Code Assistant (ECA) integration for Emacs")
       (license license:asl2.0))))
+
+(define-public emacs-claude-code
+  (let ((commit "8e37cfcf9d9aea2ba9bc5f162d5f71802213c37b")
+        (revision "0"))
+    (package
+      (name "emacs-claude-code")
+      (version (git-version "0.0.1" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/stevemolitor/claude-code.el")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "0dqwfgslcjcn8hb27w561pkxxhm94szdv9g5jklicb3hszhyv18k"))))
+      (build-system emacs-build-system)
+      (arguments (list #:tests? #f)) ; no tests
+      (home-page "https://github.com/stevemolitor/claude-code.el")
+      (propagated-inputs (list emacs-eat emacs-transient))
+      (synopsis "Claude Code Emacs integration ")
+      (description "Emacs interface for Claude Code CLI, providing integration between
+Emacs and Claude AI for coding assistance.")
+      (license license:asl2.0))))
