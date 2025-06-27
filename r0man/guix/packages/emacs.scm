@@ -1725,8 +1725,8 @@ object-relational DBMS from Emacs.")
     (license license:gpl3+)))
 
 (define-public emacs-editor-code-assistant
-  (let ((commit "36aa793baa78fadab393ee0d2eefa8607bda59e0")
-        (revision "3"))
+  (let ((commit "e1a939fe97197e94f8780025f55b66cbbc56de76")
+        (revision "4"))
     (package
       (name "emacs-editor-code-assistant")
       (version (git-version "0.0.1" revision commit))
@@ -1738,7 +1738,7 @@ object-relational DBMS from Emacs.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "0w0n0qdhj47kx866vpkinv2pkd9na7ikgpik3dx0kr8yppfbyj3a"))))
+          (base32 "0cwz00qvif58d15wgv83m5y50jb5dd3xmkn3q4gicm3c65y53zah"))))
       (build-system emacs-build-system)
       (home-page "https://github.com/editor-code-assistant/eca-emacs")
       (propagated-inputs (list emacs-compat emacs-dash emacs-f emacs-markdown-mode))
