@@ -1634,28 +1634,30 @@ details.")
     (license license:gpl3+)))
 
 (define-public emacs-whisper
-  (package
-    (name "emacs-whisper")
-    (version "20240228.1")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/natrys/whisper.el")
-             (commit "fc7512bf5a17b72c033c8231ed2a3291dff191e1")))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "0m873c3fm5knrsc8g5xdydhg7icnr8cjd44a65373k325ximvrwx"))))
-    (build-system emacs-build-system)
-    (home-page "https://github.com/natrys/whisper.el")
-    (synopsis "Speech-to-Text interface for Emacs using OpenAI's whisper model and
+  (let ((commit "fc122657bfb8d5faf6aedaefdc1687193f456d1f")
+        (revision "0"))
+    (package
+      (name "emacs-whisper")
+      (version (git-version "0.0.1" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/natrys/whisper.el")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1kp9cdk71mfv8jzc68mzw9c4f71kgf4f26g8qys2578a9gk3xv2f"))))
+      (build-system emacs-build-system)
+      (home-page "https://github.com/natrys/whisper.el")
+      (synopsis "Speech-to-Text interface for Emacs using OpenAI's whisper model and
 whisper.cpp as inference engine.")
-    (description
-     "Speech-to-Text interface for Emacs using OpenAI’s whisper speech
+      (description
+       "Speech-to-Text interface for Emacs using OpenAI’s whisper speech
 recognition model. For the inference engine it uses the awesome C/C++
 port whisper.cpp that can run on consumer grade CPU (without requiring
 a high end GPU).")
-    (license license:gpl3+)))
+      (license license:gpl3+))))
 
 (define-public emacs-wsd-mode
   (package
