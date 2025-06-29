@@ -1826,3 +1826,26 @@ Code CLI through the Model Context Protocol (MCP).  This package
 enables AI-powered code assistance directly within your Emacs
 workflow.")
       (license license:asl2.0))))
+
+(define-public emacs-mcp-client
+  (let ((commit "9c1a181cc13b38583256f8a61043b7725776abc4")
+        (revision "1"))
+    (package
+      (name "emacs-mcp-client")
+      (version (git-version "0.1.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/r0man/emacs-mcp")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "0j5favg57zj6mhg2clrynlxxbnbqgp1hdrwxbisdx11spss0jzks"))))
+      (build-system emacs-build-system)
+      (home-page "https://github.com/mpontus/emacs-mcp")
+      (synopsis "Model Context Protocol client for Emacs")
+      (description "This package provides a Model Context Protocol (MCP) client
+implementation for Emacs, enabling integration with AI tools and
+services that support the MCP standard.")
+      (license license:gpl3+))))
