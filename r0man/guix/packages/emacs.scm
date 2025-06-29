@@ -992,6 +992,35 @@ lifecycle controls, and integrates with popular Emacs packages such as
 gptel and llm.")
       (license license:gpl3+))))
 
+(define-public emacs-mcp-server-lib
+  (let ((commit "83f0524bf8be4e71830cb0a8fd7490b4963b1f5b")
+        (revision "0"))
+    (package
+      (name "emacs-mcp-server-lib")
+      (version (git-version "0.1.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/laurynas-biveinis/mcp-server-lib.el")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "0fykvkyc6lghxkxsz96hjjhs021rx9gp7wwbqk6rg0qv6biaxkf1"))))
+      (build-system emacs-build-system)
+      (arguments (list #:tests? #f)) ; no tests
+      (home-page "https://github.com/laurynas-biveinis/mcp-server-lib.el")
+      (synopsis "Model Context Protocol server library for Emacs Lisp")
+      (description
+       "This library enables Emacs packages to expose their functionality to AI
+applications via the Model Context Protocol (MCP).  It provides infrastructure
+for Emacs packages to expose their functionality as tools and resources to
+Large Language Models.  Features include a simple API for registering tools
+and resources, handles MCP protocol communication and JSON-RPC messages,
+stdio transport via emacsclient wrapper script, and built-in usage metrics
+and debugging support.")
+      (license license:gpl3+))))
+
 (define-public emacs-mermaid-mode
   (package
     (name "emacs-mermaid-mode")
