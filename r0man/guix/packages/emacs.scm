@@ -43,7 +43,7 @@ Aider, an AI pair programming environment in your terminal.")
 (define-public emacs-aidermacs
   (package
     (name "emacs-aidermacs")
-    (version "1.2")
+    (version "1.4")
     (source
      (origin
        (method git-fetch)
@@ -52,7 +52,7 @@ Aider, an AI pair programming environment in your terminal.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "15l28149akn1xxcqbqzymyw2r84sr3dafdxil8x7m7cx3260p7ni"))))
+        (base32 "11mmr222gk3g09rz4852yirxgrp0p7n7aa0x0hy7rfah7h2xy2vv"))))
     (build-system emacs-build-system)
     (propagated-inputs (list emacs-transient emacs-compat))
     (home-page "https://github.com/MatthewZMD/aidermacs")
