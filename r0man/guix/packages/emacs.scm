@@ -55,7 +55,7 @@ Aider, an AI pair programming environment in your terminal.")
        (sha256
         (base32 "11mmr222gk3g09rz4852yirxgrp0p7n7aa0x0hy7rfah7h2xy2vv"))))
     (build-system emacs-build-system)
-    (propagated-inputs (list emacs-transient emacs-compat))
+    (propagated-inputs (list emacs-markdown-mode emacs-transient emacs-compat))
     (home-page "https://github.com/MatthewZMD/aidermacs")
     (synopsis "AI pair programming with Aider")
     (description
