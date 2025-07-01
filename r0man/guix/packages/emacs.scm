@@ -16,29 +16,30 @@
   #:use-module (guix packages))
 
 (define-public emacs-aider
-  (let ((commit "9fc3b047754a4ef3fe1d5c664f84170a86a09a4b")
-        (revision "1"))
-    (package
-      (name "emacs-aider")
-      (version (git-version "0.0.1" revision commit))
-      (source
-       (origin
-         (method git-fetch)
-         (uri (git-reference
-               (url "https://github.com/tninja/aider.el")
-               (commit commit)))
-         (file-name (git-file-name name version))
-         (sha256
-          (base32 "1407jx9wab2x4sjcnswfxq00wx3g5ap8ssrn0acvyn818gdnz7d9"))))
-      (build-system emacs-build-system)
-      (propagated-inputs (list emacs-transient))
-      (native-inputs (list emacs-helm))
-      (home-page "https://github.com/tninja/aider.el")
-      (synopsis "Emacs user interface for Aider")
-      (description
-       "This package provides an interactive interface to communicate with
+  (package
+    (name "emacs-aider")
+    (version "0.13.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/tninja/aider.el")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0bqw48zxs31w5sajd4mchgz656w6qmmkgld86hb5x0b6mjaa8cp9"))))
+    (build-system emacs-build-system)
+    (propagated-inputs (list emacs-helm
+                             emacs-magit
+                             emacs-markdown-mode
+                             emacs-s
+                             emacs-transient))
+    (home-page "https://github.com/tninja/aider.el")
+    (synopsis "Emacs user interface for Aider")
+    (description
+     "This package provides an interactive interface to communicate with
 Aider, an AI pair programming environment in your terminal.")
-      (license license:asl2.0))))
+    (license license:asl2.0)))
 
 (define-public emacs-aidermacs
   (package
