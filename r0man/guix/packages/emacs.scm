@@ -1778,6 +1778,28 @@ object-relational DBMS from Emacs.")
       (description "Editor Code Assistant (ECA) integration for Emacs")
       (license license:asl2.0))))
 
+(define-public emacs-claudemacs
+  (let ((commit "bf0c2d6e3e41c965a552e6fc9ee16cffc2f79355")
+        (revision "1"))
+    (package
+      (name "emacs-claudemacs")
+      (version (git-version "0.0.1" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/cpoile/claudemacs")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1afxklm2qpsqxwfhg4whj96d5554xg115ib528x1aj676hs0f5j3"))))
+      (build-system emacs-build-system)
+      (arguments (list #:tests? #f)) ; no tests
+      (home-page "https://github.com/cpoile/claudemacs")
+      (synopsis "AI Pair Programming with Claude Code in Emacs")
+      (description "AI Pair Programming with Claude Code in Emacs")
+      (license license:expat))))
+
 (define-public emacs-claude-code
   (let ((commit "e06b35fdbd4ea74060e6f2cb41761d5885522e52")
         (revision "1"))
