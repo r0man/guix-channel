@@ -1801,8 +1801,8 @@ object-relational DBMS from Emacs.")
       (license license:expat))))
 
 (define-public emacs-claude-code
-  (let ((commit "e06b35fdbd4ea74060e6f2cb41761d5885522e52")
-        (revision "1"))
+  (let ((commit "1196a66a73eca84d0d31f9ffa920cdde98953f4b")
+        (revision "2"))
     (package
       (name "emacs-claude-code")
       (version (git-version "0.0.1" revision commit))
@@ -1814,7 +1814,7 @@ object-relational DBMS from Emacs.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "15s4iiwf95x7fv1h03qp2s4m8s3jdmsy77wavqbm0bqmfkj3ma7d"))))
+          (base32 "191vd4hcdfd99jgal8ckzqyiavdxcnzlpnfic5qr09wyc8ish9ql"))))
       (build-system emacs-build-system)
       (arguments (list #:tests? #f)) ; no tests
       (home-page "https://github.com/stevemolitor/claude-code.el")
