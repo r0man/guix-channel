@@ -441,6 +441,28 @@ with consult, such as vertico.")
     (description "This package allows you to chat with Github Copilot from within Emacs.")
     (license license:expat)))
 
+(define-public emacs-efrit
+  (let ((commit "bb99039b54a647bb50eb39156dfadbd784546bfd")
+        (revision "1"))
+    (package
+      (name "emacs-efrit")
+      (version (git-version "0.0.1" revision commit))
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                       (url "https://github.com/steveyegge/efrit")
+                       (commit commit)))
+                (file-name (git-file-name name version))
+                (sha256 (base32
+                         "0ivawz2jmcyd25xvnncdgdxk3gk2dwvija8l77his3jzn38avc6z"))))
+      (build-system emacs-build-system)
+      (propagated-inputs (list emacs-eglot emacs-jsonrpc))
+      (home-page "https://github.com/steveyegge/efrit")
+      (synopsis "Native elisp coding agent running in Emacs")
+      (description "A sophisticated AI coding agent that leverages Emacs' native
+programmability through direct Elisp evaluation.")
+      (license license:asl2.0))))
+
 (define-public emacs-eglot-java
   (let ((commit "4cb3bdfaa954ad02e6eaac77c578987355db90cf")
         (revision "1"))
