@@ -1702,12 +1702,11 @@ details.")
           (base32 "0am9nhqfnx2r60vdgnkja5ri7k5whc1wpmvsh1cvc5wi0wcxxrvn"))))
       (build-system emacs-build-system)
       (home-page "https://github.com/natrys/whisper.el")
-      (synopsis "Speech-to-Text interface for Emacs using OpenAI's whisper model and
-whisper.cpp as inference engine.")
+      (synopsis "Speech-to-Text interface for Emacs using OpenAI's whisper model")
       (description "Speech-to-Text interface for Emacs using OpenAI’s whisper speech
-recognition model. For the inference engine it uses the awesome C/C++
-port whisper.cpp that can run on consumer grade CPU (without requiring
-a high end GPU).")
+recognition model.  For the inference engine it uses the C/C++ port
+whisper.cpp that can run on consumer grade CPU without requiring a
+high end GPU.")
       (license license:gpl3+))))
 
 (define-public emacs-wsd-mode
