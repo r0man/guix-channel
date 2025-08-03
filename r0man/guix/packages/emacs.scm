@@ -5,6 +5,7 @@
   #:use-module (gnu packages emacs)
   #:use-module (gnu packages emacs-build)
   #:use-module (gnu packages emacs-xyz)
+  #:use-module (gnu packages machine-learning)
   #:use-module (gnu packages sqlite)
   #:use-module (gnu packages tree-sitter)
   #:use-module (gnu packages)
@@ -1686,7 +1687,7 @@ details.")
     (license license:gpl3+)))
 
 (define-public emacs-whisper
-  (let ((commit "32f1a79ae7b9d2d8c225d137262d18acefe47491")
+  (let ((commit "ced761e63f270e45d957381e582c8ec5c1367e08")
         (revision "1"))
     (package
       (name "emacs-whisper")
@@ -1699,8 +1700,9 @@ details.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "0am9nhqfnx2r60vdgnkja5ri7k5whc1wpmvsh1cvc5wi0wcxxrvn"))))
+          (base32 "0y7fay1888m8sd430rcggdlkzw2imjqjknv29i6vpw5czmxacsq3"))))
       (build-system emacs-build-system)
+      (inputs (list whisper-cpp))
       (home-page "https://github.com/natrys/whisper.el")
       (synopsis "Speech-to-Text interface for Emacs using OpenAI's whisper model")
       (description "Speech-to-Text interface for Emacs using OpenAI’s whisper speech
