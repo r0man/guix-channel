@@ -1864,7 +1864,7 @@ Emacs and Claude AI for coding assistance.")
       (build-system emacs-build-system)
       (arguments (list #:tests? #f)) ; no tests
       (home-page "https://github.com/manzaltu/claude-code-ide.el")
-      (propagated-inputs (list emacs-flycheck emacs-vterm emacs-websocket))
+      (propagated-inputs (list emacs-flycheck emacs-eat emacs-vterm emacs-web-server emacs-websocket))
       (synopsis "Claude Code IDE integration for Emacs")
       (description "Claude Code IDE for Emacs provides seamless integration with Claude
 Code CLI through the Model Context Protocol (MCP).  This package
