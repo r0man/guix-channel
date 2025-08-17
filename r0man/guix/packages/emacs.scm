@@ -1847,7 +1847,7 @@ Emacs and Claude AI for coding assistance.")
       (license license:asl2.0))))
 
 (define-public emacs-claude-code-ide
-  (let ((commit "8d2603b5a9b078af8b298ae416a574bb36e4b9c8")
+  (let ((commit "f8a0d197c1acdd5b1e964eee43db6e62a1be4f93")
         (revision "1"))
     (package
       (name "emacs-claude-code-ide")
@@ -1860,7 +1860,7 @@ Emacs and Claude AI for coding assistance.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "1yy9asv20yp6zwhxx7ap5vjzdqpn3q4p756i6zyaikhysrgr2db2"))))
+          (base32 "181fk0bbm1gsff54h3hfambwmr4wki7c6bcd6c0qjamss8viw68p"))))
       (build-system emacs-build-system)
       (arguments (list #:tests? #f)) ; no tests
       (home-page "https://github.com/manzaltu/claude-code-ide.el")
