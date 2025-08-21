@@ -1847,8 +1847,8 @@ Emacs and Claude AI for coding assistance.")
       (license license:asl2.0))))
 
 (define-public emacs-claude-code-ide
-  (let ((commit "f8a0d197c1acdd5b1e964eee43db6e62a1be4f93")
-        (revision "1"))
+  (let ((commit "907f28ed82b743b0fff945ebe772d10953d78bfe")
+        (revision "2"))
     (package
       (name "emacs-claude-code-ide")
       (version (git-version "0.0.1" revision commit))
@@ -1860,7 +1860,7 @@ Emacs and Claude AI for coding assistance.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "181fk0bbm1gsff54h3hfambwmr4wki7c6bcd6c0qjamss8viw68p"))))
+          (base32 "1zhbwdsy83514afxg81aywgl72sjnc5w5aibryyd44kp45qbf5wx"))))
       (build-system emacs-build-system)
       (arguments (list #:tests? #f)) ; no tests
       (home-page "https://github.com/manzaltu/claude-code-ide.el")
@@ -1870,7 +1870,7 @@ Emacs and Claude AI for coding assistance.")
 Code CLI through the Model Context Protocol (MCP).  This package
 enables AI-powered code assistance directly within your Emacs
 workflow.")
-      (license license:asl2.0))))
+      (license license:gpl3+))))
 
 (define-public emacs-mcp-client
   (let ((commit "9c1a181cc13b38583256f8a61043b7725776abc4")
