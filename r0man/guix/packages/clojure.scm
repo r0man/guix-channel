@@ -17,7 +17,7 @@
 (define-public babashka
   (package
     (name "babashka")
-    (version "1.12.197")
+    (version "1.12.208")
     (source (origin
               (method url-fetch/tarbomb)
               (uri (string-append "https://github.com/babashka/babashka"
@@ -33,7 +33,7 @@
                 (cond ((target-aarch64?)
                        "1vn239f5024d3mn323xmdg5bbd6ah1w9hiw1x87918zs3m8ci7bl")
                       ((target-x86-64?)
-                       "026r1v3w6mrxiljb26k12md13hvj3im75y5lp4yb9dh8zabivzqz"))))))
+                       "0abivcyg16cmv6phd1xcs8f971p34v0ibqaic7qyqcirpvl0nk22"))))))
     (build-system binary-build-system)
     (arguments
      (list
@@ -60,7 +60,7 @@ be using bash otherwise.")
 (define-public clojure-lsp
   (package
     (name "clojure-lsp")
-    (version "2025.03.27-20.21.36")
+    (version "2025.08.25-14.21.46")
     (source (origin
               (method url-fetch/zipbomb)
               (uri (string-append "https://github.com/clojure-lsp/clojure-lsp"
@@ -76,7 +76,7 @@ be using bash otherwise.")
                 (cond ((target-aarch64?)
                        "0imvb35gwg1zb6kh4b144kg039p06n9ysvsavfdzby45hq13r8lf")
                       ((target-x86-64?)
-                       "1djg4myb3g05c5l5lb9m0bjm6xw53k1j383ni4akby0b8cv14m38"))))))
+                       "07vmnrzagylp2yd95hg0dpflg2j24z7m6bvv8pry52p49323vncf"))))))
     (build-system binary-build-system)
     (arguments
      (list
