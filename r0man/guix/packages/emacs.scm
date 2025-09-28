@@ -1872,6 +1872,84 @@ enables AI-powered code assistance directly within your Emacs
 workflow.")
       (license license:gpl3+))))
 
+(define-public emacs-shell-maker
+  (package
+    (name "emacs-shell-maker")
+    (version "0.82.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/xenodium/shell-maker")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "1v65gbrw2kczj952j2xx1fvq7sfnxgm6xgdgmz82ydgj3sbrfg44"))))
+    (build-system emacs-build-system)
+    (home-page "https://github.com/xenodium/shell-maker")
+    (synopsis "Emacs package for creating interactive command shells")
+    (description
+     "Shell-maker provides a framework for creating interactive command shells
+in Emacs.  It offers a foundation for building shell-like interfaces that can
+communicate with various backends and services, supporting features like
+command history, auto-completion, and customizable prompts.")
+    (license license:gpl3+)))
+
+(define-public emacs-acp
+  (package
+    (name "emacs-acp")
+    (version "0.1.4")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/xenodium/acp.el")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "0ckbj82yl0kxxik2jjayckkv3a5p1nvh42ifxvilka5bvmgv1syf"))))
+    (build-system emacs-build-system)
+    (home-page "https://github.com/xenodium/acp.el")
+    (synopsis "Emacs client library for the Agent Client Protocol")
+    (description
+     "ACP.el is an Emacs Lisp implementation of the Agent Client Protocol,
+providing a standardized interface for communicating with AI agents and
+language models.  It enables Emacs to interact with various AI services
+through a unified protocol.")
+    (license license:gpl3+)))
+
+(define-public emacs-agent-shell
+  (package
+    (name "emacs-agent-shell")
+    (version "0.2.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/xenodium/agent-shell")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "1246zy8rjl6czyslgnnfcyzhmw5ijdqgdzklfsxbb1iarzfkrf7p"))))
+    (build-system emacs-build-system)
+    (propagated-inputs
+     (list emacs-shell-maker
+           emacs-acp))
+    (home-page "https://github.com/xenodium/agent-shell")
+    (synopsis "Native Emacs shell for interacting with LLM agents via ACP")
+    (description
+     "Agent-shell provides a native Emacs shell interface for interacting with
+Large Language Model (LLM) agents through the Agent Client Protocol (ACP).
+It enables users to chat with AI agents like Claude, Gemini, or OpenAI's models
+directly within Emacs, supporting features like tool calls, file operations,
+and interactive command execution.  The package integrates seamlessly with
+Emacs workflows, allowing AI agents to read and write files, execute commands,
+and assist with development tasks.")
+    (license license:gpl3+)))
+
 (define-public emacs-mcp-client
   (let ((commit "9c1a181cc13b38583256f8a61043b7725776abc4")
         (revision "1"))
