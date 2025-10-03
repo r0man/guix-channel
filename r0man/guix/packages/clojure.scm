@@ -74,7 +74,7 @@ be using bash otherwise.")
               (sha256
                (base32
                 (cond ((target-aarch64?)
-                       "0imvb35gwg1zb6kh4b144kg039p06n9ysvsavfdzby45hq13r8lf")
+                       "1k8a269hyhdzxhxb6kcz6snn3wz8bygki29fy4xvww8r72xa1yl5")
                       ((target-x86-64?)
                        "07vmnrzagylp2yd95hg0dpflg2j24z7m6bvv8pry52p49323vncf"))))))
     (build-system binary-build-system)
