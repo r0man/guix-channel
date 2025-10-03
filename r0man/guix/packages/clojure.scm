@@ -31,7 +31,7 @@
               (sha256
                (base32
                 (cond ((target-aarch64?)
-                       "1vn239f5024d3mn323xmdg5bbd6ah1w9hiw1x87918zs3m8ci7bl")
+                       "16cxzqf62jxavn5dizfn0isgxjfgy538in3f7xz7xv5q144kqqpz")
                       ((target-x86-64?)
                        "0abivcyg16cmv6phd1xcs8f971p34v0ibqaic7qyqcirpvl0nk22"))))))
     (build-system binary-build-system)
