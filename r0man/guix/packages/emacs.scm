@@ -1932,12 +1932,9 @@ through a unified protocol.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32
-         "1246zy8rjl6czyslgnnfcyzhmw5ijdqgdzklfsxbb1iarzfkrf7p"))))
+        (base32 "1246zy8rjl6czyslgnnfcyzhmw5ijdqgdzklfsxbb1iarzfkrf7p"))))
     (build-system emacs-build-system)
-    (propagated-inputs
-     (list emacs-shell-maker
-           emacs-acp))
+    (propagated-inputs (list emacs-shell-maker emacs-acp))
     (home-page "https://github.com/xenodium/agent-shell")
     (synopsis "Native Emacs shell for interacting with LLM agents via ACP")
     (description
