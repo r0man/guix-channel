@@ -102,6 +102,7 @@ It aims to work alongside you to help you navigate, identify and fix errors,
 perform refactors and more.")
     (license license:expat)))
 
+
 (define-public editor-code-assistant
   (package
     (name "editor-code-assistant")
@@ -119,11 +120,19 @@ perform refactors and more.")
               (sha256
                (base32
                 (cond ((target-aarch64?)
-                       "0imvb35gwg1zb6kh4b144kg039p06n9ysvsavfdzby45hq13r8lf")
+                       "1gcpkk97y90wm2wd1wspsmqraww3k248bs6cmb8kqsv0akwcqj21")
                       ((target-x86-64?)
                        "0f8y3bd7lvidbdl8d50g8fxpnyvm6pfc3sk0naqxli0yws5j2crc"))))))
     (build-system binary-build-system)
-    (arguments (list #:install-plan `'(("eca" "/bin/"))))
+    (arguments
+     (list
+      #:patchelf-plan
+      (if (target-aarch64?)
+          `'(("eca" ("gcc" "libc" "zlib")))
+          #f)
+      #:install-plan
+      `'(("eca" "/bin/"))))
+    (inputs (list `(,gcc "lib") zlib))
     (supported-systems '("aarch64-linux" "x86_64-linux"))
     (home-page "https://github.com/editor-code-assistant/eca")
     (synopsis "Editor Code Assistant")
