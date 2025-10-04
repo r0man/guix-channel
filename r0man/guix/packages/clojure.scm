@@ -105,12 +105,12 @@ perform refactors and more.")
 (define-public editor-code-assistant
   (package
     (name "editor-code-assistant")
-    (version "0.0.4-2025.06.26-21.33.03")
+    (version "0.64.0")
     (source (origin
               (method url-fetch/zipbomb)
               (uri (string-append "https://github.com/editor-code-assistant"
-                                  "/eca-dev-builds/releases/download/"
-                                  version "-nightly/eca-native-linux-"
+                                  "/eca/releases/download/"
+                                  version "/eca-native-linux-"
                                   (cond ((target-aarch64?)
                                          "aarch64")
                                         ((target-x86-64?)
@@ -121,7 +121,7 @@ perform refactors and more.")
                 (cond ((target-aarch64?)
                        "0imvb35gwg1zb6kh4b144kg039p06n9ysvsavfdzby45hq13r8lf")
                       ((target-x86-64?)
-                       "1hqzb06zbw9izxkk6m642mjf8y0xn9xanx11rvxs56bxnl5qx6vq"))))))
+                       "0f8y3bd7lvidbdl8d50g8fxpnyvm6pfc3sk0naqxli0yws5j2crc"))))))
     (build-system binary-build-system)
     (arguments (list #:install-plan `'(("eca" "/bin/"))))
     (supported-systems '("aarch64-linux" "x86_64-linux"))
