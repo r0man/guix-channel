@@ -451,13 +451,18 @@ with consult, such as vertico.")
       (source (origin
                 (method git-fetch)
                 (uri (git-reference
-                       (url "https://github.com/steveyegge/efrit")
-                       (commit commit)))
+                      (url "https://github.com/steveyegge/efrit")
+                      (commit commit)))
                 (file-name (git-file-name name version))
                 (sha256 (base32
                          "1fdvwwgydlms4jvkxxhpwpwlipwlyrnfi72wyzsqfdlv98sspy8v"))))
       (build-system emacs-build-system)
-      (propagated-inputs (list emacs-eglot emacs-jsonrpc))
+      (arguments (list #:lisp-directory "lisp"
+                       #:phases
+                       #~(modify-phases %standard-phases
+                           (add-before 'build 'set-home
+                             (lambda _
+                               (setenv "HOME" "/tmp"))))))
       (home-page "https://github.com/steveyegge/efrit")
       (synopsis "Native elisp coding agent running in Emacs")
       (description "A sophisticated AI coding agent that leverages Emacs' native
