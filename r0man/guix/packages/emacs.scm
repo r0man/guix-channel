@@ -1692,8 +1692,8 @@ details.")
     (license license:gpl3+)))
 
 (define-public emacs-whisper
-  (let ((commit "ced761e63f270e45d957381e582c8ec5c1367e08")
-        (revision "1"))
+  (let ((commit "6198ce3d9bff0555cf098a77b78d6c2d79baf4f9")
+        (revision "2"))
     (package
       (name "emacs-whisper")
       (version (git-version "0.0.1" revision commit))
@@ -1705,7 +1705,7 @@ details.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "0y7fay1888m8sd430rcggdlkzw2imjqjknv29i6vpw5czmxacsq3"))))
+          (base32 "0f72sa92hz0nxq469ajgwjnriwqbqq6snwxqhrzz0izhwmnkmks5"))))
       (build-system emacs-build-system)
       (inputs (list whisper-cpp))
       (home-page "https://github.com/natrys/whisper.el")
