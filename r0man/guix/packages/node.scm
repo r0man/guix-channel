@@ -3208,7 +3208,7 @@ provides a robust set of features for web and mobile applications.")
     (home-page "https://github.com/sindresorhus/mimic-response")
     (synopsis "Mimic a Node.js HTTP response stream (v1)")
     (description
-     "This package provides utilities to mimic Node.js HTTP response streams. This is version 1.x for compatibility.")
+     "This package provides utilities to mimic Node.js HTTP response streams.  This is version 1.x for compatibility.")
     (license license:expat)))
 
 (define-public node-clone-response
