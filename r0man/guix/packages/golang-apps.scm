@@ -9,12 +9,13 @@
   #:use-module (guix build-system go)
   #:use-module (guix gexp)
   #:use-module (guix git-download)
-  #:use-module (guix packages))
+  #:use-module (guix packages)
+  #:use-module (r0man guix packages golang-xyz))
 
 (define-public bd
   (package
     (name "bd")
-    (version "0.9.2")
+    (version "0.9.6")
     (source
      (origin
        (method git-fetch)
@@ -23,18 +24,17 @@
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0nvan2lwcw8zhhpbr5dpz8xvpf4c02j0vgf14xbgm0lvamwa2hgp"))))
+        (base32 "1yz5g55kr31k3igknnngwahs6slnjas1wpqlh3gphh71m361x4a2"))))
     (build-system go-build-system)
     (arguments
      (list
       #:install-source? #f
       #:import-path "github.com/steveyegge/beads/cmd/bd"
       #:unpack-path "github.com/steveyegge/beads"))
-    (native-inputs
+    (propagated-inputs
      (list go-github-com-fatih-color
-           go-github-com-mattn-go-sqlite3
            go-github-com-spf13-cobra
-           go-github-com-spf13-viper))
+           go-modernc-org-sqlite))
     (home-page "https://github.com/steveyegge/beads")
     (synopsis "Graph-based issue tracker for AI coding agents")
     (description
