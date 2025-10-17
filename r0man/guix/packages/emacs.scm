@@ -1498,30 +1498,6 @@ Emacs LLM library to handle decoding of various streaming and
 non-streaming media type formats.")
     (license license:gpl3+)))
 
-(define-public emacs-plz-event-source
-  (package
-    (name "emacs-plz-event-source")
-    (version "0.1.2")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/r0man/plz-event-source")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "0dwfrypk2gang4xc0apblg1pih55jp6lbr929ar7myv1v28wqjby"))))
-    (build-system emacs-build-system)
-    (propagated-inputs (list emacs-plz-media-type))
-    (arguments (list #:tests? #f))
-    (home-page "https://github.com/r0man/plz-event-source")
-    (synopsis "Server-Sent Events extension for plz.el")
-    (description "The plz-event-source library provides a @code{plz-media-type}, a
-parser and an event source implementation for the @acronym{SSE, Server
-Sent Event} protocol.  It is used in the Emacs LLM library to handle
-server sent events.")
-    (license license:gpl3+)))
-
 (define-public emacs-sayid
   (package
     (name "emacs-sayid")
