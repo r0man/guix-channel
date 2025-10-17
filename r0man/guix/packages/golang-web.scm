@@ -106,3 +106,40 @@
 multiple sources that can be used to configure the SDK's API clients, and
 utilities.")
     (license license:asl2.0)))
+
+(define-public go-github-com-aws-aws-sdk-go-v2-credentials
+  (package
+    (name "go-github-com-aws-aws-sdk-go-v2-credentials")
+    (version "1.17.69")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/aws/aws-sdk-go-v2")
+             (commit (go-version->git-ref version
+                                          #:subdir "credentials"))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "07g7vgpkq8cqirc2s64d9yswnpzdb7jzqr5kwrpblya2nq27inml"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/aws/aws-sdk-go-v2/credentials"
+      #:unpack-path "github.com/aws/aws-sdk-go-v2"
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'fix-tests
+            (lambda* (#:key import-path #:allow-other-keys)
+              (with-directory-excursion (string-append "src/" import-path)
+                (substitute* (find-files "." "test\\.go")
+                  (("/bin/sleep") (which "sleep")))))))))
+    (propagated-inputs
+     (list go-github-com-google-go-cmp
+           go-github-com-aws-smithy-go))
+    (home-page
+     "https://pkg.go.dev/github.com/aws/aws-sdk-go-v2/credentials")
+    (synopsis "AWS SDK for Go v2 - credentials module")
+    (description
+     "Package credentials provides types for retrieving credentials from
+credentials sources.")
+    (license license:asl2.0)))
