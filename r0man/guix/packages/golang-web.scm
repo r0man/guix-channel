@@ -43,3 +43,37 @@
     (description
      "Package smithy provides the core components for a Smithy SDK.")
     (license license:asl2.0)))
+
+(define-public go-github-com-aws-aws-sdk-go-v2
+  (package
+    (name "go-github-com-aws-aws-sdk-go-v2")
+    (version "1.36.4")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/aws/aws-sdk-go-v2")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "07g7vgpkq8cqirc2s64d9yswnpzdb7jzqr5kwrpblya2nq27inml"))
+       (modules '((guix build utils)))
+       (snippet
+        #~(begin
+            (for-each delete-file-recursively
+                      (list "config"
+                            "service/s3"
+                            "service/sqs"))))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/aws/aws-sdk-go-v2"
+      #:test-subdirs #~(list ".")))
+    (propagated-inputs
+     (list go-github-com-jmespath-go-jmespath
+           go-github-com-aws-smithy-go))
+    (home-page "https://github.com/aws/aws-sdk-go-v2")
+    (synopsis "AWS SDK for Go v2")
+    (description
+     "Package sdk is the official AWS SDK for the Go programming language.")
+    (license license:asl2.0)))
