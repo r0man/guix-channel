@@ -1470,34 +1470,6 @@ See the README.md for more details.")
     (description "This package provides a major mode for Splunk")
     (license license:gpl3+)))
 
-(define-public emacs-plz-media-type
-  (package
-    (name "emacs-plz-media-type")
-    (version "0.2.4")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/r0man/plz-media-type")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "1g9j12p8ifkp2k0lss5nx3mr1nfjsakj4d3mcq9gvzgj7qg8aw2d"))))
-    (build-system emacs-build-system)
-    (propagated-inputs (list emacs-plz))
-    (arguments (list #:tests? #f))
-    (home-page "https://github.com/r0man/plz-media-type")
-    (synopsis "HTTP media type extension for plz.el")
-    (description "The plz-media-type library enhances MIME type
-handling for HTTP requests within Emacs.  It leverages the plz.el HTTP
-library for networking calls and introduces a mechanism to process
-responses based on the content type header.  This library defines
-various classes and methods for parsing and processing standard MIME
-types, including JSON, XML, HTML, and binary data.  It is used in the
-Emacs LLM library to handle decoding of various streaming and
-non-streaming media type formats.")
-    (license license:gpl3+)))
-
 (define-public emacs-sayid
   (package
     (name "emacs-sayid")
