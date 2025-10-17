@@ -77,3 +77,32 @@
     (description
      "Package sdk is the official AWS SDK for the Go programming language.")
     (license license:asl2.0)))
+
+(define-public go-github-com-aws-aws-sdk-go-v2-config
+  (package
+    (name "go-github-com-aws-aws-sdk-go-v2-config")
+    (version "1.29.16")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/aws/aws-sdk-go-v2")
+             (commit (go-version->git-ref version
+                                          #:subdir "config"))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "07g7vgpkq8cqirc2s64d9yswnpzdb7jzqr5kwrpblya2nq27inml"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/aws/aws-sdk-go-v2/config"
+      #:unpack-path "github.com/aws/aws-sdk-go-v2"))
+    (propagated-inputs
+     (list go-github-com-aws-smithy-go))
+    (home-page "https://github.com/aws/aws-sdk-go-v2")
+    (synopsis "AWS SDK for Go v2 - config module")
+    (description
+     "Package config provides utilities for loading configuration from
+multiple sources that can be used to configure the SDK's API clients, and
+utilities.")
+    (license license:asl2.0)))
