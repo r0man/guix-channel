@@ -1928,7 +1928,7 @@ through a unified protocol.")
 (define-public emacs-agent-shell
   (package
     (name "emacs-agent-shell")
-    (version "0.2.2")
+    (version "0.6.4")
     (source
      (origin
        (method git-fetch)
@@ -1937,7 +1937,7 @@ through a unified protocol.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1246zy8rjl6czyslgnnfcyzhmw5ijdqgdzklfsxbb1iarzfkrf7p"))))
+        (base32 "1dr9dvxj6nm4rlnpv1c8mkjv8pry5h1k49b2ffdva3bhri9n8qpb"))))
     (build-system emacs-build-system)
     (propagated-inputs (list emacs-shell-maker emacs-acp))
     (home-page "https://github.com/xenodium/agent-shell")
