@@ -176,3 +176,26 @@ ccgo-generated code.")
      "Package sqlite is a CGo-free port of SQLite.  It is a drop-in
 replacement for mattn/go-sqlite3.")
     (license license:bsd-3)))
+
+(define-public go-github-com-tidwall-match
+  (package
+    (name "go-github-com-tidwall-match")
+    (version "1.1.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/tidwall/match")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1n25md63xr5m66r6zc77n6fgcpv2ljrlk92ivp9hvp8xya22as9k"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/tidwall/match"))
+    (home-page "https://github.com/tidwall/match")
+    (synopsis "Simple string pattern matcher for Golang")
+    (description
+     "Package match provides a simple pattern matcher with unicode support.")
+    (license license:expat)))
