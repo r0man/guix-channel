@@ -278,3 +278,28 @@ iteration, and parsing JSON lines.")
      "This package provides a fast and simple way to set a value in a JSON
 document.")
     (license license:expat)))
+
+(define-public go-rsc-io-script
+  (package
+    (name "go-rsc-io-script")
+    (version "0.0.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/rsc/script")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "05yl5nqhcjhp4sjdh7a9m9s6w4lm4qhn4bhi7v6hhsbfn348jxfh"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "rsc.io/script"))
+    (propagated-inputs (list go-golang-org-x-tools))
+    (home-page "https://rsc.io/script")
+    (synopsis "Small scripting language for Go")
+    (description
+     "Package script implements a small, customizable, platform-agnostic
+scripting language.")
+    (license license:bsd-3)))
