@@ -13,10 +13,10 @@
   #:use-module (r0man guix packages golang-web)
   #:use-module (r0man guix packages golang-xyz))
 
-(define-public bd
+(define-public beads
   (package
-    (name "bd")
-    (version "0.9.9")
+    (name "beads")
+    (version "0.9.10")
     (source
      (origin
        (method git-fetch)
@@ -25,14 +25,14 @@
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0a0msbnpgz44yyk5j3nbbrqz80wgclb17v2zlrpvnfyn4y5rgcq2"))))
+        (base32
+         "014fcg7kl2bqv0ss569f5rqfrl9zqv1ggxvdb4dlq93qwmxx62fr"))))
     (build-system go-build-system)
     (arguments
      (list
       #:install-source? #f
       #:import-path "github.com/steveyegge/beads/cmd/bd"
-      #:unpack-path "github.com/steveyegge/beads"
-      #:tests? #f))  ; Tests require specific setup and fail in build environment
+      #:unpack-path "github.com/steveyegge/beads"))
     (propagated-inputs
      (list go-github-com-anthropics-anthropic-sdk-go
            go-github-com-fatih-color
@@ -42,10 +42,11 @@
     (home-page "https://github.com/steveyegge/beads")
     (synopsis "Graph-based issue tracker for AI coding agents")
     (description
-     "@command{bd} (Beads) is a lightweight memory system for coding agents,
-using a graph-based issue tracker.  Four kinds of dependencies work to chain
-issues together like beads, making them easy for agents to follow for long
-distances and reliably perform complex task streams in the right order.  It
-uses SQLite for fast local operations and JSONL files stored in git for
-distributed synchronization across machines.")
+     "@command{bd} (Beads) is a lightweight memory system for coding
+agents, using a graph-based issue tracker.  Four kinds of dependencies
+work to chain issues together like beads, making them easy for agents
+to follow for long distances and reliably perform complex task streams
+in the right order.  It uses SQLite for fast local operations and
+JSONL files stored in git for distributed synchronization across
+machines.")
     (license license:expat)))
