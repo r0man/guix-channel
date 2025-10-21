@@ -79,6 +79,35 @@ explorer or cmd/powershell.")
      "This package provides a C99-compatible strftime implementation for Go.")
     (license license:expat)))
 
+(define-public go-gopkg-in-natefinch-lumberjack-v2
+  (package
+    (name "go-gopkg-in-natefinch-lumberjack-v2")
+    (version "2.2.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/natefinch/lumberjack")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "1jylmjfrx79c6vkx8sqlyrb54krqgjrgj138w8cjw6v17i2dd98r"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "gopkg.in/natefinch/lumberjack.v2"))
+    (propagated-inputs
+     (list go-github-com-burntsushi-toml
+           go-gopkg-in-yaml-v2))
+    (home-page "https://github.com/natefinch/lumberjack")
+    (synopsis "Rolling logger for Go")
+    (description
+     "Lumberjack is a Go package for writing logs to rolling files.
+It provides automatic log rotation based on file size, age, and count,
+with optional compression of rotated files.")
+    (license license:expat)))
+
 (define-public go-modernc-org-memory
   (package
     (name "go-modernc-org-memory")
