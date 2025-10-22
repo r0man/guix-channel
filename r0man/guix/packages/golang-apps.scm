@@ -16,28 +16,28 @@
 (define-public beads
   (package
     (name "beads")
-    (version "0.10.1")
+    (version "0.11.0")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-              (url "https://github.com/steveyegge/beads")
-              (commit (string-append "v" version))))
+             (url "https://github.com/steveyegge/beads")
+             (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "0vwab4mi1lc6nfv6a4d6c8v18i356wrnqvw6l191b51yib08gkad"))))
+         "1c8ihgavkzb6hkkwqmp1yfvl66akv0vpv63wgsirmp4cgyxs4d4h"))))
     (build-system go-build-system)
     (arguments
      (list
       #:install-source? #f
       #:import-path "github.com/steveyegge/beads/cmd/bd"
       #:unpack-path "github.com/steveyegge/beads"
-      #:test-flags
-      #~(list "-skip"
-              (string-join
-               (list "TestGetSocketPath")
-               "|"))))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'build 'set-home
+            (lambda _
+              (setenv "HOME" "/tmp"))))))
     (propagated-inputs
      (list go-github-com-anthropics-anthropic-sdk-go
            go-github-com-fatih-color
