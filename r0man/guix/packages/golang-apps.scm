@@ -16,7 +16,7 @@
 (define-public beads
   (package
     (name "beads")
-    (version "0.14.0")
+    (version "0.17.2")
     (source
      (origin
        (method git-fetch)
@@ -26,7 +26,7 @@
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "16v0p9kmcrzd5zca3m8fcphfpimxh3vbbwiqzkz7wdpyy6lx6zx3"))))
+         "0306hzjy8k4fv15kjny24qz959f6qq37ik3kmh74j50901f3azck"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -42,6 +42,7 @@
      (list go-github-com-anthropics-anthropic-sdk-go
            go-github-com-fatih-color
            go-github-com-spf13-cobra
+           go-github-com-spf13-viper
            go-gopkg-in-natefinch-lumberjack-v2
            go-modernc-org-sqlite
            go-rsc-io-script))
