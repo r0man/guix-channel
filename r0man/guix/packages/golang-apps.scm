@@ -5,6 +5,7 @@
   #:use-module (gnu packages golang-check)
   #:use-module (gnu packages golang-web)
   #:use-module (gnu packages golang-xyz)
+  #:use-module (gnu packages version-control)
   #:use-module (gnu packages)
   #:use-module (guix build-system go)
   #:use-module (guix gexp)
@@ -16,7 +17,7 @@
 (define-public beads
   (package
     (name "beads")
-    (version "0.17.2")
+    (version "0.17.7")
     (source
      (origin
        (method git-fetch)
@@ -26,7 +27,7 @@
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "0306hzjy8k4fv15kjny24qz959f6qq37ik3kmh74j50901f3azck"))))
+         "0adg00mqgl70fxynciswkzka5hyia86h92b1pnqd8achk6c5szbr"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -38,6 +39,8 @@
           (add-before 'build 'set-home
             (lambda _
               (setenv "HOME" "/tmp"))))))
+    (native-inputs
+     (list git))
     (propagated-inputs
      (list go-github-com-anthropics-anthropic-sdk-go
            go-github-com-fatih-color
