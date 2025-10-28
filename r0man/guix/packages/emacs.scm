@@ -1852,7 +1852,7 @@ command history, auto-completion, and customizable prompts.")
 (define-public emacs-acp
   (package
     (name "emacs-acp")
-    (version "0.1.4")
+    (version "0.7.1")
     (source
      (origin
        (method git-fetch)
@@ -1862,7 +1862,7 @@ command history, auto-completion, and customizable prompts.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "0ckbj82yl0kxxik2jjayckkv3a5p1nvh42ifxvilka5bvmgv1syf"))))
+         "04sd5qwfd3cgb8anfa7ygs4pjl1k9d0crf033cs3ymhi2lfmiq8i"))))
     (build-system emacs-build-system)
     (home-page "https://github.com/xenodium/acp.el")
     (synopsis "Emacs client library for the Agent Client Protocol")
@@ -1876,7 +1876,7 @@ through a unified protocol.")
 (define-public emacs-agent-shell
   (package
     (name "emacs-agent-shell")
-    (version "0.6.4")
+    (version "0.12.1")
     (source
      (origin
        (method git-fetch)
@@ -1885,7 +1885,7 @@ through a unified protocol.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1dr9dvxj6nm4rlnpv1c8mkjv8pry5h1k49b2ffdva3bhri9n8qpb"))))
+        (base32 "1avhk43hbpdb9mlh29spl278hslc9dvrdzrmy6ay1r3k82wm79q6"))))
     (build-system emacs-build-system)
     (propagated-inputs (list emacs-shell-maker emacs-acp))
     (home-page "https://github.com/xenodium/agent-shell")
