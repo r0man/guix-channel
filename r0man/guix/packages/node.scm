@@ -8,7 +8,7 @@
 (define-public node-anthropic-ai-claude-code
   (package
     (name "node-anthropic-ai-claude-code")
-    (version "2.0.27")
+    (version "2.0.30")
     (source
      (origin
        (method url-fetch)
@@ -16,7 +16,7 @@
              "https://registry.npmjs.org/@anthropic-ai/claude-code/"
              "-/claude-code-" version ".tgz"))
        (sha256
-        (base32 "0dxi1n4bacaz81cmj35pnlj1vdp558cb03mf8pqn2c28jhms4cnv"))))
+        (base32 "0d5pd2vmwjhr3p6lncx8kw8fa03qf5a6wr6zf47f7akymx2j7a23"))))
     (build-system node-build-system)
     (arguments
      (list
