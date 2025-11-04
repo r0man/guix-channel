@@ -2,6 +2,7 @@
   #:use-module ((guix licenses) #:prefix license:)
   #:use-module (gnu packages golang)
   #:use-module (gnu packages golang-build)
+  #:use-module (gnu packages golang-web)
   #:use-module (gnu packages golang-xyz)
   #:use-module (guix build-system go)
   #:use-module (guix gexp)
@@ -56,6 +57,38 @@
 explorer or cmd/powershell.")
     (license license:asl2.0)))
 
+(define-public go-github-com-ncruces-go-sqlite3
+  (package
+    (name "go-github-com-ncruces-go-sqlite3")
+    (version "0.29.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/ncruces/go-sqlite3")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0lf770zxsm2fafr53nrxxhshyqhpxpq0nmwxksvmkfkdlzdb3gw9"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/ncruces/go-sqlite3"
+      #:tests? #f))
+    (propagated-inputs
+     (list go-github-com-ncruces-julianday
+           go-github-com-ncruces-sort
+           go-github-com-ncruces-wbt
+           go-github-com-tetratelabs-wazero
+           go-golang-org-x-sys))
+    (home-page "https://github.com/ncruces/go-sqlite3")
+    (synopsis "Go SQLite database driver")
+    (description
+     "This package provides a low-level Go interface to SQLite.  It is a
+SQLite driver that does not use cgo, making it suitable for WASM and other
+environments where cgo is not available.")
+    (license license:expat)))
+
 (define-public go-github-com-ncruces-go-strftime
   (package
     (name "go-github-com-ncruces-go-strftime")
@@ -77,6 +110,82 @@ explorer or cmd/powershell.")
     (synopsis "C99-compatible strftime for Go")
     (description
      "This package provides a C99-compatible strftime implementation for Go.")
+    (license license:expat)))
+
+(define-public go-github-com-ncruces-julianday
+  (package
+    (name "go-github-com-ncruces-julianday")
+    (version "1.0.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/ncruces/julianday")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "12zg7hwbhvw2ns2qnf86d4nk0vkbklvp3h49ins7qb43iqw73s8i"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/ncruces/julianday"))
+    (home-page "https://github.com/ncruces/julianday")
+    (synopsis "Julian Day calculator for Go")
+    (description
+     "This package provides a Julian Day calculator for Go, compatible with
+SQLite's date and time functions.")
+    (license license:expat)))
+
+(define-public go-github-com-ncruces-sort
+  (package
+    (name "go-github-com-ncruces-sort")
+    (version "0.1.6")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/ncruces/sort")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "07kamgkqhhn1klybx9z11a5pznra89pk1316b5x53jvj3116qjyn"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/ncruces/sort"
+      #:tests? #f
+      #:phases #~(modify-phases %standard-phases
+                   (delete 'build))))
+    (home-page "https://github.com/ncruces/sort")
+    (synopsis "Sorting algorithms for Go")
+    (description
+     "This package provides sorting algorithms implemented in Go, including
+Quicksort, Heapsort, and Shellsort.  Designed for educational purposes with
+clarity and simplicity as primary goals.")
+    (license license:expat)))
+
+(define-public go-github-com-ncruces-wbt
+  (package
+    (name "go-github-com-ncruces-wbt")
+    (version "0.2.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/ncruces/wbt")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0simy6xbyjhhq9pdjjw4whrsgv7b1rv1fd7v0dljs5qp14bms8jj"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/ncruces/wbt"))
+    (home-page "https://github.com/ncruces/wbt")
+    (synopsis "Immutable weight-balanced trees for Go")
+    (description
+     "This package provides a persistent implementation of weight-balanced
+trees for Go, including join-based tree algorithms and order statistics.")
     (license license:expat)))
 
 (define-public go-gopkg-in-natefinch-lumberjack-v2

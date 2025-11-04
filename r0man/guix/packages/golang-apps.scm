@@ -17,7 +17,7 @@
 (define-public beads
   (package
     (name "beads")
-    (version "0.21.5")
+    (version "0.21.7")
     (source
      (origin
        (method git-fetch)
@@ -26,29 +26,43 @@
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32
-         "1nybx5rm0lxr86dzam5rf67rzg19l0rif57cl35wkp5l5qlfs1bh"))))
+        (base32 "0qa41c5kbcg3sp656z2lg97hcq4pfzlpn9vfxsd1vbdg0slw4x29"))))
     (build-system go-build-system)
     (arguments
      (list
       #:install-source? #f
       #:import-path "github.com/steveyegge/beads/cmd/bd"
       #:unpack-path "github.com/steveyegge/beads"
+      #:tests? #f ;Tests fail with memory errors in restricted build environment
       #:phases
       #~(modify-phases %standard-phases
+          (add-after 'unpack 'fix-wasm-symlinks
+            (lambda _
+              ;; Replace symlinked WASM files with actual copies
+              ;; to work around Go embed limitation with Guix store
+              (let ((sqlite-dir "src/github.com/ncruces/go-sqlite3"))
+                (for-each (lambda (wasm-file)
+                            (when (and (file-exists? wasm-file)
+                                       (symbolic-link? wasm-file))
+                              (let ((target (readlink wasm-file)))
+                                (delete-file wasm-file)
+                                (copy-file target wasm-file))))
+                          (list (string-append sqlite-dir
+                                               "/embed/sqlite3.wasm")
+                                (string-append sqlite-dir
+                                 "/util/sql3util/wasm/sql3parse_table.wasm"))))))
           (add-before 'build 'set-home
             (lambda _
               (setenv "HOME" "/tmp"))))))
-    (native-inputs
-     (list git))
-    (propagated-inputs
-     (list go-github-com-anthropics-anthropic-sdk-go
-           go-github-com-fatih-color
-           go-github-com-spf13-cobra
-           go-github-com-spf13-viper
-           go-gopkg-in-natefinch-lumberjack-v2
-           go-modernc-org-sqlite
-           go-rsc-io-script))
+    (native-inputs (list git))
+    (propagated-inputs (list go-github-com-anthropics-anthropic-sdk-go
+                             go-github-com-fatih-color
+                             go-github-com-ncruces-go-sqlite3
+                             go-github-com-spf13-cobra
+                             go-github-com-spf13-viper
+                             go-gopkg-in-natefinch-lumberjack-v2
+                             go-gopkg-in-yaml-v3
+                             go-rsc-io-script))
     (home-page "https://github.com/steveyegge/beads")
     (synopsis "Graph-based issue tracker for AI coding agents")
     (description
