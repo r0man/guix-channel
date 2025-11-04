@@ -6,16 +6,31 @@
   #:use-module (guix gexp)
   #:use-module (guix records)
   #:use-module (ice-9 match)
+  #:use-module (srfi srfi-1)
   #:use-module (r0man guix packages security)
   #:export (cortex-agent-configuration
             cortex-agent-configuration?
+            cortex-agent-configuration-package
+            cortex-agent-configuration-config-file
+            cortex-agent-configuration-distribution-id
+            cortex-agent-configuration-distribution-server
+            cortex-agent-configuration-endpoint-tags
+            cortex-agent-configuration-proxy-list
+            cortex-agent-configuration-unprivileged-user
+            cortex-agent-configuration-kernel-module?
+            cortex-agent-configuration-temporary-session?
+            cortex-agent-configuration-vm-template?
+            cortex-agent-configuration-restrictions
+            cortex-agent-configuration-extra-options
+            cortex-agent-configuration->arguments
+            cortex-agent-generate-config-file
             cortex-agent-service-type))
 
 ;;; Commentary:
 ;;;
 ;;; Cortex XDR Agent service for Guix System.
-;;; Provides endpoint security including Anti-Virus, EDR, Ransomware Protection,
-;;; and Exploit Prevention.
+;;; Provides endpoint security including Anti-Virus, EDR, Ransomware
+;;; Protection, and Exploit Prevention.
 ;;;
 ;;; Code:
 
@@ -25,30 +40,121 @@
   (package          cortex-agent-configuration-package
                     (default cortex-agent))
   (config-file      cortex-agent-configuration-config-file
-                    (default #f))
+                    (default #f)
+                    (sanitizer
+                     (lambda (value)
+                       (if (or (not value) (file-like? value))
+                           value
+                           (raise (formatted-message
+                                   (G_ "config-file must be a file-like \
+object or #f")))))))
   (distribution-id  cortex-agent-configuration-distribution-id
                     (default ""))
   (distribution-server cortex-agent-configuration-distribution-server
                        (default ""))
+  (endpoint-tags    cortex-agent-configuration-endpoint-tags
+                    (default '()))
+  (proxy-list       cortex-agent-configuration-proxy-list
+                    (default '()))
+  (unprivileged-user cortex-agent-configuration-unprivileged-user
+                     (default "cortexuser"))
+  (kernel-module?   cortex-agent-configuration-kernel-module?
+                    (default #t))
+  (temporary-session? cortex-agent-configuration-temporary-session?
+                      (default #f))
+  (vm-template?     cortex-agent-configuration-vm-template?
+                    (default #f))
+  (restrictions     cortex-agent-configuration-restrictions
+                    (default '()))
   (extra-options    cortex-agent-configuration-extra-options
                     (default '())))
 
+(define (cortex-agent-configuration->arguments config)
+  "Convert a cortex-agent-configuration to command-line arguments."
+  (define (maybe-add condition arg)
+    (if condition (list arg) '()))
+
+  (define (list-arg option values)
+    (if (null? values)
+        '()
+        (list option (string-join values ","))))
+
+  (append
+   ;; Distribution settings
+   (if (not (string-null?
+             (cortex-agent-configuration-distribution-id config)))
+       (list "--distribution-id"
+             (cortex-agent-configuration-distribution-id config))
+       '())
+   (if (not (string-null?
+             (cortex-agent-configuration-distribution-server config)))
+       (list "--distribution-server"
+             (cortex-agent-configuration-distribution-server config))
+       '())
+
+   ;; Tags and proxy
+   (list-arg "--endpoint-tags"
+             (cortex-agent-configuration-endpoint-tags config))
+   (list-arg "--proxy-list"
+             (cortex-agent-configuration-proxy-list config))
+
+   ;; User and kernel module
+   (list "--unprivileged-user"
+         (cortex-agent-configuration-unprivileged-user config))
+   (maybe-add (not (cortex-agent-configuration-kernel-module? config))
+              "--no-km")
+
+   ;; Session type
+   (maybe-add (cortex-agent-configuration-temporary-session? config)
+              "--temporary-session")
+   (maybe-add (cortex-agent-configuration-vm-template? config)
+              "--vm-template")
+
+   ;; Restrictions
+   (append-map (lambda (restriction)
+                 (list "--restrict" restriction))
+               (cortex-agent-configuration-restrictions config))
+
+   ;; Extra options
+   (cortex-agent-configuration-extra-options config)))
+
+(define (cortex-agent-generate-config-file config)
+  "Generate the cortex.conf file content from configuration."
+  (let ((args (cortex-agent-configuration->arguments config)))
+    (if (null? args)
+        #f
+        (plain-file "cortex.conf"
+                    (string-join args "\n")))))
+
 (define (cortex-agent-activation config)
   "Return the activation gexp for Cortex XDR Agent."
-  #~(begin
-      (use-modules (guix build utils))
-      ;; Create necessary directories
-      (mkdir-p "/etc/panw")
-      (mkdir-p "/var/log/traps")
-      (mkdir-p "/opt/traps/persist")
-      (mkdir-p "/opt/traps/download")
-      (mkdir-p "/opt/traps/tmp")
+  (let ((config-file (or (cortex-agent-configuration-config-file config)
+                        (cortex-agent-generate-config-file config))))
+    #~(begin
+        (use-modules (guix build utils))
 
-      ;; Copy config file if provided
-      #$@(if (cortex-agent-configuration-config-file config)
-             #~((copy-file #$(cortex-agent-configuration-config-file config)
-                          "/etc/panw/cortex.conf"))
-             #~())))
+        ;; Create necessary directories
+        (mkdir-p "/etc/panw")
+        (mkdir-p "/etc/traps")
+        (mkdir-p "/var/log/traps")
+        (mkdir-p "/var/log/traps/agent")
+        (mkdir-p "/opt/traps/persist")
+        (mkdir-p "/opt/traps/download")
+        (mkdir-p "/opt/traps/upload")
+        (mkdir-p "/opt/traps/tmp")
+        (mkdir-p "/opt/traps/ipc")
+        (mkdir-p "/opt/traps/ipc_agent")
+        (mkdir-p "/opt/traps/forensics")
+        (mkdir-p "/opt/traps/edr")
+        (mkdir-p "/opt/traps/trace")
+
+        ;; Copy or generate config file
+        #$@(if config-file
+               #~((let ((target "/etc/panw/cortex.conf"))
+                    (copy-file #$config-file target)
+                    (chown target 0 0)
+                    (chmod target #o600)))
+               #~()))))
 
 (define (cortex-agent-shepherd-service config)
   "Return a Shepherd service for Cortex XDR Agent."
@@ -71,7 +177,7 @@
                      (sleep 2)
                      ;; Run km_manage stop if it exists
                      (let ((km-manage (string-append #$package
-                                                     "/opt/traps/km_utils/km_manage")))
+                                         "/opt/traps/km_utils/km_manage")))
                        (when (file-exists? km-manage)
                          (system* km-manage "stop")))
                      #f))
@@ -79,13 +185,13 @@
            (actions
             (list (shepherd-action
                    (name 'status)
-                   (documentation "Check the status of the Cortex XDR agent.")
+                   (documentation "Check status of Cortex XDR agent.")
                    (procedure
                     #~(lambda (pid)
                         (if pid
-                            (format #t "Cortex XDR agent is running (PID ~a).~%"
+                            (format #t "Cortex XDR agent running (PID ~a)~%"
                                    pid)
-                            (format #t "Cortex XDR agent is not running.~%")))))))))))
+                            (format #t "Cortex XDR agent not running~%")))))))))))
 
 (define cortex-agent-service-type
   (service-type
