@@ -1828,7 +1828,7 @@ workflow.")
 (define-public emacs-shell-maker
   (package
     (name "emacs-shell-maker")
-    (version "0.83.1")
+    (version "0.84.1")
     (source
      (origin
        (method git-fetch)
@@ -1838,7 +1838,7 @@ workflow.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "10was1mbgwrpvqpm0kj6b5q5gcbj9l03an5nnd7z6vz902wcb2rm"))))
+         "1g0lwv2g5b0cjqsr61jaw902j93wi61qznwl6yybs4hgjj3vjzgg"))))
     (build-system emacs-build-system)
     (home-page "https://github.com/xenodium/shell-maker")
     (synopsis "Emacs package for creating interactive command shells")
@@ -1876,7 +1876,7 @@ through a unified protocol.")
 (define-public emacs-agent-shell
   (package
     (name "emacs-agent-shell")
-    (version "0.12.1")
+    (version "0.16.2")
     (source
      (origin
        (method git-fetch)
@@ -1885,7 +1885,7 @@ through a unified protocol.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1avhk43hbpdb9mlh29spl278hslc9dvrdzrmy6ay1r3k82wm79q6"))))
+        (base32 "0jihpv0jnmjw0wmpzbl61r8xg3wn42dqwm75g51glq93qjwjjvi0"))))
     (build-system emacs-build-system)
     (propagated-inputs (list emacs-shell-maker emacs-acp))
     (home-page "https://github.com/xenodium/agent-shell")
