@@ -2,6 +2,7 @@
   #:use-module ((guix licenses) #:prefix license:)
   #:use-module (gnu packages golang)
   #:use-module (gnu packages golang-build)
+  #:use-module (gnu packages golang-crypto)
   #:use-module (gnu packages golang-web)
   #:use-module (gnu packages golang-xyz)
   #:use-module (guix build-system go)
@@ -57,10 +58,35 @@
 explorer or cmd/powershell.")
     (license license:asl2.0)))
 
+(define-public go-github-com-tetratelabs-wazero
+  (package
+    (name "go-github-com-tetratelabs-wazero")
+    (version "1.10.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/tetratelabs/wazero")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1wz9f9kbbr7315grx4apcszgxpzm8gygx2yi45f7lhgq7lydf9jl"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/tetratelabs/wazero"
+      #:tests? #f))
+    (home-page "https://wazero.io/")
+    (synopsis "WebAssembly runtime for Go")
+    (description
+     "wazero is a WebAssembly runtime written in pure Go.  It provides a safe
+way to run compiled WebAssembly modules without CGO dependencies.")
+    (license license:asl2.0)))
+
 (define-public go-github-com-ncruces-go-sqlite3
   (package
     (name "go-github-com-ncruces-go-sqlite3")
-    (version "0.29.1")
+    (version "0.30.1")
     (source
      (origin
        (method git-fetch)
@@ -69,12 +95,39 @@ explorer or cmd/powershell.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0lf770zxsm2fafr53nrxxhshyqhpxpq0nmwxksvmkfkdlzdb3gw9"))))
+        (base32 "1s7xlc5dynj5mcb7p9s1iazii668ph3v0wiz7fkmci83pgiknknl"))))
     (build-system go-build-system)
     (arguments
      (list
       #:import-path "github.com/ncruces/go-sqlite3"
-      #:tests? #f))
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'check
+            (lambda* (#:key import-path tests? #:allow-other-keys)
+              (when tests?
+                ;; Skip tests that fail due to build environment constraints
+                (invoke "go" "test"
+                        "github.com/ncruces/go-sqlite3"
+                        "github.com/ncruces/go-sqlite3/embed/..."
+                        "github.com/ncruces/go-sqlite3/ext/array"
+                        "github.com/ncruces/go-sqlite3/ext/blobio"
+                        "github.com/ncruces/go-sqlite3/ext/csv"
+                        "github.com/ncruces/go-sqlite3/ext/ipaddr"
+                        "github.com/ncruces/go-sqlite3/ext/lines"
+                        "github.com/ncruces/go-sqlite3/ext/pivot"
+                        "github.com/ncruces/go-sqlite3/ext/regexp"
+                        "github.com/ncruces/go-sqlite3/ext/statement"
+                        "github.com/ncruces/go-sqlite3/ext/stats"
+                        "github.com/ncruces/go-sqlite3/internal/..."
+                        "github.com/ncruces/go-sqlite3/util/..."
+                        "github.com/ncruces/go-sqlite3/vfs/memdb"
+                        "github.com/ncruces/go-sqlite3/vfs/mvcc"
+                        "github.com/ncruces/go-sqlite3/vfs/xts")))))))
+    (native-inputs
+     (list go-github-com-dchest-siphash
+           go-github-com-google-uuid
+           go-golang-org-x-crypto
+           go-golang-org-x-text))
     (propagated-inputs
      (list go-github-com-ncruces-julianday
            go-github-com-ncruces-sort

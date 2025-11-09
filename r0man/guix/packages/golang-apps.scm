@@ -17,7 +17,7 @@
 (define-public beads
   (package
     (name "beads")
-    (version "0.21.9")
+    (version "0.23.1")
     (source
      (origin
        (method git-fetch)
@@ -26,16 +26,25 @@
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0p7hwcmfkk8d21w8d9q6c4zcwi9rms9nzxyhpqzzdav8kaam2y37"))))
+        (base32 "0a0jf6z0f4b05xbfkmmh5l8kqpab9n64g5g5p56lyclls768zdc9"))))
     (build-system go-build-system)
     (arguments
      (list
       #:install-source? #f
       #:import-path "github.com/steveyegge/beads/cmd/bd"
       #:unpack-path "github.com/steveyegge/beads"
-      #:tests? #f ;Tests fail with memory errors in restricted build environment
       #:phases
       #~(modify-phases %standard-phases
+          (replace 'check
+            (lambda* (#:key tests? import-path #:allow-other-keys)
+              (when tests?
+                ;; Run only unit tests, skipping CLI integration tests that fail
+                ;; in the sandboxed build environment
+                (with-directory-excursion (string-append "src/" import-path)
+                  ;; Run tests that don't require full environment
+                  (invoke "go" "test" "-v" "-run"
+                          "^Test(Parse|ValidationResults|VersionCommand|Truncate|GitRevParse)"
+                          ".")))))
           (add-after 'unpack 'fix-wasm-symlinks
             (lambda _
               ;; Replace symlinked WASM files with actual copies
