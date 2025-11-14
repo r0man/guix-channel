@@ -995,8 +995,8 @@ returns the language of the      current buffer  * language-detection-string
     (license license:gpl3+)))
 
 (define-public emacs-mcp
-  (let ((commit "5288951946664271ded8faa26aed72ed2f2f0b64")
-        (revision "1"))
+  (let ((commit "963b4af6ce743fbb6224f61bb61f05de1c37f511")
+        (revision "2"))
     (package
       (name "emacs-mcp")
       (version (git-version "0.0.1" revision commit))
@@ -1008,7 +1008,7 @@ returns the language of the      current buffer  * language-detection-string
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "0zfchnvcy2r3hnl7qhgn7y2mf7rcaw9w6cc9sw44zzszh2jzc88j"))))
+          (base32 "05k1j3xnzs4swl4xj2l5kpazq603jyqqq3iz7vf4f3iily81csfx"))))
       (build-system emacs-build-system)
       (home-page "https://github.com/lizqwerscott/mcp.el")
       (synopsis "Emacs MCP client")
@@ -1022,8 +1022,8 @@ gptel and llm.")
       (license license:gpl3+))))
 
 (define-public emacs-mcp-server-lib
-  (let ((commit "83f0524bf8be4e71830cb0a8fd7490b4963b1f5b")
-        (revision "0"))
+  (let ((commit "847bcb180b6c035ee07f497e0ffc8092b3e54c4a")
+        (revision "1"))
     (package
       (name "emacs-mcp-server-lib")
       (version (git-version "0.1.0" revision commit))
@@ -1035,7 +1035,7 @@ gptel and llm.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "0fykvkyc6lghxkxsz96hjjhs021rx9gp7wwbqk6rg0qv6biaxkf1"))))
+          (base32 "00jl2n0zj0x6gbxdx4q7abv5yn7x15ycc05mszdl1sx935k2z74q"))))
       (build-system emacs-build-system)
       (arguments (list #:tests? #f)) ; no tests
       (home-page "https://github.com/laurynas-biveinis/mcp-server-lib.el")
@@ -1925,8 +1925,8 @@ and assist with development tasks.")
     (license license:gpl3+)))
 
 (define-public emacs-mcp-client
-  (let ((commit "9c1a181cc13b38583256f8a61043b7725776abc4")
-        (revision "1"))
+  (let ((commit "11585f6702168ea11e85880f565f5733d17852e0")
+        (revision "2"))
     (package
       (name "emacs-mcp-client")
       (version (git-version "0.1.0" revision commit))
@@ -1938,9 +1938,9 @@ and assist with development tasks.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "0j5favg57zj6mhg2clrynlxxbnbqgp1hdrwxbisdx11spss0jzks"))))
+          (base32 "086gn3p2sv3xzp0pykh7h404iswps6qipd012rlvszsk55an45ak"))))
       (build-system emacs-build-system)
-      (home-page "https://github.com/mpontus/emacs-mcp")
+      (home-page "https://github.com/r0man/emacs-mcp")
       (synopsis "Model Context Protocol client for Emacs")
       (description "This package provides a Model Context Protocol (MCP) client
 implementation for Emacs, enabling integration with AI tools and
