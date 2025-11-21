@@ -9,7 +9,8 @@
   #:use-module (guix gexp)
   #:use-module (guix git-download)
   #:use-module (guix packages)
-  #:use-module (r0man guix packages golang-maths))
+  #:use-module (r0man guix packages golang-maths)
+  #:use-module (r0man guix packages golang-web))
 
 (define-public go-github-com-google-uuid
   (package
@@ -494,3 +495,43 @@ document.")
      "Package script implements a small, customizable, platform-agnostic
 scripting language.")
     (license license:bsd-3)))
+
+(define-public go-github-com-steveyegge-beads
+  (package
+    (name "go-github-com-steveyegge-beads")
+    (version "0.22.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/steveyegge/beads")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "00mvpsap1f89fyqk3kzhq8n0wrim6446vqnx30i99g02bbnfzycz"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:install-source? #t
+      #:tests? #f  ; Tests require full environment
+      #:import-path "github.com/steveyegge/beads"
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; No binaries to build, just install source
+          (delete 'build))))
+    (propagated-inputs
+     (list go-github-com-anthropics-anthropic-sdk-go
+           go-github-com-fatih-color
+           go-github-com-ncruces-go-sqlite3
+           go-github-com-spf13-cobra
+           go-github-com-spf13-viper
+           go-gopkg-in-natefinch-lumberjack-v2
+           go-gopkg-in-yaml-v3
+           go-rsc-io-script))
+    (home-page "https://github.com/steveyegge/beads")
+    (synopsis "Go library for graph-based issue tracking")
+    (description
+     "This package provides the Go library for Beads, a graph-based issue
+tracker for AI coding agents.  It includes the core types, storage interfaces,
+and utility functions needed to interact with Beads databases.")
+    (license license:expat)))

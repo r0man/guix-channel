@@ -12,77 +12,63 @@
   #:use-module (guix git-download)
   #:use-module (guix packages)
   #:use-module (r0man guix packages golang-web)
-  #:use-module (r0man guix packages golang-xyz))
+  #:use-module (r0man guix packages golang-xyz)
+  #:use-module (r0man guix packages task-management))
 
-(define-public beads
-  (package
-    (name "beads")
-    (version "0.24.0")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/steveyegge/beads")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "0bs3ckqnwccj1nxh1g4zq7a4pp2467mxdgx556b3vcfza6mjsnhl"))))
-    (build-system go-build-system)
-    (arguments
-     (list
-      #:install-source? #f
-      #:import-path "github.com/steveyegge/beads/cmd/bd"
-      #:unpack-path "github.com/steveyegge/beads"
-      #:phases
-      #~(modify-phases %standard-phases
-          (replace 'check
-            (lambda* (#:key tests? import-path #:allow-other-keys)
-              (when tests?
-                ;; Run only unit tests, skipping CLI integration tests that fail
-                ;; in the sandboxed build environment
-                (with-directory-excursion (string-append "src/" import-path)
-                  ;; Run tests that don't require full environment
-                  (invoke "go" "test" "-v" "-run"
-                          "^Test(Parse|ValidationResults|VersionCommand|Truncate|GitRevParse)"
-                          ".")))))
-          (add-after 'unpack 'delete-broken-test
-            (lambda _
-              (delete-file "src/github.com/steveyegge/beads/cmd/bd/integrity_content_test.go")))
-          (add-after 'unpack 'fix-wasm-symlinks
-            (lambda _
-              ;; Replace symlinked WASM files with actual copies
-              ;; to work around Go embed limitation with Guix store
-              (let ((sqlite-dir "src/github.com/ncruces/go-sqlite3"))
-                (for-each (lambda (wasm-file)
-                            (when (and (file-exists? wasm-file)
-                                       (symbolic-link? wasm-file))
-                              (let ((target (readlink wasm-file)))
-                                (delete-file wasm-file)
-                                (copy-file target wasm-file))))
-                          (list (string-append sqlite-dir
-                                               "/embed/sqlite3.wasm")
-                                (string-append sqlite-dir
-                                               "/util/sql3util/wasm/sql3parse_table.wasm"))))))
-          (add-before 'build 'set-home
-            (lambda _
-              (setenv "HOME" "/tmp"))))))
+(define-public vibecoder
+  (let ((revision "0")
+        (commit "4ae43b6a4281704ee072b7c0b69b20e3d53837ee"))
+    (package
+      (name "vibecoder")
+      (version (git-version "0.0.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/steveyegge/vc")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "0ii5vc23kv2s3iawhyyzyljrbll4i6s7156h048zyzwbj1idyvlf"))))
+      (build-system go-build-system)
+      (arguments
+       (list
+        #:install-source? #f
+        #:tests? #f  ; Tests require ANTHROPIC_API_KEY and full environment
+        #:import-path "github.com/steveyegge/vc/cmd/vc"
+        #:unpack-path "github.com/steveyegge/vc"
+        #:embed-files #~(list ".*\\.wasm")
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-after 'unpack 'remove-replace-directive
+              (lambda _
+                ;; Remove the replace directive that points to a local beads path
+                (substitute* "src/github.com/steveyegge/vc/go.mod"
+                  (("replace github.com/steveyegge/beads.*") ""))))
+            (add-before 'build 'set-home
+              (lambda _
+                (setenv "HOME" "/tmp"))))))
     (native-inputs (list git))
-    (propagated-inputs (list go-github-com-anthropics-anthropic-sdk-go
+    (propagated-inputs (list go-github-com-steveyegge-beads
+                             go-github-com-chzyer-readline
                              go-github-com-fatih-color
+                             go-github-com-google-uuid
                              go-github-com-ncruces-go-sqlite3
                              go-github-com-spf13-cobra
-                             go-github-com-spf13-viper
-                             go-gopkg-in-natefinch-lumberjack-v2
-                             go-gopkg-in-yaml-v3
-                             go-rsc-io-script))
-    (home-page "https://github.com/steveyegge/beads")
-    (synopsis "Graph-based issue tracker for AI coding agents")
+                             go-github-com-stretchr-testify
+                             go-golang-org-x-mod
+                             go-golang-org-x-sync
+                             go-golang-org-x-time
+                             go-gopkg-in-yaml-v3))
+    (home-page "https://github.com/steveyegge/vc")
+    (synopsis "AI-orchestrated coding agent colony")
     (description
-     "@command{bd} (Beads) is a lightweight memory system for coding
-agents, using a graph-based issue tracker.  Four kinds of dependencies
-work to chain issues together like beads, making them easy for agents
-to follow for long distances and reliably perform complex task streams
-in the right order.  It uses SQLite for fast local operations and
-JSONL files stored in git for distributed synchronization across
-machines.")
-    (license license:expat)))
+     "@command{vc} (VibeCoder v2) orchestrates multiple coding agents
+(Amp, Claude Code, etc.) to work on small, well-defined tasks, guided
+by AI supervision.  This keeps agents focused, improves quality, and
+minimizes context window costs.  The system uses an AI-supervised
+issue workflow where work is tracked in a SQLite issue tracker with
+dependency awareness, workflows can be interrupted and resumed, and
+quality gates validate the results.  Built on lessons learned from a
+350k LOC TypeScript prototype.")
+      (license license:expat))))
