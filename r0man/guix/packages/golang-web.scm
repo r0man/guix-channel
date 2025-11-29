@@ -10,8 +10,7 @@
   #:use-module (guix gexp)
   #:use-module (guix git-download)
   #:use-module (guix packages)
-  #:use-module (guix utils)
-  #:use-module (r0man guix packages golang-xyz))
+  #:use-module (guix utils))
 
 (define-public go-github-com-aws-smithy-go
   (package
@@ -144,37 +143,3 @@ utilities.")
 credentials sources.")
     (license license:asl2.0)))
 
-(define-public go-github-com-anthropics-anthropic-sdk-go
-  (package
-    (name "go-github-com-anthropics-anthropic-sdk-go")
-    (version "1.14.0")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/anthropics/anthropic-sdk-go")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32
-         "12a9f7ddp8nx0x35yvsdjzmv2qjx9p7d7qwkl4qhqnv6l5bsifxb"))))
-    (build-system go-build-system)
-    (arguments
-     (list
-      #:import-path "github.com/anthropics/anthropic-sdk-go"
-      #:tests? #f)) ; Tests require network access
-    (propagated-inputs
-     (list go-github-com-tidwall-gjson
-           go-github-com-tidwall-sjson
-           go-github-com-aws-aws-sdk-go-v2
-           go-github-com-aws-aws-sdk-go-v2-config
-           go-github-com-aws-aws-sdk-go-v2-credentials
-           go-golang-org-x-oauth2))
-    (home-page "https://github.com/anthropics/anthropic-sdk-go")
-    (synopsis "Go client library for the Anthropic API")
-    (description
-     "This package provides a Go client library for convenient access
-to the Anthropic REST API.  It includes support for message creation,
-streaming, tool calling, and integration with Amazon Bedrock and
-Google Vertex AI.")
-    (license license:expat)))

@@ -9,31 +9,7 @@
   #:use-module (guix gexp)
   #:use-module (guix git-download)
   #:use-module (guix packages)
-  #:use-module (r0man guix packages golang-maths)
-  #:use-module (r0man guix packages golang-web))
-
-(define-public go-github-com-google-uuid
-  (package
-    (name "go-github-com-google-uuid")
-    (version "1.6.0")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/google/uuid")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "131d01minir79dq6d4jq55018343yidl5cs2bfhynx1klnr7ssam"))))
-    (build-system go-build-system)
-    (arguments
-     (list
-      #:import-path "github.com/google/uuid"))
-    (home-page "https://github.com/google/uuid")
-    (synopsis "Go package for UUIDs")
-    (description
-     "This package provides UUID generation and parsing for Go.")
-    (license license:bsd-3)))
+  #:use-module (r0man guix packages golang-maths))
 
 (define-public go-github-com-inconshreveable-mousetrap
   (package
@@ -242,35 +218,6 @@ clarity and simplicity as primary goals.")
 trees for Go, including join-based tree algorithms and order statistics.")
     (license license:expat)))
 
-(define-public go-gopkg-in-natefinch-lumberjack-v2
-  (package
-    (name "go-gopkg-in-natefinch-lumberjack-v2")
-    (version "2.2.1")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/natefinch/lumberjack")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32
-         "1jylmjfrx79c6vkx8sqlyrb54krqgjrgj138w8cjw6v17i2dd98r"))))
-    (build-system go-build-system)
-    (arguments
-     (list
-      #:import-path "gopkg.in/natefinch/lumberjack.v2"))
-    (propagated-inputs
-     (list go-github-com-burntsushi-toml
-           go-gopkg-in-yaml-v2))
-    (home-page "https://github.com/natefinch/lumberjack")
-    (synopsis "Rolling logger for Go")
-    (description
-     "Lumberjack is a Go package for writing logs to rolling files.
-It provides automatic log rotation based on file size, age, and count,
-with optional compression of rotated files.")
-    (license license:expat)))
-
 (define-public go-modernc-org-memory
   (package
     (name "go-modernc-org-memory")
@@ -367,133 +314,6 @@ ccgo-generated code.")
     (description
      "Package sqlite is a CGo-free port of SQLite.  It is a drop-in
 replacement for mattn/go-sqlite3.")
-    (license license:bsd-3)))
-
-(define-public go-github-com-tidwall-match
-  (package
-    (name "go-github-com-tidwall-match")
-    (version "1.1.1")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/tidwall/match")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "1n25md63xr5m66r6zc77n6fgcpv2ljrlk92ivp9hvp8xya22as9k"))))
-    (build-system go-build-system)
-    (arguments
-     (list
-      #:import-path "github.com/tidwall/match"))
-    (home-page "https://github.com/tidwall/match")
-    (synopsis "Simple string pattern matcher for Golang")
-    (description
-     "Package match provides a simple pattern matcher with unicode support.")
-    (license license:expat)))
-
-(define-public go-github-com-tidwall-pretty
-  (package
-    (name "go-github-com-tidwall-pretty")
-    (version "1.2.1")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/tidwall/pretty")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "0prj9vpjgrca70rvx40kkl566yf9lw4fsbcmszwamwl364696jsb"))))
-    (build-system go-build-system)
-    (arguments
-     (list
-      #:import-path "github.com/tidwall/pretty"))
-    (home-page "https://github.com/tidwall/pretty")
-    (synopsis "JSON beautifier and compactor for Golang")
-    (description
-     "This package provides fast methods for formatting JSON for human
-readability, or to compact JSON for smaller payloads.")
-    (license license:expat)))
-
-(define-public go-github-com-tidwall-gjson
-  (package
-    (name "go-github-com-tidwall-gjson")
-    (version "1.17.1")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/tidwall/gjson")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "0gcjzbs5in4kics39d2v3j2v9gvfxkdgp0bdgbfmcsa5arqgq7g5"))))
-    (build-system go-build-system)
-    (arguments
-     (list
-      #:import-path "github.com/tidwall/gjson"))
-    (propagated-inputs
-     (list go-github-com-tidwall-match
-           go-github-com-tidwall-pretty))
-    (home-page "https://github.com/tidwall/gjson")
-    (synopsis "JSON parser for Golang")
-    (description
-     "This package provides a fast and simple way to get values from a JSON
-document.  It has features such as one line retrieval, dot notation paths,
-iteration, and parsing JSON lines.")
-    (license license:expat)))
-
-(define-public go-github-com-tidwall-sjson
-  (package
-    (name "go-github-com-tidwall-sjson")
-    (version "1.2.5")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/tidwall/sjson")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "16yaikpxiwqz00zxa70w17k2k52nr06svand88sv2br6b6i8v09r"))))
-    (build-system go-build-system)
-    (arguments
-     (list
-      #:import-path "github.com/tidwall/sjson"))
-    (propagated-inputs
-     (list go-github-com-tidwall-gjson
-           go-github-com-tidwall-pretty))
-    (home-page "https://github.com/tidwall/sjson")
-    (synopsis "Quick value JSON values setting in Golang")
-    (description
-     "This package provides a fast and simple way to set a value in a JSON
-document.")
-    (license license:expat)))
-
-(define-public go-rsc-io-script
-  (package
-    (name "go-rsc-io-script")
-    (version "0.0.2")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/rsc/script")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "05yl5nqhcjhp4sjdh7a9m9s6w4lm4qhn4bhi7v6hhsbfn348jxfh"))))
-    (build-system go-build-system)
-    (arguments
-     (list
-      #:import-path "rsc.io/script"))
-    (propagated-inputs (list go-golang-org-x-tools))
-    (home-page "https://rsc.io/script")
-    (synopsis "Small scripting language for Go")
-    (description
-     "Package script implements a small, customizable, platform-agnostic
-scripting language.")
     (license license:bsd-3)))
 
 (define-public go-github-com-steveyegge-beads

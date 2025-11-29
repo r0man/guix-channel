@@ -11,9 +11,7 @@
   #:use-module (guix gexp)
   #:use-module (guix git-download)
   #:use-module (guix packages)
-  #:use-module (r0man guix packages golang-web)
-  #:use-module (r0man guix packages golang-xyz)
-  #:use-module (r0man guix packages task-management))
+  #:use-module (r0man guix packages golang-xyz))
 
 (define-public vibecoder
   (let ((revision "0")
