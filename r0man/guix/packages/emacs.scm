@@ -457,12 +457,28 @@ with consult, such as vertico.")
                 (sha256 (base32
                          "0hj8i5y3zdycpjqp2m1432bchzhs1pg17fda5knl1vsx40nsb1lc"))))
       (build-system emacs-build-system)
-      (arguments (list #:lisp-directory "lisp"
+      (arguments (list #:include #~(cons ".*\\.el$" '#$%default-include)
+                       #:lisp-directory "lisp"
                        #:phases
                        #~(modify-phases %standard-phases
                            (add-before 'build 'set-home
                              (lambda _
-                               (setenv "HOME" "/tmp"))))))
+                               (setenv "HOME" "/tmp")))
+                           (add-after 'unpack 'fix-load-path
+                             (lambda _
+                               (substitute* "efrit.el"
+                                 (("\"core\" \"interfaces\" \"support\" \"dev\"")
+                                  "\"core\" \"interfaces\" \"support\" \"dev\" \"tools\""))))
+                           (add-after 'expand-load-path 'add-subdirs-to-load-path
+                             (lambda _
+                               (let ((cwd (getcwd)))
+                                 (setenv "EMACSLOADPATH"
+                                         (string-append
+                                          (string-join
+                                           (cons cwd (find-files cwd "" #:directories? #t))
+                                           ":")
+                                          ":"
+                                          (getenv "EMACSLOADPATH")))))))))
       (home-page "https://github.com/steveyegge/efrit")
       (synopsis "Native elisp coding agent running in Emacs")
       (description "A sophisticated AI coding agent that leverages Emacs' native
