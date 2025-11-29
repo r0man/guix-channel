@@ -17,7 +17,7 @@
 (define-public beads
   (package
     (name "beads")
-    (version "0.24.0")
+    (version "0.26.0")
     (source
      (origin
        (method git-fetch)
@@ -26,7 +26,7 @@
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0bs3ckqnwccj1nxh1g4zq7a4pp2467mxdgx556b3vcfza6mjsnhl"))))
+        (base32 "0x0ijpprzfa2s68ad95als1pg3jgj3f41ya3v2z85gjd3h0vlh1f"))))
     (build-system go-build-system)
     (arguments
      (list
