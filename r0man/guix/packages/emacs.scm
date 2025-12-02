@@ -443,45 +443,46 @@ with consult, such as vertico.")
     (license license:expat)))
 
 (define-public emacs-efrit
-  (let ((commit "beff9be354edc2452e220e78b49c2104b9df54b2")
-        (revision "3"))
+  (let ((commit "4ff85f3aca804c96b0efecd87ab5159b93038e0e")
+        (revision "4"))
     (package
       (name "emacs-efrit")
       (version (git-version "0.0.1" revision commit))
-      (source (origin
-                (method git-fetch)
-                (uri (git-reference
-                      (url "https://github.com/steveyegge/efrit")
-                      (commit commit)))
-                (file-name (git-file-name name version))
-                (sha256 (base32
-                         "0hj8i5y3zdycpjqp2m1432bchzhs1pg17fda5knl1vsx40nsb1lc"))))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/steveyegge/efrit")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "0jsilh2a4mljifvchn8x8q2zn65gkjwd678j32lg195ds0pm2ijk"))))
       (build-system emacs-build-system)
-      (arguments (list #:include #~(cons ".*\\.el$" '#$%default-include)
-                       #:lisp-directory "lisp"
-                       #:phases
-                       #~(modify-phases %standard-phases
-                           (add-before 'build 'set-home
-                             (lambda _
-                               (setenv "HOME" "/tmp")))
-                           (add-after 'unpack 'fix-load-path
-                             (lambda _
-                               (substitute* "efrit.el"
-                                 (("\"core\" \"interfaces\" \"support\" \"dev\"")
-                                  "\"core\" \"interfaces\" \"support\" \"dev\" \"tools\""))))
-                           (add-after 'expand-load-path 'add-subdirs-to-load-path
-                             (lambda _
-                               (let ((cwd (getcwd)))
-                                 (setenv "EMACSLOADPATH"
-                                         (string-append
-                                          (string-join
-                                           (cons cwd (find-files cwd "" #:directories? #t))
-                                           ":")
-                                          ":"
-                                          (getenv "EMACSLOADPATH")))))))))
+      (arguments
+       (list
+        #:include
+        #~(cons ".*\\.el$"
+                '#$%default-include)
+        #:lisp-directory "lisp"
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-before 'build 'set-home
+              (lambda _
+                (setenv "HOME" "/tmp")))
+            (add-after 'expand-load-path 'add-subdirs-to-load-path
+              (lambda _
+                (let ((cwd (getcwd)))
+                  (setenv "EMACSLOADPATH"
+                          (string-append (string-join (cons cwd
+                                                            (find-files cwd ""
+                                                                        #:directories?
+                                                                        #t))
+                                                      ":") ":"
+                                         (getenv "EMACSLOADPATH")))))))))
       (home-page "https://github.com/steveyegge/efrit")
       (synopsis "Native elisp coding agent running in Emacs")
-      (description "A sophisticated AI coding agent that leverages Emacs' native
+      (description
+       "A sophisticated AI coding agent that leverages Emacs' native
 programmability through direct Elisp evaluation.")
       (license license:asl2.0))))
 
