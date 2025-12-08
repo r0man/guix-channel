@@ -443,8 +443,8 @@ with consult, such as vertico.")
     (license license:expat)))
 
 (define-public emacs-efrit
-  (let ((commit "fc9949259895b1abd7cf0716cb16fdbd18774240")
-        (revision "5"))
+  (let ((commit "97246b6e235a00cc827c3c9a3464bee168c1916b")
+        (revision "6"))
     (package
       (name "emacs-efrit")
       (version (git-version "0.0.1" revision commit))
@@ -456,7 +456,7 @@ with consult, such as vertico.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "0i11ckp4nraa2bf0casfxiksvvirhqqx6brldn21adr84p06362n"))))
+          (base32 "181ljnv468va1d5p9yd9p572aqagl0s43khzb54fp7y9syfl8ch3"))))
       (build-system emacs-build-system)
       (arguments
        (list
