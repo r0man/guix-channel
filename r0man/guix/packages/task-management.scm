@@ -16,7 +16,7 @@
 (define-public beads
   (package
     (name "beads")
-    (version "0.28.0")
+    (version "0.29.0")
     (source
      (origin
        (method git-fetch)
@@ -25,7 +25,7 @@
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1pi4kjwcyv62rggp7c9am7wv6011gmwdd57c3navphzga6pp6c5w"))))
+        (base32 "1m1by365zayg2zmfihvpivhh3nzim7xih9836fx6kb9gd5qz8bdm"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -41,12 +41,16 @@
                 ;; in the sandboxed build environment
                 (with-directory-excursion (string-append "src/" import-path)
                   ;; Run tests that don't require full environment
-                  (invoke "go" "test" "-v" "-run"
-                          "^Test(Parse|ValidationResults|VersionCommand|Truncate|GitRevParse)"
-                          ".")))))
+                  (invoke "go"
+                   "test"
+                   "-v"
+                   "-run"
+                   "^Test(Parse|ValidationResults|VersionCommand|Truncate|GitRevParse)"
+                   ".")))))
           (add-after 'unpack 'delete-broken-test
             (lambda _
-              (delete-file "src/github.com/steveyegge/beads/cmd/bd/integrity_content_test.go")))
+              (delete-file
+               "src/github.com/steveyegge/beads/cmd/bd/integrity_content_test.go")))
           (add-after 'unpack 'fix-wasm-symlinks
             (lambda _
               ;; Replace symlinked WASM files with actual copies
@@ -61,7 +65,7 @@
                           (list (string-append sqlite-dir
                                                "/embed/sqlite3.wasm")
                                 (string-append sqlite-dir
-                                               "/util/sql3util/wasm/sql3parse_table.wasm"))))))
+                                 "/util/sql3util/wasm/sql3parse_table.wasm"))))))
           (add-before 'build 'set-home
             (lambda _
               (setenv "HOME" "/tmp"))))))
