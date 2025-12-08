@@ -1,5 +1,6 @@
 (define-module (r0man guix packages clojure)
   #:use-module ((guix licenses) #:prefix license:)
+  #:use-module (gnu packages bash)
   #:use-module (gnu packages bootstrap)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages gcc)
@@ -7,6 +8,7 @@
   #:use-module (guix build-system copy)
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system trivial)
+  #:use-module (guix build utils)
   #:use-module (guix download)
   #:use-module (guix gexp)
   #:use-module (guix git-download)
@@ -137,4 +139,49 @@ perform refactors and more.")
     (home-page "https://github.com/editor-code-assistant/eca")
     (synopsis "Editor Code Assistant")
     (description "AI pair programming capabilities in any editor")
+    (license license:expat)))
+
+(define-public bbin
+  (package
+    (name "bbin")
+    (version "0.2.4")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/babashka/bbin")
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "1f4sxqvggsp8fx6mqzmm5g1zaalqyvgmm3swiakym2wbfjl9kayv"))))
+    (build-system copy-build-system)
+    (arguments
+     (list
+      #:install-plan
+      #~'(("bbin" "bin/")
+          ("templates" "share/bbin/"))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'install 'wrap-program
+            (lambda* (#:key inputs outputs #:allow-other-keys)
+              (let* ((out (assoc-ref outputs "out"))
+                     (bin (string-append out "/bin"))
+                     (bbin (string-append bin "/bbin"))
+                     (bb (search-input-file inputs "/bin/bb"))
+                     (templates (string-append out "/share/bbin/templates")))
+                (wrap-program bbin
+                  `("PATH" ":" prefix (,bin))
+                  `("BBIN_TEMPLATES" ":" = (,templates)))
+                (substitute* bbin
+                  (("#!/usr/bin/env bb")
+                   (string-append "#!" bb)))))))))
+    (inputs (list bash-minimal babashka))
+    (home-page "https://github.com/babashka/bbin")
+    (synopsis "Install Babashka scripts and projects")
+    (description
+     "bbin is a package manager for Babashka scripts and projects.
+It allows you to install any Babashka script or project with a single
+command from various sources including qualified library names, URLs,
+Git repositories, local files, and local directories.  Once installed,
+scripts become executable commands.")
     (license license:expat)))
