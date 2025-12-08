@@ -1963,3 +1963,38 @@ and assist with development tasks.")
 implementation for Emacs, enabling integration with AI tools and
 services that support the MCP standard.")
       (license license:gpl3+))))
+
+(define-public emacs-kele
+  (package
+    (name "emacs-kele")
+    (version "0.7.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/jinnovation/kele.el")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "1df9b4ifav19b8724fpp35hpynkjadqxi5x7m0nj3kfyi46fl831"))))
+    (build-system emacs-build-system)
+    (arguments (list #:tests? #f)) ; no tests
+    (propagated-inputs
+     (list emacs-async
+           emacs-dash
+           emacs-f
+           emacs-magit
+           emacs-memoize
+           emacs-plz
+           emacs-yaml))
+    (home-page "https://github.com/jinnovation/kele.el")
+    (synopsis "Kubernetes management for Emacs")
+    (description
+     "Kele (Kubernetes Enablement Layer for Emacs) provides a nimble,
+lightweight interface for managing Kubernetes clusters from within Emacs.
+It offers context-aware resource management, a sortable and color-coded
+tabular interface for viewing resources, GUI menu bar integration for
+switching contexts and namespaces, and integration with doom-modeline to
+display the active kubectl context.")
+    (license license:asl2.0)))
