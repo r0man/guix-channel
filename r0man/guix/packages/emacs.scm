@@ -1993,8 +1993,21 @@ services that support the MCP standard.")
     (description
      "Kele (Kubernetes Enablement Layer for Emacs) provides a nimble,
 lightweight interface for managing Kubernetes clusters from within Emacs.
-It offers context-aware resource management, a sortable and color-coded
-tabular interface for viewing resources, GUI menu bar integration for
-switching contexts and namespaces, and integration with doom-modeline to
-display the active kubectl context.")
+It enables fast, efficient Kubernetes operations without requiring
+context-switching from your editor.
+
+Key features include:
+@itemize
+@item Enhanced resource viewing with a sortable, color-coded tabular
+interface that improves upon @code{kubectl get}
+@item Context-aware actions that present only relevant operations for each
+resource type
+@item Menu bar controls for switching Kubernetes contexts and namespaces
+@item Integration with doom-modeline to display the active kubectl context
+and default namespace in the modeline
+@item Integration with Embark for additional contextual actions
+@end itemize
+
+The package follows a batteries-included philosophy, coming pre-configured
+with useful integrations while remaining highly customizable.")
     (license license:asl2.0)))
