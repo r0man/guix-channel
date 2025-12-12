@@ -1771,8 +1771,8 @@ object-relational DBMS from Emacs.")
       (license license:asl2.0))))
 
 (define-public emacs-claudemacs
-  (let ((commit "bf0c2d6e3e41c965a552e6fc9ee16cffc2f79355")
-        (revision "1"))
+  (let ((commit "5ba3416fc9e61575870b53424981cab00d1de825")
+        (revision "2"))
     (package
       (name "emacs-claudemacs")
       (version (git-version "0.0.1" revision commit))
@@ -1784,7 +1784,7 @@ object-relational DBMS from Emacs.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "1afxklm2qpsqxwfhg4whj96d5554xg115ib528x1aj676hs0f5j3"))))
+          (base32 "03cqa499c8za8k0lxgjbkgl4mya9bv2fv4wq2mqxvnq7k5q35pyn"))))
       (build-system emacs-build-system)
       (arguments (list #:tests? #f)) ; no tests
       (home-page "https://github.com/cpoile/claudemacs")
@@ -1793,8 +1793,8 @@ object-relational DBMS from Emacs.")
       (license license:expat))))
 
 (define-public emacs-claude-code
-  (let ((commit "1196a66a73eca84d0d31f9ffa920cdde98953f4b")
-        (revision "2"))
+  (let ((commit "becece683bcf60f7b150a87a30ef14885dcf8ce3")
+        (revision "3"))
     (package
       (name "emacs-claude-code")
       (version (git-version "0.0.1" revision commit))
@@ -1806,11 +1806,11 @@ object-relational DBMS from Emacs.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "191vd4hcdfd99jgal8ckzqyiavdxcnzlpnfic5qr09wyc8ish9ql"))))
+          (base32 "0z77nxazkw08pmqam2z27a56s9nyp72a1vvc0ba3vgcwfkjx0v81"))))
       (build-system emacs-build-system)
       (arguments (list #:tests? #f)) ; no tests
       (home-page "https://github.com/stevemolitor/claude-code.el")
-      (propagated-inputs (list emacs-eat emacs-transient))
+      (propagated-inputs (list emacs-eat emacs-inheritenv emacs-transient emacs-vterm))
       (synopsis "Claude Code Emacs integration ")
       (description "Emacs interface for Claude Code CLI, providing integration between
 Emacs and Claude AI for coding assistance.")
