@@ -1869,7 +1869,7 @@ running over SSH or inside terminal multiplexers like tmux or GNU Screen.")
 (define-public emacs-shell-maker
   (package
     (name "emacs-shell-maker")
-    (version "0.84.1")
+    (version "0.84.4")
     (source
      (origin
        (method git-fetch)
@@ -1879,7 +1879,7 @@ running over SSH or inside terminal multiplexers like tmux or GNU Screen.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "1g0lwv2g5b0cjqsr61jaw902j93wi61qznwl6yybs4hgjj3vjzgg"))))
+         "13hw8qx8mxd89q7my18xbpg6v4nn2zbdffypv9vqy66sc5vz4fwj"))))
     (build-system emacs-build-system)
     (home-page "https://github.com/xenodium/shell-maker")
     (synopsis "Emacs package for creating interactive command shells")
@@ -1893,7 +1893,7 @@ command history, auto-completion, and customizable prompts.")
 (define-public emacs-acp
   (package
     (name "emacs-acp")
-    (version "0.7.1")
+    (version "0.8.1")
     (source
      (origin
        (method git-fetch)
@@ -1903,7 +1903,7 @@ command history, auto-completion, and customizable prompts.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "04sd5qwfd3cgb8anfa7ygs4pjl1k9d0crf033cs3ymhi2lfmiq8i"))))
+         "0dialj0qjkz1i8i7d500n86z5qpzllm71fl2y73s98sbxq2bl1mk"))))
     (build-system emacs-build-system)
     (home-page "https://github.com/xenodium/acp.el")
     (synopsis "Emacs client library for the Agent Client Protocol")
@@ -1917,7 +1917,7 @@ through a unified protocol.")
 (define-public emacs-agent-shell
   (package
     (name "emacs-agent-shell")
-    (version "0.16.2")
+    (version "0.25.1")
     (source
      (origin
        (method git-fetch)
@@ -1926,7 +1926,7 @@ through a unified protocol.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0jihpv0jnmjw0wmpzbl61r8xg3wn42dqwm75g51glq93qjwjjvi0"))))
+        (base32 "0f8jk1qmaygh898vnw4vkp9x573jmsy6jrq89rncb72671gr0mnw"))))
     (build-system emacs-build-system)
     (propagated-inputs (list emacs-shell-maker emacs-acp))
     (home-page "https://github.com/xenodium/agent-shell")
