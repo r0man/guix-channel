@@ -14,11 +14,11 @@
     #:use-module (r0man guix packages golang-xyz))
 
 (define-public beads
-  (let ((commit "3a9749279a32bd4af4c92d93d27286b7a57a3e51")
-        (revision "134"))
+  (let ((commit "ff0ecb526e99d0fd1b73fd2efc27f073b3a4a45c")
+        (revision "497"))
     (package
       (name "beads")
-      (version (git-version "0.29.0" revision commit))
+      (version (git-version "0.30.2" revision commit))
       (source
        (origin
          (method git-fetch)
@@ -27,7 +27,7 @@
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "0k7rlyf548h4xwjgjm6ciplpqlbak3r9n0s43pcrkqr574ywxv00"))))
+          (base32 "0ll7d5hdhvxs5v2ja47wdbxjq55fsn4jxz4y6qhl84warxxlg5cx"))))
       (build-system go-build-system)
       (arguments
        (list
@@ -44,11 +44,11 @@
                   (with-directory-excursion (string-append "src/" import-path)
                     ;; Run tests that don't require full environment
                     (invoke "go"
-                            "test"
-                            "-v"
-                            "-run"
-                            "^Test(Parse|ValidationResults|VersionCommand|Truncate|GitRevParse)"
-                            ".")))))
+                     "test"
+                     "-v"
+                     "-run"
+                     "^Test(Parse|ValidationResults|VersionCommand|Truncate|GitRevParse)"
+                     ".")))))
             (add-after 'unpack 'delete-broken-test
               (lambda _
                 (delete-file
@@ -67,12 +67,13 @@
                             (list (string-append sqlite-dir
                                                  "/embed/sqlite3.wasm")
                                   (string-append sqlite-dir
-                                                 "/util/sql3util/wasm/sql3parse_table.wasm"))))))
+                                   "/util/sql3util/wasm/sql3parse_table.wasm"))))))
             (add-before 'build 'set-home
               (lambda _
                 (setenv "HOME" "/tmp"))))))
       (native-inputs (list git))
       (propagated-inputs (list go-github-com-anthropics-anthropic-sdk-go
+                               go-github-com-charmbracelet-lipgloss
                                go-github-com-fatih-color
                                go-github-com-ncruces-go-sqlite3
                                go-github-com-spf13-cobra
