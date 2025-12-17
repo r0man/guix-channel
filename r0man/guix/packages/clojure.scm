@@ -19,42 +19,45 @@
 (define-public babashka
   (package
     (name "babashka")
-    (version "1.12.208")
-    (source (origin
-              (method url-fetch/tarbomb)
-              (uri (string-append "https://github.com/babashka/babashka"
-                                  "/releases/download/v" version "/babashka-"
-                                  version "-linux-"
-                                  (cond ((target-aarch64?)
-                                         "aarch64")
-                                        ((target-x86-64?)
-                                         "amd64"))
-                                  "-static.tar.gz"))
-              (sha256
-               (base32
-                (cond ((target-aarch64?)
-                       "16cxzqf62jxavn5dizfn0isgxjfgy538in3f7xz7xv5q144kqqpz")
-                      ((target-x86-64?)
-                       "0abivcyg16cmv6phd1xcs8f971p34v0ibqaic7qyqcirpvl0nk22"))))))
+    (version "1.12.213")
+    (source
+     (origin
+       (method url-fetch/tarbomb)
+       (uri (string-append "https://github.com/babashka/babashka"
+                           "/releases/download/v"
+                           version
+                           "/babashka-"
+                           version
+                           "-linux-"
+                           (cond
+                             ((target-aarch64?)
+                              "aarch64")
+                             ((target-x86-64?)
+                              "amd64"))
+                           "-static.tar.gz"))
+       (sha256
+        (base32 (cond
+                  ((target-aarch64?)
+                   "1sjj4rfh5883i9c04416h20hg3g2y9sh45ic5h8lj1942vj9z1dh")
+                  ((target-x86-64?)
+                   "0mr091jizad7vm7xwi1n5v7zqsbycqjn2gb8hvmhf8j0vi6a37n9"))))))
     (build-system binary-build-system)
     (arguments
      (list
-      #:patchelf-plan
-      (if (target-aarch64?)
-          `'(("bb" ("gcc" "libc" "zlib")))
-          #f)
-      #:install-plan
-      `'(("./bb" "/bin/"))
+      #:patchelf-plan (if (target-aarch64?)
+                          `'(("bb" ("gcc" "libc" "zlib"))) #f)
+      #:install-plan `'(("./bb" "/bin/"))
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'chmod
             (lambda _
               (chmod "bb" #o755))))))
-    (inputs (list `(,gcc "lib") zlib))
+    (inputs (list (list gcc "lib") zlib))
     (supported-systems '("aarch64-linux" "x86_64-linux"))
     (home-page "https://github.com/babashka/babashka")
     (synopsis "Native, fast starting Clojure interpreter for scripting")
-    (description "Babashka is a native Clojure interpreter for scripting with
+    (description
+     "Babashka is a native Clojure interpreter for scripting with
 fast startup.  Its main goal is to leverage Clojure in places where you would
 be using bash otherwise.")
     (license license:epl1.0)))
