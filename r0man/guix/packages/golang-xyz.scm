@@ -316,10 +316,293 @@ ccgo-generated code.")
 replacement for mattn/go-sqlite3.")
     (license license:bsd-3)))
 
+(define-public go-github-com-catppuccin-go
+  (package
+    (name "go-github-com-catppuccin-go")
+    (version "0.3.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/catppuccin/go")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1gqbgsap69abq1jdc4dhxvsrfb9yqc9423x6za6d7slfky1f736d"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/catppuccin/go"))
+    (home-page "https://github.com/catppuccin/go")
+    (synopsis "Catppuccin color palette for Go")
+    (description
+     "This package provides the Catppuccin color palette for Go applications.")
+    (license license:expat)))
+
+(define-public go-github-com-charmbracelet-x-errors
+  (package
+    (name "go-github-com-charmbracelet-x-errors")
+    (version "0.0.0-20240508181413-e8d8b6e2de86")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/charmbracelet/x")
+             (commit (go-version->git-ref version
+                                          #:subdir "errors"))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "00yyl9bspc2jn79d3zxbqvp7kwaklqaiyahfh71gp1xzijbgnibp"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/charmbracelet/x/errors"
+      #:unpack-path "github.com/charmbracelet/x"))
+    (home-page "https://github.com/charmbracelet/x")
+    (synopsis "Error handling utilities for Go")
+    (description "Package errors provides error handling utilities.")
+    (license license:expat)))
+
+(define-public go-github-com-charmbracelet-x-termios
+  (package
+    (name "go-github-com-charmbracelet-x-termios")
+    (version "0.1.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/charmbracelet/x")
+             (commit (go-version->git-ref version
+                                          #:subdir "termios"))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "059b9kxqlmvfif2xrj8j21ih2476n0aphg5w5ajrf974hl0fy3k1"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/charmbracelet/x/termios"
+      #:unpack-path "github.com/charmbracelet/x"))
+    (propagated-inputs (list go-golang-org-x-sys))
+    (home-page "https://github.com/charmbracelet/x")
+    (synopsis "Unified termios API for Go")
+    (description
+     "Package termios provides a unified termios API for Go.")
+    (license license:expat)))
+
+(define-public go-github-com-charmbracelet-x-conpty
+  (package
+    (name "go-github-com-charmbracelet-x-conpty")
+    (version "0.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/charmbracelet/x")
+             (commit (go-version->git-ref version
+                                          #:subdir "conpty"))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "00d3lxlly64aqcnaci5ds9cyxcq9ynq5qh4f368s17gxml5k40pz"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/charmbracelet/x/conpty"
+      #:unpack-path "github.com/charmbracelet/x"))
+    (propagated-inputs (list go-golang-org-x-sys))
+    (home-page "https://github.com/charmbracelet/x")
+    (synopsis "Windows Console Pseudo-terminal support for Go")
+    (description
+     "Package conpty implements Windows Console Pseudo-terminal support.")
+    (license license:expat)))
+
+(define-public go-github-com-charmbracelet-x-exp-strings
+  (package
+    (name "go-github-com-charmbracelet-x-exp-strings")
+    (version "0.0.0-20240722160745-212f7b056ed0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/charmbracelet/x")
+             (commit (go-version->git-ref version
+                                          #:subdir "exp/strings"))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "086q8qp2ip0gmz21yrfhmqfb4q57xwm5rpfgnw63vk5rvhl7qxlb"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/charmbracelet/x/exp/strings"
+      #:unpack-path "github.com/charmbracelet/x"))
+    (home-page "https://github.com/charmbracelet/x")
+    (synopsis "String manipulation utilities for Go")
+    (description "Package strings provides string manipulation utilities.")
+    (license license:expat)))
+
+(define-public go-github-com-charmbracelet-x-xpty
+  (package
+    (name "go-github-com-charmbracelet-x-xpty")
+    (version "0.1.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/charmbracelet/x")
+             (commit (go-version->git-ref version
+                                          #:subdir "xpty"))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1dnkbmgmmpr2hd4z464mvyia260pvl0qfrdgjjjqab7kqqk78pch"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/charmbracelet/x/xpty"
+      #:unpack-path "github.com/charmbracelet/x"))
+    (propagated-inputs (list go-golang-org-x-sys
+                             go-github-com-creack-pty))
+    (home-page "https://github.com/charmbracelet/x")
+    (synopsis "Cross-platform PTY interface for Go")
+    (description
+     "Package xpty provides platform-independent interfaces to interact with
+pseudo-terminals (PTYs) in Go.  It abstracts the differences between Unix and
+Windows systems and supports both ConPTY and classic Unix PTYs.")
+    (license license:expat)))
+
+(define-public go-github-com-mattn-go-localereader
+  (package
+    (name "go-github-com-mattn-go-localereader")
+    (version "0.0.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/mattn/go-localereader")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0wcgqnpjk0drm7swc0q27j4r5ab63mhz29dgbjdnyn4sw68rqm96"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/mattn/go-localereader"
+      #:tests? #f))  ; Tests require golang.org/x/text
+    (home-page "https://github.com/mattn/go-localereader")
+    (synopsis "Locale-aware reader for Go")
+    (description
+     "This package provides a locale-aware reader for Go.")
+    (license license:expat)))
+
+(define-public go-github-com-charmbracelet-bubbletea
+  (package
+    (name "go-github-com-charmbracelet-bubbletea")
+    (version "1.3.6")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/charmbracelet/bubbletea")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "09bdwp1qsfjkvv7lgwjcvmww88mrz6bb9bani17rs96ag0l4bpaw"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/charmbracelet/bubbletea"
+      #:tests? #f))
+    (propagated-inputs (list go-golang-org-x-sys
+                             go-golang-org-x-sync
+                             go-github-com-muesli-cancelreader
+                             go-github-com-muesli-ansi
+                             go-github-com-mattn-go-localereader
+                             go-github-com-erikgeiser-coninput
+                             go-github-com-charmbracelet-x-term
+                             go-github-com-charmbracelet-x-ansi
+                             go-github-com-charmbracelet-lipgloss))
+    (home-page "https://github.com/charmbracelet/bubbletea")
+    (synopsis "TUI framework for Go based on The Elm Architecture")
+    (description
+     "Package tea provides a framework for building rich terminal user interfaces
+based on the paradigms of The Elm Architecture.  It's well-suited for simple and
+complex terminal applications, either inline, full-window, or a mix of both.")
+    (license license:expat)))
+
+(define-public go-github-com-charmbracelet-bubbles
+  (package
+    (name "go-github-com-charmbracelet-bubbles")
+    (version "0.21.1-0.20250623103423-23b8fd6302d7")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/charmbracelet/bubbles")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0p1akww623hhj31g1z2xpzw7mbhq6x23qc2fqjfqqn5irmbnp4aj"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/charmbracelet/bubbles"))
+    (propagated-inputs (list go-github-com-sahilm-fuzzy
+                             go-github-com-rivo-uniseg
+                             go-github-com-muesli-termenv
+                             go-github-com-mattn-go-runewidth
+                             go-github-com-lucasb-eyer-go-colorful
+                             go-github-com-dustin-go-humanize
+                             go-github-com-charmbracelet-x-exp-golden
+                             go-github-com-charmbracelet-x-ansi
+                             go-github-com-charmbracelet-lipgloss
+                             go-github-com-charmbracelet-harmonica
+                             go-github-com-charmbracelet-bubbletea
+                             go-github-com-aymanbagabas-go-udiff
+                             go-github-com-atotto-clipboard
+                             go-github-com-makenowjust-heredoc))
+    (home-page "https://github.com/charmbracelet/bubbles")
+    (synopsis "TUI components for Bubble Tea applications")
+    (description
+     "Package bubbles provides some components for Bubble Tea applications.  These
+components are used in production in Glow, Charm and many other applications.")
+    (license license:expat)))
+
+(define-public go-github-com-charmbracelet-huh
+  (package
+    (name "go-github-com-charmbracelet-huh")
+    (version "0.8.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/charmbracelet/huh")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "166j1hrspj74z0ffbw1zbwapisfq1zz7l0bkj8xsqa08rz7nspjv"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/charmbracelet/huh"
+      #:tests? #f))
+    (propagated-inputs (list go-github-com-mitchellh-hashstructure-v2
+                             go-github-com-charmbracelet-x-xpty
+                             go-github-com-charmbracelet-x-term
+                             go-github-com-charmbracelet-x-exp-strings
+                             go-github-com-charmbracelet-x-cellbuf
+                             go-github-com-charmbracelet-x-ansi
+                             go-github-com-charmbracelet-lipgloss
+                             go-github-com-charmbracelet-bubbletea
+                             go-github-com-charmbracelet-bubbles
+                             go-github-com-catppuccin-go))
+    (home-page "https://github.com/charmbracelet/huh")
+    (synopsis "Terminal forms and prompts library for Go")
+    (description
+     "Package huh provides components to build terminal-based forms and prompts.")
+    (license license:expat)))
+
 (define-public go-github-com-steveyegge-beads
   (package
     (name "go-github-com-steveyegge-beads")
-    (version "0.22.0")
+    (version "0.30.7")
     (source
      (origin
        (method git-fetch)
@@ -328,7 +611,7 @@ replacement for mattn/go-sqlite3.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "00mvpsap1f89fyqk3kzhq8n0wrim6446vqnx30i99g02bbnfzycz"))))
+        (base32 "03jgyy6wansxpmsx5ycdirdk45y3ccz8hb1iljbda5pmimdxs13f"))))
     (build-system go-build-system)
     (arguments
      (list

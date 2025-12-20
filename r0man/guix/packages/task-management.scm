@@ -14,11 +14,11 @@
     #:use-module (r0man guix packages golang-xyz))
 
 (define-public beads
-  (let ((commit "ff0ecb526e99d0fd1b73fd2efc27f073b3a4a45c")
-        (revision "497"))
+  (let ((commit "244ba1471b6ac5ac841bc7675a3f5562c77df5a9")
+        (revision "11"))
     (package
       (name "beads")
-      (version (git-version "0.30.2" revision commit))
+      (version (git-version "0.30.7" revision commit))
       (source
        (origin
          (method git-fetch)
@@ -27,7 +27,7 @@
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "0ll7d5hdhvxs5v2ja47wdbxjq55fsn4jxz4y6qhl84warxxlg5cx"))))
+          (base32 "17jjqn0mrxdfrqjkn0ynvg44c9ic9wqynypb2kspvwpyjv96vcp3"))))
       (build-system go-build-system)
       (arguments
        (list
@@ -73,6 +73,7 @@
                 (setenv "HOME" "/tmp"))))))
       (native-inputs (list git))
       (propagated-inputs (list go-github-com-anthropics-anthropic-sdk-go
+                               go-github-com-charmbracelet-huh
                                go-github-com-charmbracelet-lipgloss
                                go-github-com-fatih-color
                                go-github-com-ncruces-go-sqlite3
