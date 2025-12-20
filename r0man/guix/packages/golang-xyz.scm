@@ -602,7 +602,7 @@ components are used in production in Glow, Charm and many other applications.")
 (define-public go-github-com-steveyegge-beads
   (package
     (name "go-github-com-steveyegge-beads")
-    (version "0.30.7")
+    (version "0.22.0")
     (source
      (origin
        (method git-fetch)
@@ -611,7 +611,7 @@ components are used in production in Glow, Charm and many other applications.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "03jgyy6wansxpmsx5ycdirdk45y3ccz8hb1iljbda5pmimdxs13f"))))
+        (base32 "00mvpsap1f89fyqk3kzhq8n0wrim6446vqnx30i99g02bbnfzycz"))))
     (build-system go-build-system)
     (arguments
      (list
