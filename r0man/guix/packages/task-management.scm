@@ -14,11 +14,11 @@
     #:use-module (r0man guix packages golang-xyz))
 
 (define-public beads
-  (let ((commit "199def9fede28c7e39ecd4c942f5541735eb86ec")
+  (let ((commit "117bdd637ec8ce33e14e805f56fe4290a207d965")
         (revision "13"))
     (package
       (name "beads")
-      (version (git-version "0.34.0" revision commit))
+      (version (git-version "0.35.0" revision commit))
       (source
        (origin
          (method git-fetch)
@@ -27,7 +27,7 @@
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "1cikiabfhib2xxpccb1zkjl3gm1dmis6862q4p22v62f10cjiy70"))))
+          (base32 "08z8b9vnhd09hxxq39sqjcvqba6w3441z9clkmz703dfi8qzmi5a"))))
       (build-system go-build-system)
       (arguments
        (list
