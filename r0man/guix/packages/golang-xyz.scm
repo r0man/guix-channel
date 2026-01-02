@@ -52,7 +52,13 @@ explorer or cmd/powershell.")
     (arguments
      (list
       #:import-path "github.com/tetratelabs/wazero"
-      #:tests? #f))
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'check
+            (lambda* (#:key tests? import-path #:allow-other-keys)
+              (when tests?
+                ;; Only test main package, skip internal/integration tests
+                (invoke "go" "test" "-v" import-path)))))))
     (home-page "https://wazero.io/")
     (synopsis "WebAssembly runtime for Go")
     (description
@@ -457,9 +463,24 @@ replacement for mattn/go-sqlite3.")
     (arguments
      (list
       #:import-path "github.com/charmbracelet/x/xpty"
-      #:unpack-path "github.com/charmbracelet/x"))
-    (propagated-inputs (list go-golang-org-x-sys
-                             go-github-com-creack-pty))
+      #:unpack-path "github.com/charmbracelet/x"
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'install 'install-sibling-packages
+            (lambda* (#:key outputs #:allow-other-keys)
+              ;; xpty imports conpty, term, and termios from the same monorepo.
+              ;; Install them alongside xpty so dependents can use them.
+              (let ((out (assoc-ref outputs "out")))
+                (for-each
+                 (lambda (pkg)
+                   (let ((src (string-append "src/github.com/charmbracelet/x/" pkg))
+                         (dest (string-append out "/src/github.com/charmbracelet/x/" pkg)))
+                     (when (file-exists? src)
+                       (mkdir-p dest)
+                       (copy-recursively src dest))))
+                 '("conpty" "term" "termios"))))))))
+    (propagated-inputs (list go-github-com-creack-pty
+                             go-golang-org-x-sys))
     (home-page "https://github.com/charmbracelet/x")
     (synopsis "Cross-platform PTY interface for Go")
     (description
@@ -485,7 +506,8 @@ Windows systems and supports both ConPTY and classic Unix PTYs.")
     (arguments
      (list
       #:import-path "github.com/mattn/go-localereader"
-      #:tests? #f))  ; Tests require golang.org/x/text
+      ;; Tests use Windows-only NewCodePageDecoder function
+      #:tests? #f))
     (home-page "https://github.com/mattn/go-localereader")
     (synopsis "Locale-aware reader for Go")
     (description
@@ -509,7 +531,13 @@ Windows systems and supports both ConPTY and classic Unix PTYs.")
     (arguments
      (list
       #:import-path "github.com/charmbracelet/bubbletea"
-      #:tests? #f))
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'check
+            (lambda* (#:key tests? import-path #:allow-other-keys)
+              (when tests?
+                ;; Only test main package, skip examples which have extra deps
+                (invoke "go" "test" "-v" import-path)))))))
     (propagated-inputs (list go-golang-org-x-sys
                              go-golang-org-x-sync
                              go-github-com-muesli-cancelreader
@@ -582,7 +610,13 @@ components are used in production in Glow, Charm and many other applications.")
     (arguments
      (list
       #:import-path "github.com/charmbracelet/huh"
-      #:tests? #f))
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'check
+            (lambda* (#:key tests? import-path #:allow-other-keys)
+              (when tests?
+                ;; Test main package only, skip spinner example
+                (invoke "go" "test" "-v" import-path)))))))
     (propagated-inputs (list go-github-com-mitchellh-hashstructure-v2
                              go-github-com-charmbracelet-x-xpty
                              go-github-com-charmbracelet-x-term
@@ -616,12 +650,19 @@ components are used in production in Glow, Charm and many other applications.")
     (arguments
      (list
       #:install-source? #t
-      #:tests? #f  ; Tests require full environment
       #:import-path "github.com/steveyegge/beads"
       #:phases
       #~(modify-phases %standard-phases
           ;; No binaries to build, just install source
-          (delete 'build))))
+          (delete 'build)
+          (replace 'check
+            (lambda* (#:key tests? import-path #:allow-other-keys)
+              (when tests?
+                (with-directory-excursion (string-append "src/" import-path)
+                  ;; Only test packages that don't require sqlite/wasm setup
+                  (invoke "go" "test" "-v"
+                          "github.com/steveyegge/beads/internal/config"
+                          "github.com/steveyegge/beads/internal/utils"))))))))
     (propagated-inputs
      (list go-github-com-anthropics-anthropic-sdk-go
            go-github-com-fatih-color
