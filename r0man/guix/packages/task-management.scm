@@ -5,6 +5,7 @@
     #:use-module (gnu packages golang-check)
     #:use-module (gnu packages golang-web)
     #:use-module (gnu packages golang-xyz)
+    #:use-module (gnu packages tmux)
     #:use-module (gnu packages version-control)
     #:use-module (gnu packages)
     #:use-module (guix build-system go)
@@ -90,4 +91,69 @@ to follow for long distances and reliably perform complex task streams
 in the right order.  It uses SQLite for fast local operations and
 JSONL files stored in git for distributed synchronization across
 machines.")
+    (license license:expat)))
+
+(define-public gastown
+  (package
+    (name "gastown")
+    (version "0.1.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/steveyegge/gastown")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0yfgn70gin9hs0c1l0f59qgn5h684zqir765fjr12p7vz8jabfy8"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:install-source? #f
+      #:import-path "github.com/steveyegge/gastown/cmd/gt"
+      #:unpack-path "github.com/steveyegge/gastown"
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'remove-beads-directory
+            (lambda* (#:key import-path #:allow-other-keys)
+              ;; Remove .beads directory so integration tests skip gracefully.
+              ;; The directory contains only JSONL without an initialized
+              ;; SQLite database, which would cause TestIntegration to fail.
+              (let ((beads-dir (string-append
+                                "src/"
+                                (dirname (dirname import-path))
+                                "/.beads")))
+                (when (file-exists? beads-dir)
+                  (delete-file-recursively beads-dir)))))
+          (replace 'check
+            (lambda* (#:key tests? import-path #:allow-other-keys)
+              (when tests?
+                (with-directory-excursion
+                    (string-append "src/"
+                                   (dirname (dirname import-path)))
+                  ;; Run test suite, skipping tests that expect bd in temp dirs
+                  (invoke "go" "test" "-v"
+                          "-skip" "TestInitAgentBeadsUsesRigBeadsDir"
+                          "./...")))))
+          (add-before 'build 'set-home
+            (lambda _
+              (setenv "HOME" "/tmp"))))))
+    (native-inputs (list beads git tmux))
+    (propagated-inputs (list go-github-com-burntsushi-toml
+                             go-github-com-charmbracelet-bubbles
+                             go-github-com-charmbracelet-bubbletea
+                             go-github-com-charmbracelet-lipgloss
+                             go-github-com-spf13-cobra
+                             go-golang-org-x-term
+                             go-golang-org-x-text))
+    (home-page "https://github.com/steveyegge/gastown")
+    (synopsis "Multi-agent orchestrator for Claude Code")
+    (description
+     "@command{gt} (Gastown) is a multi-agent orchestrator for Claude Code
+that coordinates multiple AI agents working on software development tasks.
+It uses a git-backed issue tracker called Beads to maintain work state,
+ensuring tasks survive crashes and agent restarts.  Agents are organized
+into roles (Polecats for workers, Witness for monitoring, Refinery for
+code review, Mayor for cross-project coordination) within containerized
+project spaces called Rigs.")
     (license license:expat)))
