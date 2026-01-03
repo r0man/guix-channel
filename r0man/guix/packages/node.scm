@@ -1,5 +1,6 @@
 (define-module (r0man guix packages node)
   #:use-module ((guix licenses) #:prefix license:)
+  #:use-module (gnu packages rust-apps)
   #:use-module (guix packages)
   #:use-module (guix download)
   #:use-module (guix build-system node)
@@ -24,7 +25,22 @@
       #:phases
       #~(modify-phases %standard-phases
           (delete 'build)
+          (add-after 'install 'replace-vendored-ripgrep
+            (lambda* (#:key inputs outputs #:allow-other-keys)
+              (let* ((out (assoc-ref outputs "out"))
+                     (lib (string-append out "/lib/node_modules/@anthropic-ai/claude-code"))
+                     (vendor-rg-dir (string-append lib "/vendor/ripgrep"))
+                     (rg-bin (search-input-file inputs "/bin/rg")))
+                ;; Delete all vendored ripgrep binaries
+                (when (file-exists? vendor-rg-dir)
+                  (delete-file-recursively vendor-rg-dir))
+                ;; Recreate the expected directory structure with symlinks to Guix ripgrep
+                (mkdir-p (string-append vendor-rg-dir "/arm64-linux"))
+                (mkdir-p (string-append vendor-rg-dir "/x64-linux"))
+                (symlink rg-bin (string-append vendor-rg-dir "/arm64-linux/rg"))
+                (symlink rg-bin (string-append vendor-rg-dir "/x64-linux/rg")))))
           (delete 'validate-runpath))))
+    (inputs (list ripgrep))
     (home-page "https://github.com/anthropics/claude-code")
     (synopsis "AI coding assistant that lives in your terminal")
     (description
