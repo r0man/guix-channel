@@ -11,6 +11,59 @@
   #:use-module (guix packages)
   #:use-module (r0man guix packages golang-maths))
 
+(define-public go-github-com-aleksi-pointer
+  (package
+    (name "go-github-com-aleksi-pointer")
+    (version "1.2.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/AlekSi/pointer")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0rncmanv62wwy7ihvjhvb695mkvy4kdzhgnn90zygs9yrfzzk0wk"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/AlekSi/pointer"))
+    (home-page "https://github.com/AlekSi/pointer")
+    (synopsis "Go package for pointer helpers")
+    (description
+     "Package pointer provides helper routines for simplifying the creation of
+pointer types for literals of basic Go types.")
+    (license license:expat)))
+
+(define-public go-github-com-olebedev-when
+  (package
+    (name "go-github-com-olebedev-when")
+    (version "1.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/olebedev/when")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "11jpz8w12pip6qy5ylyd7jx5r2imd35q1xkay296gj4w2k2g1yh6"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/olebedev/when"
+      ;; Tests require testify which has many transitive dependencies
+      #:tests? #f))
+    (propagated-inputs (list go-github-com-aleksi-pointer
+                             go-github-com-pkg-errors))
+    (home-page "https://github.com/olebedev/when")
+    (synopsis "Natural language date/time parser for Go")
+    (description
+     "Package when provides a natural language date/time parser with pluggable
+rules and merge strategies.  It supports parsing expressions like \"tomorrow\",
+\"next week\", and \"in 2 hours\".")
+    (license license:expat)))
+
 (define-public go-github-com-inconshreveable-mousetrap
   (package
     (name "go-github-com-inconshreveable-mousetrap")

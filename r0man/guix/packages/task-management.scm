@@ -17,7 +17,7 @@
 (define-public beads
   (package
     (name "beads")
-    (version "0.42.0")
+    (version "0.43.0")
     (source
      (origin
        (method git-fetch)
@@ -26,7 +26,7 @@
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0a5d8wh4b6zxki8672jym6kaxcf14zq2f0js3z7ks5pfpfdskpyy"))))
+        (base32 "0xyxaizd0slp40dvfm5n87cagf70vd4nra35ygqnaal2mqhbgkxr"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -43,11 +43,11 @@
                 (with-directory-excursion (string-append "src/" import-path)
                   ;; Run tests that don't require full environment
                   (invoke "go"
-                          "test"
-                          "-v"
-                          "-run"
-                          "^Test(Parse|ValidationResults|VersionCommand|Truncate|GitRevParse)"
-                          ".")))))
+                   "test"
+                   "-v"
+                   "-run"
+                   "^Test(Parse|ValidationResults|VersionCommand|Truncate|GitRevParse)"
+                   ".")))))
           (add-after 'unpack 'delete-broken-test
             (lambda _
               (delete-file
@@ -66,7 +66,7 @@
                           (list (string-append sqlite-dir
                                                "/embed/sqlite3.wasm")
                                 (string-append sqlite-dir
-                                               "/util/sql3util/wasm/sql3parse_table.wasm"))))))
+                                 "/util/sql3util/wasm/sql3parse_table.wasm"))))))
           (add-before 'build 'set-home
             (lambda _
               (setenv "HOME" "/tmp"))))))
@@ -76,6 +76,7 @@
                              go-github-com-charmbracelet-lipgloss
                              go-github-com-fatih-color
                              go-github-com-ncruces-go-sqlite3
+                             go-github-com-olebedev-when
                              go-github-com-spf13-cobra
                              go-github-com-spf13-viper
                              go-gopkg-in-natefinch-lumberjack-v2
