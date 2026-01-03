@@ -1817,11 +1817,10 @@ Emacs and Claude AI for coding assistance.")
       (license license:asl2.0))))
 
 (define-public emacs-claude-code-ide
-  (let ((commit "32d853e20b9d245a6ee89c4a153a4e568250c62c")
-        (revision "3"))
+  (let ((commit "760240d7f03ff16f90ede9d4f4243cd94f3fed73"))
     (package
       (name "emacs-claude-code-ide")
-      (version (git-version "0.0.1" revision commit))
+      (version "0.2.5")
       (source
        (origin
          (method git-fetch)
@@ -1830,11 +1829,17 @@ Emacs and Claude AI for coding assistance.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "0ba33pqrzllfnwc87ql9cisqmwlhci741x871b4jhipajm8jgdrs"))))
+          (base32 "0vhqpniyisi8avsn4qhk7sz6s5j5nm54ry1f4h8jjhavpvx3rfq1"))))
       (build-system emacs-build-system)
       (arguments (list #:tests? #f)) ; no tests
       (home-page "https://github.com/manzaltu/claude-code-ide.el")
-      (propagated-inputs (list emacs-flycheck emacs-eat emacs-vterm emacs-web-server emacs-websocket))
+      (propagated-inputs
+       (list emacs-eat
+             emacs-flycheck
+             emacs-transient
+             emacs-vterm
+             emacs-web-server
+             emacs-websocket))
       (synopsis "Claude Code IDE integration for Emacs")
       (description "Claude Code IDE for Emacs provides seamless integration with Claude
 Code CLI through the Model Context Protocol (MCP).  This package
