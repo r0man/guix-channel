@@ -820,7 +820,7 @@ languages is very easy and this package already contains language statistics for
 (define-public emacs-jira
   (package
     (name "emacs-jira")
-    (version "2.9.1")
+    (version "2.15.0")
     (source
      (origin
        (method git-fetch)
@@ -829,7 +829,7 @@ languages is very easy and this package already contains language statistics for
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0xnsqjc0dbb2fy9i0fyhxdza9x0q7cm1yas662rg7s8r4310vqxh"))))
+        (base32 "0wwzw84qrzzw1bywpfz81x4z9fb84dikxgb5dx4hji97j1s6w21k"))))
     (build-system emacs-build-system)
     (arguments (list #:tests? #f)) ; no tests
     (propagated-inputs (list emacs-magit
