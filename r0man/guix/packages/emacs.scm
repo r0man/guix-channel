@@ -1178,8 +1178,8 @@ buffers to HTML that is compatible with Tufte CSS.")
     (license license:gpl3+)))
 
 (define-public emacs-openai
-  (let ((commit "e12330c217bb3358736f5534e9becba1ebaef0d4")
-        (revision "2"))
+  (let ((commit "349aaccee567fceda116a05a310b401e320f186b")
+        (revision "3"))
     (package
       (name "emacs-openai")
       (version (git-version "0.1.0" revision commit))
@@ -1191,7 +1191,7 @@ buffers to HTML that is compatible with Tufte CSS.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "05w6pgqp62xf48z9zm3bjh5c91pwfs0rbkc9bx2dc9qp2hy5dfpv"))))
+          (base32 "0n4ymfv0hl2h9rarqw6ybf1lkjpr1mcgvw46d1i2rh11ldphymfx"))))
       (build-system emacs-build-system)
       (arguments (list #:tests? #f)) ; no tests
       (propagated-inputs (list emacs-dash emacs-request emacs-tblui))
