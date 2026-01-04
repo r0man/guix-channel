@@ -1637,25 +1637,23 @@ direct access to the core SQLite3 C API from Emacs Lisp.")
 (define-public emacs-virtualenvwrapper
   (package
     (name "emacs-virtualenvwrapper")
-    (version "20190223.1919")
+    (version "0.2.0")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/porterjamesj/virtualenvwrapper.el.git")
-             (commit "c7e84505db4142fd1beebf38ffe37c3f42444ca3")))
+             (url "https://github.com/porterjamesj/virtualenvwrapper.el")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "0kkhbw8c9c7nfhz7i0wwwcrbk0a91yvq7n5n89ndsk5iwisr92vp"))))
+        (base32 "062pbnplb3w9h64qsj71d9fvgicp1x63n05mgvgymjh2rnx7py0d"))))
     (build-system emacs-build-system)
     (propagated-inputs (list emacs-dash emacs-s))
-    (home-page "http://github.com/porterjamesj/virtualenvwrapper.el")
-    (synopsis "a featureful virtualenv tool for Emacs")
+    (home-page "https://github.com/porterjamesj/virtualenvwrapper.el")
+    (synopsis "Featureful virtualenv tool for Emacs")
     (description
-     "This package provides a featureful virtualenv tool for Emacs.  Emulates much of
-the functionality of Doug Hellmann's
-[virtualenvwrapper](https://bitbucket.org/dhellmann/virtualenvwrapper/) See
-documentation at https://github.com/porterjamesj/virtualenvwrapper.el for more
-details.")
+     "This package provides a featureful virtualenv tool for Emacs.
+It emulates much of the functionality of Doug Hellmann's virtualenvwrapper.")
     (license license:gpl3+)))
 
 (define-public emacs-whisper
