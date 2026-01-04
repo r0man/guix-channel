@@ -877,8 +877,8 @@ https://docs.atlassian.com/jira/REST/cloud/.")
     (license license:gpl3+)))
 
 (define-public emacs-json-process-client
-  (let ((commit "c4385859ada9b7803698a1f0199fea7fc8880214")
-        (revision "1"))
+  (let ((commit "6485953fe6eff62938fd08720811c6fdd09d7d22")
+        (revision "2"))
     (package
       (name "emacs-json-process-client")
       (version (git-version "0.2.0" revision commit))
@@ -890,7 +890,7 @@ https://docs.atlassian.com/jira/REST/cloud/.")
                       (commit commit)))
                 (file-name (git-file-name name version))
                 (sha256 (base32
-                         "1n4spfyv7g88mkvca0cxc34qvp3x8vc838hmyp7x4ijr87lp8inm"))))
+                         "1vqls817hp6x7ydqyn1k7akj2pwdzi7iwp995zas24yk5w04dd5i"))))
       (build-system emacs-build-system)
       (arguments (list #:tests? #f)) ; tests use networking
       (home-page "https://github.com/DamienCassou/json-process-client")
