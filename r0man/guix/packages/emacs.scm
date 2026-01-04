@@ -101,44 +101,43 @@ It can also be used directly.")
       (license license:gpl3+))))
 
 (define-public emacs-bnf-mode
-  (let ((commit "5304ab647e04916c5be4fdde41477ad429a89120")
-        (revision "2"))
+  (let ((commit "1a7e177c282b8e07a2c33bd89232464b347dfc17")
+        (revision "1"))
     (package
       (name "emacs-bnf-mode")
-      (version (git-version "20240915.2318" revision commit))
+      (version (git-version "20221205.1451" revision commit))
       (source (origin
                 (method git-fetch)
                 (uri (git-reference
-                      (url "https://github.com/sergeyklay/bnf-mode")
+                      (url "https://github.com/sergeyklay/bnf-mode.git")
                       (commit commit)))
                 (file-name (git-file-name name version))
                 (sha256
                  (base32
-                  "0d2w2hbfzvqmln7jzq5j4i4365rvl1fbi3fx252ig1ivkcb4jk8c"))))
+                  "1r23hrl258v7r0y785p2jrjz0y0bpd4lpl9ji91pqzrm6amvbkn4"))))
       (build-system emacs-build-system)
       (arguments (list #:tests? #f)) ; tests don't run
       (home-page "https://github.com/sergeyklay/bnf-mode")
-      (synopsis "Major mode for editing BNF grammars")
+      (synopsis "Major mode for editing BNF grammars.")
       (description
        "BNF Mode is a GNU Emacs major mode for editing BNF grammars.
-Presently it provides basic syntax and font-locking for BNF files.  BNF
-notation is supported exactly form as it was first announced in the
+Presently itprovides basic syntax and font-locking for BNF files.  BNF
+notation is supportedexactly form as it was first announced in the
 ALGOL 60 report.")
       (license license:gpl3+))))
 
 (define-public emacs-cask
   (package
     (name "emacs-cask")
-    (version "0.9.1")
+    (version "0.9.0")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/cask/cask")
+             (url "https://github.com/cask/cask.git")
              (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
        (sha256
-        (base32 "06v79bq4hqkmw02pbg6c6izz52an4y1jzf3mdn9yc0km1sjsgy7y"))))
+        (base32 "1013cp97074ghjm3z7ah1xpgjwcr95pfibwg4lzvjj3nr8bcjnpp"))))
     (build-system emacs-build-system)
     (propagated-inputs
      (list emacs-s
@@ -150,8 +149,8 @@ ALGOL 60 report.")
     (arguments '(#:include '("^cask.el$" "^cask-bootstrap.el$")
                  #:exclude '()
                  #:tests? #f)) ; tests don't run
-    (home-page "https://github.com/cask/cask")
-    (synopsis "Project management for package development")
+    (home-page "http://github.com/cask/cask")
+    (synopsis "Cask: Project management for package development")
     (description
      "Cask is a project management tool for Emacs that helps automate the package
 development cycle.")
@@ -271,30 +270,35 @@ your questions, right within the editor.")
       (license license:gpl3+))))
 
 (define-public emacs-consult-gh
-  (let ((commit "92dea3c7bb4d831888415de37389c97bc6be7902")
-        (revision "1"))
-    (package
-      (name "emacs-consult-gh")
-      (version (git-version "0.12" revision commit))
-      (source
-       (origin
-         (method git-fetch)
-         (uri (git-reference
-               (url "https://github.com/armindarvish/consult-gh")
-               (commit commit)))
-         (file-name (git-file-name name version))
-         (sha256
-          (base32 "13hiisr0hh2w5md5iw2znz1zmq50455dpsxal8is9lzq5glghm8i"))))
-      (build-system emacs-build-system)
-      (propagated-inputs (list emacs-consult emacs-embark))
-      (home-page "https://github.com/armindarvish/consult-gh")
-      (synopsis "Interactive GitHub CLI interface using Consult")
-      (description "Consult-GH provides an interface to interact with GitHub
+  (package
+    (name "emacs-consult-gh")
+    (version "3.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/armindarvish/consult-gh")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1p9lcjrzwxgscxpy0x992g8sxy6h3mcin1vffxf6nx28akwz13in"))))
+    (build-system emacs-build-system)
+    (propagated-inputs (list emacs-consult
+                             emacs-embark
+                             emacs-forge
+                             emacs-markdown-mode
+                             emacs-nerd-icons
+                             emacs-ox-gfm
+                             emacs-pr-review
+                             emacs-yaml))
+    (home-page "https://github.com/armindarvish/consult-gh")
+    (synopsis "Interactive interface for GitHub CLI in Emacs using Consult")
+    (description "Consult-GH provides an interface to interact with GitHub
 repositories (search, view files and issues, clone, fork, etc) from
 inside Emacs.  It uses the consult package and the GitHub CLI and
 optionally Embark and provides an intuitive UI using minibuffer
 completion familiar to Emacs users.")
-      (license license:gpl3+))))
+    (license license:gpl3+)))
 
 (define-public emacs-color-theme
   (package
@@ -397,24 +401,26 @@ with consult, such as vertico.")
     (license license:gpl3+)))
 
 (define-public emacs-copilot
-  (package
-    (name "emacs-copilot")
-    (version "0.3.0")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/copilot-emacs/copilot.el")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "0n1kpjkr6vdfpb20x28bsg14piqv9vl0iz0jswc5qm0qgdmi23ah"))))
-    (build-system emacs-build-system)
-    (propagated-inputs (list emacs-dash emacs-f emacs-editorconfig emacs-jsonrpc emacs-s))
-    (home-page "https://github.com/copilot-emacs/copilot.el")
-    (synopsis "Unofficial Github Copilot mode for Emacs")
-    (description "An unofficial Emacs mode for Github Copilot.")
-    (license license:gpl3+)))
+  (let ((commit "6a2ad80489b8a0d021df95293eb7ac370aea140b")
+        (revision "8"))
+    (package
+      (name "emacs-copilot")
+      (version (git-version "0.0.1" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/copilot-emacs/copilot.el")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1f2gxzg9vz6pwzaygqq99z5ii3ccpcv3031qnm03mql7zdwm29ba"))))
+      (build-system emacs-build-system)
+      (propagated-inputs (list emacs-dash emacs-f emacs-editorconfig emacs-jsonrpc emacs-s))
+      (home-page "https://github.com/copilot-emacs/copilot.el")
+      (synopsis "Unofficial Github Copilot mode for Emacs")
+      (description "An unofficial Emacs mode for Github Copilot.")
+      (license license:gpl3+))))
 
 (define-public emacs-copilot-chat
   (package
@@ -424,7 +430,7 @@ with consult, such as vertico.")
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/chep/copilot-chat.el")
+             (url "https://github.com/chep/copilot-chat.el.git")
              (commit "17c4bfaafe7cd7da1b333714dfa548cd08a875d7")))
        (file-name (git-file-name name version))
        (sha256
@@ -487,11 +493,11 @@ programmability through direct Elisp evaluation.")
       (license license:asl2.0))))
 
 (define-public emacs-eglot-java
-  (let ((commit "b42b5190f3f59976d330fcec5fd27fc8e2701336")
-        (revision "2"))
+  (let ((commit "4cb3bdfaa954ad02e6eaac77c578987355db90cf")
+        (revision "1"))
     (package
       (name "emacs-eglot-java")
-      (version "20250527.1232")
+      (version "20231228.2257")
       (source (origin
                 (method git-fetch)
                 (uri (git-reference
@@ -499,18 +505,18 @@ programmability through direct Elisp evaluation.")
                       (commit commit)))
                 (file-name (git-file-name name version))
                 (sha256 (base32
-                         "0224qm3fhw7avl8npsrm32iwzbnwv4kihiyrkh5ps459mpawbjg3"))))
+                         "0wsyd2yiz1air2aiwqvprz89qgm05ak8zksh1jg4m5w5gbg9rlrj"))))
       (build-system emacs-build-system)
       (propagated-inputs (list emacs-eglot emacs-jsonrpc))
       (home-page "https://github.com/yveszoundi/eglot-java")
       (synopsis "Eglot Java package for Emacs")
-      (description "Java extension for the Eglot LSP client.")
+      (description "Java extension for the Eglot LSP client")
       (license license:gpl3+))))
 
 (define-public emacs-elisa
   (package
     (name "emacs-elisa")
-    (version "1.1.7")
+    (version "0.1.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -518,7 +524,7 @@ programmability through direct Elisp evaluation.")
                     (commit version)))
               (file-name (git-file-name name version))
               (sha256 (base32
-                       "1jwv4blhf9021758g212q8cf68a4hipj8nqgad00f54dxrr4s2h5"))))
+                       "0mk7rg2nmi7qc91fml0ahiwpc0xkhaf2w6mla8kxavjpx0051i3n"))))
     (build-system emacs-build-system)
     (propagated-inputs (list emacs-async emacs-ellama))
     (home-page "https://github.com/s-kostyaev/elisa")
@@ -747,8 +753,8 @@ you can force them to use the \"master\" branch.")
     (license license:gpl3+)))
 
 (define-public emacs-guess-language
-  (let ((commit "a17203d26135b970e4d7c5d101955d41303a758f")
-        (revision "2"))
+  (let ((commit "bccca49bbb27a3dff02c660d7cda8cdf83333d6e")
+        (revision "1"))
     (package
       (name "emacs-guess-language")
       (version (git-version "0.0.1" revision commit))
@@ -756,11 +762,11 @@ you can force them to use the \"master\" branch.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/tmalsburg/guess-language.el")
+               (url "https://github.com/tmalsburg/guess-language.el.git")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "1v9wwpfjl7a37jx0s2w5g48mv58vw8b3d0552v5ksxw21mbkya8s"))))
+          (base32 "0hq3nsjwvjxjrpqv57q8krw59gdd14qmkpm4pii49ca8iyx65v54"))))
       (build-system emacs-build-system)
       (arguments
        '(#:include '("^guess-language.el$" "^trigrams/[^/]+$") #:exclude '()))
@@ -788,23 +794,25 @@ languages is very easy and this package already contains language statistics for
       (license license:gpl3+))))
 
 (define-public emacs-grip-mode
-  (package
-    (name "emacs-grip-mode")
-    (version "2.5.0")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/seagle0128/grip-mode")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "1mrpmzcxgc9hkv55d6kv79f8y6ldqrf5b48f0a4fy30qlgby2wyz"))))
-    (build-system emacs-build-system)
-    (home-page "https://github.com/seagle0128/grip-mode")
-    (synopsis "Instant GitHub-flavored Markdown/Org preview using grip")
-    (description "Instant GitHub-flavored Markdown/Org preview using a grip subprocess.")
-    (license license:gpl3+)))
+  (let ((commit "e145adb22593a88249d964f77174207bcf755493")
+        (revision "1"))
+    (package
+      (name "emacs-grip-mode")
+      (version (git-version "2.3.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/seagle0128/grip-mode")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1jn15mid6qgqd9cam0afydka0k99ml9dwbr2g24zwfp0hzyblqkf"))))
+      (build-system emacs-build-system)
+      (home-page "https://github.com/seagle0128/grip-mode")
+      (synopsis "Instant GitHub-flavored Markdown/Org preview using grip.")
+      (description "Instant GitHub-flavored Markdown/Org preview using a grip subprocess.")
+      (license license:gpl3+))))
 
 (define-public emacs-jira
   (package
@@ -1286,8 +1294,8 @@ generate generate digital images from natural language descriptions.")
       (license license:gpl3+))))
 
 (define-public emacs-ox-jira
-  (let ((commit "8748a908ee366e52539b19b863935d2ef7ebd0bf")
-        (revision "2"))
+  (let ((commit "00184f8fdef02a3a359a253712e8769cbfbea3ba")
+        (revision "1"))
     (package
       (name "emacs-ox-jira")
       (version (git-version "0.0.1" revision commit))
@@ -1299,7 +1307,7 @@ generate generate digital images from natural language descriptions.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "0b2cirdyxz7c26d999kyzi7lydxh23v925bf2jmfv229875c8izv"))))
+          (base32 "1zyq4d0fvyawvb3w6072zl4zgbnrpzmxlz2l731wqrgnwm0l80gy"))))
       (build-system emacs-build-system)
       (propagated-inputs (list emacs-org))
       (home-page "https://github.com/stig/ox-jira.el")
@@ -1343,18 +1351,19 @@ Org files to JIRA markup for pasting into JIRA tickets & comments.")
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/antonj/scss-mode")
+             (url "https://github.com/antonj/scss-mode.git")
              (commit "cf58dbec5394280503eb5502938f3b5445d1b53d")))
-       (file-name (git-file-name name version))
        (sha256
         (base32 "0raja19l0igwr0pn0ghr1pj1d8i9k3m3764ma4r8nwzxcj9qw4ja"))))
     (build-system emacs-build-system)
     (home-page "https://github.com/antonj/scss-mode")
     (synopsis "Major mode for editing SCSS files")
     (description
-     "Major mode for editing SCSS files.  Requires the @code{sass} command
-line utility.  Customize @code{scss-sass-command} to point to your
-sass executable.")
+     "Command line utility sass is required, see http://sass-lang.com/ To install
+sass: gem install sass
+
+Also make sure sass location is in emacs PATH, example: (setq exec-path (cons
+(expand-file-name \"~/.gem/ruby/1.8/bin\") exec-path)) or customize\n`scss-sass-command' to point to your sass executable.")
     (license license:gpl3+)))
 
 (define-public emacs-smooth-scrolling
@@ -1365,13 +1374,12 @@ sass executable.")
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/aspiers/smooth-scrolling")
+             (url "https://github.com/aspiers/smooth-scrolling.git")
              (commit "2462c13640aa4c75ab3ddad443fedc29acf68f84")))
-       (file-name (git-file-name name version))
        (sha256
         (base32 "1h15gjq781i6fsz32qlh51knawdr8hcqvshsz6cszp752cibdcdg"))))
     (build-system emacs-build-system)
-    (home-page "https://github.com/aspiers/smooth-scrolling")
+    (home-page "http://github.com/aspiers/smooth-scrolling/")
     (synopsis "Make emacs scroll smoothly")
     (description
      "To interactively toggle the mode on / off:
@@ -1406,27 +1414,29 @@ See the README.md for more details.")
     (license license:gpl3+)))
 
 (define-public emacs-timesheet
-  (package
-    (name "emacs-timesheet")
-    (version "0.5.0")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/tmarble/timesheet.el")
-             (commit version)))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "01j8wps938mjjlq55w9lgky3f51k260ipjqv8072x0n73mwf9008"))))
-    (build-system emacs-build-system)
-    (propagated-inputs (list emacs-s emacs-org emacs-auctex))
-    (arguments '(#:include '("^[^/]+.el$" "^bin$" "^share$")
-                 #:exclude '()
-                 #:tests? #f))
-    (home-page "https://github.com/tmarble/timesheet.el")
-    (synopsis "Timesheet management add-on for org-mode")
-    (description "Timesheet management add-on for Emacs org-mode.")
-    (license license:gpl3+)))
+  (let ((commit "511751b239c84d7619ec1c61d7f108b732b64442")
+        (revision "1"))
+    (package
+      (name "emacs-timesheet")
+      (version (git-version "0.5.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/tmarble/timesheet.el.git")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "01j8wps938mjjlq55w9lgky3f51k260ipjqv8072x0n73mwf9008"))))
+      (build-system emacs-build-system)
+      (propagated-inputs (list emacs-s emacs-org emacs-auctex))
+      (arguments '(#:include '("^[^/]+.el$" "^bin$" "^share$")
+                   #:exclude '()
+                   #:tests? #f))
+      (home-page "https://github.com/tmarble/timesheet.el")
+      (synopsis "Timesheet management add-on for org-mode")
+      (description "Timesheet management add-on for Emacs org-mode")
+      (license license:gpl3+))))
 
 (define-public emacs-paimon
   (package
@@ -1436,7 +1446,7 @@ See the README.md for more details.")
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/r0man/paimon.el")
+             (url "https://github.com/r0man/paimon.el.git")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
@@ -1479,8 +1489,8 @@ See the README.md for more details.")
                (for-each (lambda (f) (rename-file f (basename f))) el-files)))))
        #:tests? #f)) ; no tests
     (home-page "https://github.com/r0man/paimon.el")
-    (synopsis "Major mode for Splunk")
-    (description "This package provides a major mode for Splunk.")
+    (synopsis "A major mode for Splunk")
+    (description "This package provides a major mode for Splunk")
     (license license:gpl3+)))
 
 (define-public emacs-sayid
@@ -1534,7 +1544,7 @@ and outputs from within Emacs.")
       (build-system emacs-build-system)
       (home-page "https://github.com/ahyatt/semext")
       (propagated-inputs (list emacs-llm))
-      (synopsis "Semantic versions of existing Emacs functionality")
+      (synopsis "Semantic versions of existing Emacs functionality ")
       (description "Semext aims to provide LLM-powered version of Emacs command in ways
 that feel natural to Emacs users.  The goal is to be as Emacs-like as
 possible.")
@@ -1568,9 +1578,7 @@ possible.")
                (emacs-substitute-sexps "sqlite3.el"
                  ("(require 'cl-lib)"
                   `(unless (require 'sqlite3-core nil t)
-                     (module-load
-                      ,(string-append (assoc-ref outputs "out")
-                                      "/lib/sqlite3-core.so")))))))
+                     (module-load ,(string-append (assoc-ref outputs "out") "/lib/sqlite3-core.so")))))))
            (add-before 'install 'build-emacs-module
              ;; Run make.
              (lambda* (#:key (make-flags '()) outputs #:allow-other-keys)
@@ -1584,12 +1592,12 @@ possible.")
        (list libtool sqlite))
       (home-page "https://github.com/syohex/emacs-sqlite3")
       (synopsis "Sqlite3 binding of Emacs Lisp")
-      (description "Sqlite binding of Emacs Lisp inspired by mruby-sqlite3.")
+      (description "Sqlite binding of Emacs Lisp inspired by mruby-sqlite3")
       (license license:gpl3+))))
 
 (define-public emacs-sqlite3-api
-  (let ((commit "615cc1cb021384291cec39a2048a3a36859e8cb9")
-        (revision "1"))
+  (let ((commit "a601c9965e4d0178705a64b7d4f88709ca9aea66")
+        (revision "0"))
     (package
       (name "emacs-sqlite3-api")
       (version (git-version "0.18" revision commit))
@@ -1601,7 +1609,7 @@ possible.")
                 (file-name (git-file-name name version))
                 (sha256
                  (base32
-                  "0lkzd3s08iymh1ahh3bfs6h70wafh5avxkx1rymq3facc9nc87jp"))))
+                  "1d1r65ybcf5idbs8sv0l3dna4l1wy3jba9dvv1kkz7zj6qhr48fs"))))
       (build-system emacs-build-system)
       (arguments
        `(#:modules ((guix build emacs-build-system)
@@ -1614,24 +1622,20 @@ possible.")
                (chmod "sqlite3.el" #o644)
                (emacs-substitute-sexps "sqlite3.el"
                  ("(require 'sqlite3-api nil t)"
-                  `(module-load
-                    ,(string-append (assoc-ref outputs "out")
-                                    "/lib/sqlite3-api.so"))))))
+                  `(module-load ,(string-append (assoc-ref outputs "out") "/lib/sqlite3-api.so"))))))
            (add-before 'install 'build-emacs-module
              ;; Run make.
              (lambda* (#:key (make-flags '()) outputs #:allow-other-keys)
                ;; Compile the shared object file.
                (apply invoke "make" "CC=gcc" make-flags)
                ;; Move the file into /lib.
-               (install-file "sqlite3-api.so"
-                             (string-append (assoc-ref outputs "out") "/lib")))))
+               (install-file "sqlite3-api.so" (string-append (assoc-ref outputs "out") "/lib")))))
          #:tests? #f))
       (native-inputs
        (list libtool sqlite))
       (home-page "https://github.com/pekingduck/emacs-sqlite3-api")
       (synopsis "SQLite3 API for GNU Emacs 25+")
-      (description "SQLite3 is a dynamic module for GNU Emacs 25+ that provides
-direct access to the core SQLite3 C API from Emacs Lisp.")
+      (description "SQLite3 is a dynamic module for GNU Emacs 25+ that provides direct access to the core SQLite3 C API from Emacs Lisp.")
       (license license:gpl3+))))
 
 (define-public emacs-virtualenvwrapper
@@ -1642,15 +1646,14 @@ direct access to the core SQLite3 C API from Emacs Lisp.")
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/porterjamesj/virtualenvwrapper.el")
+             (url "https://github.com/porterjamesj/virtualenvwrapper.el.git")
              (commit "c7e84505db4142fd1beebf38ffe37c3f42444ca3")))
-       (file-name (git-file-name name version))
        (sha256
         (base32 "0kkhbw8c9c7nfhz7i0wwwcrbk0a91yvq7n5n89ndsk5iwisr92vp"))))
     (build-system emacs-build-system)
     (propagated-inputs (list emacs-dash emacs-s))
-    (home-page "https://github.com/porterjamesj/virtualenvwrapper.el")
-    (synopsis "Featureful virtualenv tool for Emacs")
+    (home-page "http://github.com/porterjamesj/virtualenvwrapper.el")
+    (synopsis "a featureful virtualenv tool for Emacs")
     (description
      "This package provides a featureful virtualenv tool for Emacs.  Emulates much of
 the functionality of Doug Hellmann's
@@ -1692,9 +1695,8 @@ high end GPU.")
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/josteink/wsd-mode")
+             (url "https://github.com/josteink/wsd-mode.git")
              (commit "53330a2a43c4875f8682457df1a869a4c9028660")))
-       (file-name (git-file-name name version))
        (sha256
         (base32 "1swwaphlbvpalk7mgdgkaal8ffivhxil5fhfkxzazqnkl4i5zbmy"))))
     (build-system emacs-build-system)
@@ -1753,8 +1755,8 @@ object-relational DBMS from Emacs.")
     (license license:gpl3+)))
 
 (define-public emacs-editor-code-assistant
-  (let ((commit "c6c56a4cd55ad1792f19fa09bd39bc48c81b23c9")
-        (revision "5"))
+  (let ((commit "e1a939fe97197e94f8780025f55b66cbbc56de76")
+        (revision "4"))
     (package
       (name "emacs-editor-code-assistant")
       (version (git-version "0.0.1" revision commit))
@@ -1766,7 +1768,7 @@ object-relational DBMS from Emacs.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "0wmrb7z607n7xjx86b3vhafghjxzdi1hrwc2z40b7k5zivvq67nv"))))
+          (base32 "0cwz00qvif58d15wgv83m5y50jb5dd3xmkn3q4gicm3c65y53zah"))))
       (build-system emacs-build-system)
       (home-page "https://github.com/editor-code-assistant/eca-emacs")
       (propagated-inputs (list emacs-compat emacs-dash emacs-f emacs-markdown-mode))
@@ -1775,11 +1777,11 @@ object-relational DBMS from Emacs.")
       (license license:asl2.0))))
 
 (define-public emacs-claudemacs
-  (let ((commit "23e6b12bca687060f5de2547ec021bafe395db70")
-        (revision "3"))
+  (let ((commit "5ba3416fc9e61575870b53424981cab00d1de825")
+        (revision "2"))
     (package
       (name "emacs-claudemacs")
-      (version (git-version "0.2.0" revision commit))
+      (version (git-version "0.0.1" revision commit))
       (source
        (origin
          (method git-fetch)
@@ -1788,7 +1790,7 @@ object-relational DBMS from Emacs.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "1yqzg40y65db58rdf59ady6k9dyf5qd767vz4jy0wdgdxybmk38q"))))
+          (base32 "03cqa499c8za8k0lxgjbkgl4mya9bv2fv4wq2mqxvnq7k5q35pyn"))))
       (build-system emacs-build-system)
       (arguments (list #:tests? #f)) ; no tests
       (home-page "https://github.com/cpoile/claudemacs")
@@ -1797,8 +1799,8 @@ object-relational DBMS from Emacs.")
       (license license:expat))))
 
 (define-public emacs-claude-code
-  (let ((commit "4a9914bd4161eb43f489820f9174c62390e5adc8")
-        (revision "4"))
+  (let ((commit "becece683bcf60f7b150a87a30ef14885dcf8ce3")
+        (revision "3"))
     (package
       (name "emacs-claude-code")
       (version (git-version "0.0.1" revision commit))
@@ -1810,12 +1812,12 @@ object-relational DBMS from Emacs.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "13pbbypq5xjmp8wpiin9n6hiylsz85gpfj9dmwjffwb1mpm46a91"))))
+          (base32 "0z77nxazkw08pmqam2z27a56s9nyp72a1vvc0ba3vgcwfkjx0v81"))))
       (build-system emacs-build-system)
       (arguments (list #:tests? #f)) ; no tests
       (home-page "https://github.com/stevemolitor/claude-code.el")
       (propagated-inputs (list emacs-eat emacs-inheritenv emacs-transient emacs-vterm))
-      (synopsis "Claude Code Emacs integration")
+      (synopsis "Claude Code Emacs integration ")
       (description "Emacs interface for Claude Code CLI, providing integration between
 Emacs and Claude AI for coding assistance.")
       (license license:asl2.0))))
@@ -1926,7 +1928,7 @@ through a unified protocol.")
 (define-public emacs-agent-shell
   (package
     (name "emacs-agent-shell")
-    (version "0.27.3")
+    (version "0.27.2")
     (source
      (origin
        (method git-fetch)
@@ -1935,7 +1937,7 @@ through a unified protocol.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "13fqygfi3riyqyfw0ah5klm8xnrz9qk4g4aii69qs4h4ink2qvip"))))
+        (base32 "0f9cq7h46x6283p3faypfhj052phhbwxixxfmfv79iszn8pbfqk9"))))
     (build-system emacs-build-system)
     (propagated-inputs (list emacs-shell-maker emacs-acp))
     (home-page "https://github.com/xenodium/agent-shell")
