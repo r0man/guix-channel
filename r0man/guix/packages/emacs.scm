@@ -1051,33 +1051,31 @@ gptel and llm.")
       (license license:gpl3+))))
 
 (define-public emacs-mcp-server-lib
-  (let ((commit "847bcb180b6c035ee07f497e0ffc8092b3e54c4a")
-        (revision "1"))
-    (package
-      (name "emacs-mcp-server-lib")
-      (version (git-version "0.1.0" revision commit))
-      (source
-       (origin
-         (method git-fetch)
-         (uri (git-reference
-               (url "https://github.com/laurynas-biveinis/mcp-server-lib.el")
-               (commit commit)))
-         (file-name (git-file-name name version))
-         (sha256
-          (base32 "00jl2n0zj0x6gbxdx4q7abv5yn7x15ycc05mszdl1sx935k2z74q"))))
-      (build-system emacs-build-system)
-      (arguments (list #:tests? #f)) ; no tests
-      (home-page "https://github.com/laurynas-biveinis/mcp-server-lib.el")
-      (synopsis "Model Context Protocol server library for Emacs Lisp")
-      (description
-       "This library enables Emacs packages to expose their functionality to AI
+  (package
+    (name "emacs-mcp-server-lib")
+    (version "0.2.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/laurynas-biveinis/mcp-server-lib.el")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0qn38iqf75xzz0vkgac2ngv49qv52rbbfpziczb052r5fnl0pzp0"))))
+    (build-system emacs-build-system)
+    (arguments (list #:tests? #f)) ; no tests
+    (home-page "https://github.com/laurynas-biveinis/mcp-server-lib.el")
+    (synopsis "Model Context Protocol server library for Emacs Lisp")
+    (description
+     "This library enables Emacs packages to expose their functionality to AI
 applications via the Model Context Protocol (MCP).  It provides infrastructure
 for Emacs packages to expose their functionality as tools and resources to
 Large Language Models.  Features include a simple API for registering tools
 and resources, handles MCP protocol communication and JSON-RPC messages,
 stdio transport via emacsclient wrapper script, and built-in usage metrics
 and debugging support.")
-      (license license:gpl3+))))
+    (license license:gpl3+)))
 
 (define-public emacs-mermaid-mode
   (package
