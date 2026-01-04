@@ -1749,26 +1749,24 @@ object-relational DBMS from Emacs.")
     (license license:gpl3+)))
 
 (define-public emacs-editor-code-assistant
-  (let ((commit "e1a939fe97197e94f8780025f55b66cbbc56de76")
-        (revision "4"))
-    (package
-      (name "emacs-editor-code-assistant")
-      (version (git-version "0.0.1" revision commit))
-      (source
-       (origin
-         (method git-fetch)
-         (uri (git-reference
-               (url "https://github.com/editor-code-assistant/eca-emacs")
-               (commit commit)))
-         (file-name (git-file-name name version))
-         (sha256
-          (base32 "0cwz00qvif58d15wgv83m5y50jb5dd3xmkn3q4gicm3c65y53zah"))))
-      (build-system emacs-build-system)
-      (home-page "https://github.com/editor-code-assistant/eca-emacs")
-      (propagated-inputs (list emacs-compat emacs-dash emacs-f emacs-markdown-mode))
-      (synopsis "Editor Code Assistant for Emacs")
-      (description "Editor Code Assistant (ECA) integration for Emacs")
-      (license license:asl2.0))))
+  (package
+    (name "emacs-editor-code-assistant")
+    (version "0.4.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/editor-code-assistant/eca-emacs")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "17a53j4pr4liyyf854x04xk4qrd38z45j3x4gqlfj8sp9c67r1l7"))))
+    (build-system emacs-build-system)
+    (home-page "https://github.com/editor-code-assistant/eca-emacs")
+    (propagated-inputs (list emacs-compat emacs-dash emacs-f emacs-markdown-mode))
+    (synopsis "Editor Code Assistant for Emacs")
+    (description "Editor Code Assistant (ECA) integration for Emacs.")
+    (license license:asl2.0)))
 
 (define-public emacs-claudemacs
   (let ((commit "5ba3416fc9e61575870b53424981cab00d1de825")
