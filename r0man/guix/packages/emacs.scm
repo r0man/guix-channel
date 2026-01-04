@@ -950,8 +950,9 @@ over TCP.  The process must output one JSON message per line.")
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/andreasjansson/language-detection.el.git")
+             (url "https://github.com/andreasjansson/language-detection.el")
              (commit "54a6ecf55304fba7d215ef38a4ec96daff2f35a4")))
+       (file-name (git-file-name name version))
        (sha256
         (base32 "0p8kim8idh7hg9398kpgjawkxq9hb6fraxpamdkflg8gjk0h5ppa"))))
     (build-system emacs-build-system)
@@ -974,7 +975,7 @@ Entrypoints:
  * language-detection-buffer    - When called interactively, prints the language
 of the current      buffer to the echo area    - When called non-interactively,
 returns the language of the      current buffer  * language-detection-string
-- Non-interactive function, returns the language of its argument")
+- Non-interactive function, returns the language of its argument.")
     (license license:gpl3+)))
 
 (define-public emacs-lsp-dart
