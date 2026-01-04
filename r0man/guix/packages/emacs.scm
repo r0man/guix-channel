@@ -1208,8 +1208,9 @@ from applications written in the Elisp language.")
     (source (origin
               (method git-fetch)
               (uri (git-reference
-                    (url "https://github.com/titaniumbones/ox-slack.git")
+                    (url "https://github.com/titaniumbones/ox-slack")
                     (commit "bd797dcc58851d5051dc3516c317706967a44721")))
+              (file-name (git-file-name name version))
               (sha256 (base32
                        "1kh2v08fqmsmfj44ik8pljs3fz47fg9zf6q4mr99c0m5ccj5ck7w"))))
     (build-system emacs-build-system)
