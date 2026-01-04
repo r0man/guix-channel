@@ -1252,19 +1252,20 @@ generate generate digital images from natural language descriptions.")
       (license license:gpl3+))))
 
 (define-public emacs-reveal-in-folder
-  (let ((commit "adf99cdc743998b81292b1f0bd239456e20b9f6a")
-        (revision "1"))
+  (let ((commit "70c9ba29705ce6a0fc7a718cc4d6016b9691d408")
+        (revision "2"))
     (package
       (name "emacs-reveal-in-folder")
       (version (git-version "0.1.2" revision commit))
       (source (origin
                 (method git-fetch)
                 (uri (git-reference
-                      (url "https://github.com/jcs-elpa/reveal-in-folder.git")
+                      (url "https://github.com/jcs-elpa/reveal-in-folder")
                       (commit commit)))
+                (file-name (git-file-name name version))
                 (sha256
                  (base32
-                  "02l9f94wd3clmyrqnwz0xq63adzkpbf9gsfy66l8anarisizgk6c"))))
+                  "160a4j2n89m73si7h5r9ljxmx657v3g643y4f1a1iww7kw24kbg6"))))
       (build-system emacs-build-system)
       (arguments (list #:tests? #f)) ; no tests
       (propagated-inputs (list emacs-f emacs-s))
