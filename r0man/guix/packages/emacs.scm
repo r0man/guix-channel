@@ -747,8 +747,8 @@ you can force them to use the \"master\" branch.")
     (license license:gpl3+)))
 
 (define-public emacs-guess-language
-  (let ((commit "bccca49bbb27a3dff02c660d7cda8cdf83333d6e")
-        (revision "1"))
+  (let ((commit "a17203d26135b970e4d7c5d101955d41303a758f")
+        (revision "2"))
     (package
       (name "emacs-guess-language")
       (version (git-version "0.0.1" revision commit))
@@ -756,11 +756,11 @@ you can force them to use the \"master\" branch.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/tmalsburg/guess-language.el.git")
+               (url "https://github.com/tmalsburg/guess-language.el")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "0hq3nsjwvjxjrpqv57q8krw59gdd14qmkpm4pii49ca8iyx65v54"))))
+          (base32 "1v9wwpfjl7a37jx0s2w5g48mv58vw8b3d0552v5ksxw21mbkya8s"))))
       (build-system emacs-build-system)
       (arguments
        '(#:include '("^guess-language.el$" "^trigrams/[^/]+$") #:exclude '()))
@@ -788,25 +788,23 @@ languages is very easy and this package already contains language statistics for
       (license license:gpl3+))))
 
 (define-public emacs-grip-mode
-  (let ((commit "e145adb22593a88249d964f77174207bcf755493")
-        (revision "1"))
-    (package
-      (name "emacs-grip-mode")
-      (version (git-version "2.3.0" revision commit))
-      (source
-       (origin
-         (method git-fetch)
-         (uri (git-reference
-               (url "https://github.com/seagle0128/grip-mode")
-               (commit commit)))
-         (file-name (git-file-name name version))
-         (sha256
-          (base32 "1jn15mid6qgqd9cam0afydka0k99ml9dwbr2g24zwfp0hzyblqkf"))))
-      (build-system emacs-build-system)
-      (home-page "https://github.com/seagle0128/grip-mode")
-      (synopsis "Instant GitHub-flavored Markdown/Org preview using grip.")
-      (description "Instant GitHub-flavored Markdown/Org preview using a grip subprocess.")
-      (license license:gpl3+))))
+  (package
+    (name "emacs-grip-mode")
+    (version "2.5.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/seagle0128/grip-mode")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1mrpmzcxgc9hkv55d6kv79f8y6ldqrf5b48f0a4fy30qlgby2wyz"))))
+    (build-system emacs-build-system)
+    (home-page "https://github.com/seagle0128/grip-mode")
+    (synopsis "Instant GitHub-flavored Markdown/Org preview using grip")
+    (description "Instant GitHub-flavored Markdown/Org preview using a grip subprocess.")
+    (license license:gpl3+)))
 
 (define-public emacs-jira
   (package
