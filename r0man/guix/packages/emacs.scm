@@ -1286,8 +1286,8 @@ generate generate digital images from natural language descriptions.")
       (license license:gpl3+))))
 
 (define-public emacs-ox-jira
-  (let ((commit "00184f8fdef02a3a359a253712e8769cbfbea3ba")
-        (revision "1"))
+  (let ((commit "8748a908ee366e52539b19b863935d2ef7ebd0bf")
+        (revision "2"))
     (package
       (name "emacs-ox-jira")
       (version (git-version "0.0.1" revision commit))
@@ -1299,7 +1299,7 @@ generate generate digital images from natural language descriptions.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "1zyq4d0fvyawvb3w6072zl4zgbnrpzmxlz2l731wqrgnwm0l80gy"))))
+          (base32 "0b2cirdyxz7c26d999kyzi7lydxh23v925bf2jmfv229875c8izv"))))
       (build-system emacs-build-system)
       (propagated-inputs (list emacs-org))
       (home-page "https://github.com/stig/ox-jira.el")
@@ -1343,19 +1343,18 @@ Org files to JIRA markup for pasting into JIRA tickets & comments.")
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/antonj/scss-mode.git")
+             (url "https://github.com/antonj/scss-mode")
              (commit "cf58dbec5394280503eb5502938f3b5445d1b53d")))
+       (file-name (git-file-name name version))
        (sha256
         (base32 "0raja19l0igwr0pn0ghr1pj1d8i9k3m3764ma4r8nwzxcj9qw4ja"))))
     (build-system emacs-build-system)
     (home-page "https://github.com/antonj/scss-mode")
     (synopsis "Major mode for editing SCSS files")
     (description
-     "Command line utility sass is required, see http://sass-lang.com/ To install
-sass: gem install sass
-
-Also make sure sass location is in emacs PATH, example: (setq exec-path (cons
-(expand-file-name \"~/.gem/ruby/1.8/bin\") exec-path)) or customize\n`scss-sass-command' to point to your sass executable.")
+     "Major mode for editing SCSS files.  Requires the @code{sass} command
+line utility.  Customize @code{scss-sass-command} to point to your
+sass executable.")
     (license license:gpl3+)))
 
 (define-public emacs-smooth-scrolling
@@ -1366,12 +1365,13 @@ Also make sure sass location is in emacs PATH, example: (setq exec-path (cons
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/aspiers/smooth-scrolling.git")
+             (url "https://github.com/aspiers/smooth-scrolling")
              (commit "2462c13640aa4c75ab3ddad443fedc29acf68f84")))
+       (file-name (git-file-name name version))
        (sha256
         (base32 "1h15gjq781i6fsz32qlh51knawdr8hcqvshsz6cszp752cibdcdg"))))
     (build-system emacs-build-system)
-    (home-page "http://github.com/aspiers/smooth-scrolling/")
+    (home-page "https://github.com/aspiers/smooth-scrolling")
     (synopsis "Make emacs scroll smoothly")
     (description
      "To interactively toggle the mode on / off:
@@ -1406,29 +1406,27 @@ See the README.md for more details.")
     (license license:gpl3+)))
 
 (define-public emacs-timesheet
-  (let ((commit "511751b239c84d7619ec1c61d7f108b732b64442")
-        (revision "1"))
-    (package
-      (name "emacs-timesheet")
-      (version (git-version "0.5.0" revision commit))
-      (source
-       (origin
-         (method git-fetch)
-         (uri (git-reference
-               (url "https://github.com/tmarble/timesheet.el.git")
-               (commit commit)))
-         (file-name (git-file-name name version))
-         (sha256
-          (base32 "01j8wps938mjjlq55w9lgky3f51k260ipjqv8072x0n73mwf9008"))))
-      (build-system emacs-build-system)
-      (propagated-inputs (list emacs-s emacs-org emacs-auctex))
-      (arguments '(#:include '("^[^/]+.el$" "^bin$" "^share$")
-                   #:exclude '()
-                   #:tests? #f))
-      (home-page "https://github.com/tmarble/timesheet.el")
-      (synopsis "Timesheet management add-on for org-mode")
-      (description "Timesheet management add-on for Emacs org-mode")
-      (license license:gpl3+))))
+  (package
+    (name "emacs-timesheet")
+    (version "0.5.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/tmarble/timesheet.el")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "01j8wps938mjjlq55w9lgky3f51k260ipjqv8072x0n73mwf9008"))))
+    (build-system emacs-build-system)
+    (propagated-inputs (list emacs-s emacs-org emacs-auctex))
+    (arguments '(#:include '("^[^/]+.el$" "^bin$" "^share$")
+                 #:exclude '()
+                 #:tests? #f))
+    (home-page "https://github.com/tmarble/timesheet.el")
+    (synopsis "Timesheet management add-on for org-mode")
+    (description "Timesheet management add-on for Emacs org-mode.")
+    (license license:gpl3+)))
 
 (define-public emacs-paimon
   (package
@@ -1438,7 +1436,7 @@ See the README.md for more details.")
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/r0man/paimon.el.git")
+             (url "https://github.com/r0man/paimon.el")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
@@ -1481,8 +1479,8 @@ See the README.md for more details.")
                (for-each (lambda (f) (rename-file f (basename f))) el-files)))))
        #:tests? #f)) ; no tests
     (home-page "https://github.com/r0man/paimon.el")
-    (synopsis "A major mode for Splunk")
-    (description "This package provides a major mode for Splunk")
+    (synopsis "Major mode for Splunk")
+    (description "This package provides a major mode for Splunk.")
     (license license:gpl3+)))
 
 (define-public emacs-sayid
@@ -1536,7 +1534,7 @@ and outputs from within Emacs.")
       (build-system emacs-build-system)
       (home-page "https://github.com/ahyatt/semext")
       (propagated-inputs (list emacs-llm))
-      (synopsis "Semantic versions of existing Emacs functionality ")
+      (synopsis "Semantic versions of existing Emacs functionality")
       (description "Semext aims to provide LLM-powered version of Emacs command in ways
 that feel natural to Emacs users.  The goal is to be as Emacs-like as
 possible.")
@@ -1570,7 +1568,9 @@ possible.")
                (emacs-substitute-sexps "sqlite3.el"
                  ("(require 'cl-lib)"
                   `(unless (require 'sqlite3-core nil t)
-                     (module-load ,(string-append (assoc-ref outputs "out") "/lib/sqlite3-core.so")))))))
+                     (module-load
+                      ,(string-append (assoc-ref outputs "out")
+                                      "/lib/sqlite3-core.so")))))))
            (add-before 'install 'build-emacs-module
              ;; Run make.
              (lambda* (#:key (make-flags '()) outputs #:allow-other-keys)
@@ -1584,7 +1584,7 @@ possible.")
        (list libtool sqlite))
       (home-page "https://github.com/syohex/emacs-sqlite3")
       (synopsis "Sqlite3 binding of Emacs Lisp")
-      (description "Sqlite binding of Emacs Lisp inspired by mruby-sqlite3")
+      (description "Sqlite binding of Emacs Lisp inspired by mruby-sqlite3.")
       (license license:gpl3+))))
 
 (define-public emacs-sqlite3-api
