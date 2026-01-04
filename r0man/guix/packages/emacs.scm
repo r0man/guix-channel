@@ -1123,24 +1123,26 @@ Emacs built-in tabulated list mode, but with less boilerplate.")
       (license license:gpl3+))))
 
 (define-public emacs-ob-mermaid
-  (package
-    (name "emacs-ob-mermaid")
-    (version "20250124.1831")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/arnm/ob-mermaid.git")
-             (commit "0e7abc14f887e7da6914caf6aaa3226d00d590f7")))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "0agq1nkzx62ki9n8qhyvhkvl4anxpbxm6s9smjknhzlllwr4xraj"))))
-    (build-system emacs-build-system)
-    (home-page "https://github.com/arnm/ob-mermaid")
-    (synopsis "Org-babel support for Mermaid diagrams")
-    (description "Generate Mermaid diagrams using org-mode, org-babel and the Mermaid
+  (let ((commit "372c2d91d3cdba5da9f7ac23e7bce7a0b3b46862")
+        (revision "1"))
+    (package
+      (name "emacs-ob-mermaid")
+      (version (git-version "0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/arnm/ob-mermaid")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1bvg7xgm9ph7hbkgzm145ifxi833rg6lamanngqq564n7d0l4ng0"))))
+      (build-system emacs-build-system)
+      (home-page "https://github.com/arnm/ob-mermaid")
+      (synopsis "Org-babel support for Mermaid diagrams")
+      (description "Generate Mermaid diagrams using org-mode, org-babel and the Mermaid
 CLI.")
-    (license license:gpl3+)))
+      (license license:gpl3+))))
 
 (define-public emacs-ox-tufte
   (let ((commit "7bd86582afb7d8d504322dcba9848c478579990b")
