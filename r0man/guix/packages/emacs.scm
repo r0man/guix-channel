@@ -1438,7 +1438,7 @@ which are visually confusing.")
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/r0man/paimon.el.git")
+             (url "https://github.com/r0man/paimon.el")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
@@ -1481,8 +1481,8 @@ which are visually confusing.")
                (for-each (lambda (f) (rename-file f (basename f))) el-files)))))
        #:tests? #f)) ; no tests
     (home-page "https://github.com/r0man/paimon.el")
-    (synopsis "A major mode for Splunk")
-    (description "This package provides a major mode for Splunk")
+    (synopsis "Major mode for Splunk")
+    (description "This package provides a major mode for Splunk.")
     (license license:gpl3+)))
 
 (define-public emacs-sayid
