@@ -1380,51 +1380,30 @@ sass executable.")
       (license license:gpl3+))))
 
 (define-public emacs-smooth-scrolling
-  (package
-    (name "emacs-smooth-scrolling")
-    (version "20161002.1949")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/aspiers/smooth-scrolling.git")
-             (commit "2462c13640aa4c75ab3ddad443fedc29acf68f84")))
-       (sha256
-        (base32 "1h15gjq781i6fsz32qlh51knawdr8hcqvshsz6cszp752cibdcdg"))))
-    (build-system emacs-build-system)
-    (home-page "http://github.com/aspiers/smooth-scrolling/")
-    (synopsis "Make emacs scroll smoothly")
-    (description
-     "To interactively toggle the mode on / off:
-
-    M-x smooth-scrolling-mode
-
-To make the mode permanent, put this in your .emacs:
-
-    (require 'smooth-scrolling)     (smooth-scrolling-mode 1)
-
-This package offers a global minor mode which make emacs scroll smoothly.  It
-keeps the point away from the top and bottom of the current buffer's window in
-order to keep lines of context around the point visible as much as possible,
-whilst minimising the frequency of sudden scroll jumps which are visually
-confusing.
-
-This is a nice alternative to all the native `scroll-*` custom variables, which
-unfortunately cannot provide this functionality perfectly.  For example, when
-using the built-in variables, clicking with the mouse in the margin will
-immediately scroll the window to maintain the margin, so the text that you
-clicked on will no longer be under the mouse.  This can be disorienting.  In
-contrast, this mode will not do any scrolling until you actually move up or down
-a line.
-
-Also, the built-in margin code does not interact well with small windows.  If
-the margin is more than half the window height, you get some weird behavior,
-because the point is always hitting both the top and bottom margins.  This
-package auto-adjusts the margin in each buffer to never exceed half the window
-height, so the top and bottom margins never overlap.
-
-See the README.md for more details.")
-    (license license:gpl3+)))
+  (let ((commit "7b65c4304f97e186c290ce2c7cd2922eaae692e0")
+        (revision "1"))
+    (package
+      (name "emacs-smooth-scrolling")
+      (version (git-version "2.0.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/aspiers/smooth-scrolling")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "0fcq8p84ykk3alqnv28phbczibg8fgkc8rs9ff14qcwjv0kgak9r"))))
+      (build-system emacs-build-system)
+      (home-page "https://github.com/aspiers/smooth-scrolling")
+      (synopsis "Make emacs scroll smoothly")
+      (description
+       "This package offers a global minor mode which make Emacs scroll
+smoothly.  It keeps the point away from the top and bottom of the current
+buffer's window in order to keep lines of context around the point visible
+as much as possible, whilst minimising the frequency of sudden scroll jumps
+which are visually confusing.")
+      (license license:gpl3+))))
 
 (define-public emacs-timesheet
   (let ((commit "511751b239c84d7619ec1c61d7f108b732b64442")
