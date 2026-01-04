@@ -1024,8 +1024,8 @@ returns the language of the      current buffer  * language-detection-string
     (license license:gpl3+)))
 
 (define-public emacs-mcp
-  (let ((commit "963b4af6ce743fbb6224f61bb61f05de1c37f511")
-        (revision "2"))
+  (let ((commit "125e0a4478ff1404880ea4e593f5e4ff0122cb83")
+        (revision "3"))
     (package
       (name "emacs-mcp")
       (version (git-version "0.0.1" revision commit))
@@ -1037,7 +1037,7 @@ returns the language of the      current buffer  * language-detection-string
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "05k1j3xnzs4swl4xj2l5kpazq603jyqqq3iz7vf4f3iily81csfx"))))
+          (base32 "02rapj0vgnml518hr1vxvv7bljpa6ldcnxi676gysng2p1kn4f0q"))))
       (build-system emacs-build-system)
       (home-page "https://github.com/lizqwerscott/mcp.el")
       (synopsis "Emacs MCP client")
