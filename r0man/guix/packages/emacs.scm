@@ -425,24 +425,28 @@ with consult, such as vertico.")
 (define-public emacs-copilot-chat
   (package
     (name "emacs-copilot-chat")
-    (version "20250228.2322")
+    (version "20251211.0000")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/chep/copilot-chat.el.git")
-             (commit "17c4bfaafe7cd7da1b333714dfa548cd08a875d7")))
+             (url "https://github.com/chep/copilot-chat.el")
+             (commit "ca446c226f08ae13fa6d173f4e3094a2e54adf09")))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "00z15s7z8qr4bd69dknxsxyczqb0nb4axlc2yy73rj1nbw8qdpb8"))))
+        (base32 "0k9masn4937sx4j6sd5cw7fqi9q8v8n06i0ajsrk9c46zvs18afl"))))
     (build-system emacs-build-system)
-    (propagated-inputs (list emacs-request
-                             emacs-markdown-mode
+    (arguments
+     (list #:exclude #~(cons "^copilot-chat-mcp\\.el$" %default-exclude)))
+    (propagated-inputs (list emacs-aio
                              emacs-magit
-                             emacs-transient
+                             emacs-markdown-mode
+                             emacs-mcp
                              emacs-org
                              emacs-polymode
-                             emacs-shell-maker))
+                             emacs-request
+                             emacs-shell-maker
+                             emacs-transient))
     (home-page "https://github.com/chep/copilot-chat.el")
     (synopsis "Chat with Github copilot in Emacs")
     (description "This package allows you to chat with Github Copilot from within Emacs.")
