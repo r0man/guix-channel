@@ -101,43 +101,44 @@ It can also be used directly.")
       (license license:gpl3+))))
 
 (define-public emacs-bnf-mode
-  (let ((commit "1a7e177c282b8e07a2c33bd89232464b347dfc17")
-        (revision "1"))
+  (let ((commit "5304ab647e04916c5be4fdde41477ad429a89120")
+        (revision "2"))
     (package
       (name "emacs-bnf-mode")
-      (version (git-version "20221205.1451" revision commit))
+      (version (git-version "20240915.2318" revision commit))
       (source (origin
                 (method git-fetch)
                 (uri (git-reference
-                      (url "https://github.com/sergeyklay/bnf-mode.git")
+                      (url "https://github.com/sergeyklay/bnf-mode")
                       (commit commit)))
                 (file-name (git-file-name name version))
                 (sha256
                  (base32
-                  "1r23hrl258v7r0y785p2jrjz0y0bpd4lpl9ji91pqzrm6amvbkn4"))))
+                  "0d2w2hbfzvqmln7jzq5j4i4365rvl1fbi3fx252ig1ivkcb4jk8c"))))
       (build-system emacs-build-system)
       (arguments (list #:tests? #f)) ; tests don't run
       (home-page "https://github.com/sergeyklay/bnf-mode")
-      (synopsis "Major mode for editing BNF grammars.")
+      (synopsis "Major mode for editing BNF grammars")
       (description
        "BNF Mode is a GNU Emacs major mode for editing BNF grammars.
-Presently itprovides basic syntax and font-locking for BNF files.  BNF
-notation is supportedexactly form as it was first announced in the
+Presently it provides basic syntax and font-locking for BNF files.  BNF
+notation is supported exactly form as it was first announced in the
 ALGOL 60 report.")
       (license license:gpl3+))))
 
 (define-public emacs-cask
   (package
     (name "emacs-cask")
-    (version "0.9.0")
+    (version "0.9.1")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/cask/cask.git")
+             (url "https://github.com/cask/cask")
              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "1013cp97074ghjm3z7ah1xpgjwcr95pfibwg4lzvjj3nr8bcjnpp"))))
+        (base32 "06v79bq4hqkmw02pbg6c6izz52an4y1jzf3mdn9yc0km1sjsgy7y"))))
     (build-system emacs-build-system)
     (propagated-inputs
      (list emacs-s
@@ -149,16 +150,16 @@ ALGOL 60 report.")
     (arguments '(#:include '("^cask.el$" "^cask-bootstrap.el$")
                  #:exclude '()
                  #:tests? #f)) ; tests don't run
-    (home-page "http://github.com/cask/cask")
-    (synopsis "Cask: Project management for package development")
+    (home-page "https://github.com/cask/cask")
+    (synopsis "Project management for package development")
     (description
      "Cask is a project management tool for Emacs that helps automate the package
 development cycle.")
     (license license:gpl3+)))
 
 (define-public emacs-chatgpt
-  (let ((commit "882fc956b5ecf63e8b1b5fd2cc29b37eb4c608e9")
-        (revision "2"))
+  (let ((commit "00e90708ce3e9e53f6f7739f2037d0dfb3b34d3e")
+        (revision "3"))
     (package
       (name "emacs-chatgpt")
       (version (git-version "0.1.0" revision commit))
@@ -170,7 +171,7 @@ development cycle.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "0falksb1ljv0m6imzzflws60akg34rf3v7z4r3l7v5y5hixhdmfa"))))
+          (base32 "02jxwydyg0jdp01lkxnphscl6i2a183wkhg8820s8b70v0svgcbw"))))
       (build-system emacs-build-system)
       (arguments (list #:tests? #f)) ; no tests
       (propagated-inputs (list emacs-ht
@@ -188,23 +189,23 @@ your questions, right within the editor.")
 (define-public emacs-clojure-mode-extra-font-locking
   (package
     (name "emacs-clojure-mode-extra-font-locking")
-    (version "5.18.1")
+    (version "5.20.0")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/clojure-emacs/clojure-mode.git")
+             (url "https://github.com/clojure-emacs/clojure-mode")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1d5kkq2i8d04k2qfrb31zyjpij92ckbccnzvz01mls3xrvpr57m5"))))
+        (base32 "123x8rwv4nb30h1rz7avshvr00xjfjjsmzrqsyxhgdm3f0rhac5w"))))
     (build-system emacs-build-system)
     (propagated-inputs (list emacs-clojure-mode))
     (arguments
      '(#:include '("^clojure-mode-extra-font-locking.el$")
        #:exclude '()
        #:tests? #f)) ; no tests
-    (home-page "http://github.com/clojure-emacs/clojure-mode")
+    (home-page "https://github.com/clojure-emacs/clojure-mode")
     (synopsis "Extra font-locking for Clojure mode")
     (description
      "This package provides additional font-locking for clojure-mode.  This
@@ -218,18 +219,19 @@ Clojure application.")
 (define-public emacs-clojure-ts-mode
   (package
     (name "emacs-clojure-ts-mode")
-    (version "0.2.2")
+    (version "0.6.0")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/clojure-emacs/clojure-ts-mode.git")
+             (url "https://github.com/clojure-emacs/clojure-ts-mode")
              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "15aisl4pzdgi5nqpjxllq053fj9011liz53ph9kqvl7mzspffgaj"))))
+        (base32 "1j78j9ig2x3g8qgsdrs38r3v0rva48c074d7kyag1aa0p7s37kr0"))))
     (build-system emacs-build-system)
     (arguments (list #:tests? #f)) ; tests don't run
-    (home-page "http://github.com/clojure-emacs/clojure-ts-mode")
+    (home-page "https://github.com/clojure-emacs/clojure-ts-mode")
     (synopsis "Tree-sitter major mode for Clojure")
     (propagated-inputs
      (list tree-sitter-clojure))
@@ -241,8 +243,8 @@ grammar.")
     (license license:gpl3+)))
 
 (define-public emacs-codegpt
-  (let ((commit "be35070c133e89fbaa7bccb5a276cb074bf6dc68")
-        (revision "3"))
+  (let ((commit "01602348999ec22ef93600e4f676b2cd63066dc9")
+        (revision "4"))
     (package
       (name "emacs-codegpt")
       (version (git-version "0.1.0" revision commit))
@@ -254,7 +256,7 @@ grammar.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "1xwkms00nh8c3lzy04ag4lyjcr3jiq58qjwsjbxlw8gn7qg04b8h"))))
+          (base32 "1kc7q4ipjx3h5wj0a7hpd582ivr1d013xr1q49qaz42rpvqglv38"))))
       (build-system emacs-build-system)
       (arguments (list #:tests? #f)) ; no tests
       (propagated-inputs (list emacs-chatgpt
@@ -286,10 +288,10 @@ your questions, right within the editor.")
       (build-system emacs-build-system)
       (propagated-inputs (list emacs-consult emacs-embark))
       (home-page "https://github.com/armindarvish/consult-gh")
-      (synopsis "An Interactive interface for GitHub CLI client inside GNU Emacs using Consult")
+      (synopsis "Interactive GitHub CLI interface using Consult")
       (description "Consult-GH provides an interface to interact with GitHub
 repositories (search, view files and issues, clone, fork, etc) from
-inside Emacs. It uses the consult package and the GitHub CLI and
+inside Emacs.  It uses the consult package and the GitHub CLI and
 optionally Embark and provides an intuitive UI using minibuffer
 completion familiar to Emacs users.")
       (license license:gpl3+))))
@@ -395,26 +397,24 @@ with consult, such as vertico.")
     (license license:gpl3+)))
 
 (define-public emacs-copilot
-  (let ((commit "6a2ad80489b8a0d021df95293eb7ac370aea140b")
-        (revision "8"))
-    (package
-      (name "emacs-copilot")
-      (version (git-version "0.0.1" revision commit))
-      (source
-       (origin
-         (method git-fetch)
-         (uri (git-reference
-               (url "https://github.com/copilot-emacs/copilot.el")
-               (commit commit)))
-         (file-name (git-file-name name version))
-         (sha256
-          (base32 "1f2gxzg9vz6pwzaygqq99z5ii3ccpcv3031qnm03mql7zdwm29ba"))))
-      (build-system emacs-build-system)
-      (propagated-inputs (list emacs-dash emacs-f emacs-editorconfig emacs-jsonrpc emacs-s))
-      (home-page "https://github.com/copilot-emacs/copilot.el")
-      (synopsis "Unofficial Github Copilot mode for Emacs")
-      (description "An unofficial Emacs mode for Github Copilot.")
-      (license license:gpl3+))))
+  (package
+    (name "emacs-copilot")
+    (version "0.3.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/copilot-emacs/copilot.el")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0n1kpjkr6vdfpb20x28bsg14piqv9vl0iz0jswc5qm0qgdmi23ah"))))
+    (build-system emacs-build-system)
+    (propagated-inputs (list emacs-dash emacs-f emacs-editorconfig emacs-jsonrpc emacs-s))
+    (home-page "https://github.com/copilot-emacs/copilot.el")
+    (synopsis "Unofficial Github Copilot mode for Emacs")
+    (description "An unofficial Emacs mode for Github Copilot.")
+    (license license:gpl3+)))
 
 (define-public emacs-copilot-chat
   (package
@@ -424,7 +424,7 @@ with consult, such as vertico.")
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/chep/copilot-chat.el.git")
+             (url "https://github.com/chep/copilot-chat.el")
              (commit "17c4bfaafe7cd7da1b333714dfa548cd08a875d7")))
        (file-name (git-file-name name version))
        (sha256
