@@ -850,8 +850,9 @@ issues from Emacs.")
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/nyyManni/jiralib2.git")
+             (url "https://github.com/nyyManni/jiralib2")
              (commit "c21c4e759eff549dbda11099f2f680b78d7f5a01")))
+       (file-name (git-file-name name version))
        (sha256
         (base32 "0yrcc9yfz9gxkhizy03bpysl1wcdbk0m6fj9hkqw3kbgnsk25h4p"))))
     (build-system emacs-build-system)
@@ -872,7 +873,7 @@ and is only available with JIRA Cloud.  OAuth login is not supported.
 Jira References:
 
 Primary reference (on current Jira, only REST is supported):
-https://docs.atlassian.com/jira/REST/cloud/")
+https://docs.atlassian.com/jira/REST/cloud/.")
     (license license:gpl3+)))
 
 (define-public emacs-json-process-client
