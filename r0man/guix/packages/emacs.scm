@@ -986,7 +986,7 @@ returns the language of the      current buffer  * language-detection-string
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/emacs-lsp/lsp-dart.git")
+             (url "https://github.com/emacs-lsp/lsp-dart")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
@@ -999,9 +999,9 @@ returns the language of the      current buffer  * language-detection-string
            emacs-f
            emacs-dash
            emacs-dart-mode))
-    (home-page "https://emacs-lsp.github.io/lsp-dart")
+    (home-page "https://emacs-lsp.github.io/lsp-dart/")
     (synopsis "Dart support lsp-mode")
-    (description "Dart analysis server client for LSP mode")
+    (description "Dart analysis server client for LSP mode.")
     (license license:gpl3+)))
 
 (define-public emacs-markdown-preview-eww
