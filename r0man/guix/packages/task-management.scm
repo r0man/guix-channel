@@ -95,8 +95,8 @@ machines.")
     (license license:expat)))
 
 (define-public gastown
-  (let ((commit "7f9795f63032d7095d2c3e676af821fdb92faafa")
-        (revision "2176"))
+  (let ((commit "60ecf1ff7671c46fcc575df78a96b5e58754de39")
+        (revision "2203"))
     (package
       (name "gastown")
       (version (git-version "0.1.1" revision commit))
@@ -108,7 +108,7 @@ machines.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "1a9yc8h4zwn6j16a0vl5yay844mvr5jyp034aq1mcglc2zc287r5"))))
+          (base32 "1bxdgzx3gx23759smxydqdc39p2q6cbskxvyi3m8d1fjv4lricdx"))))
       (build-system go-build-system)
       (arguments
        (list
@@ -117,7 +117,14 @@ machines.")
         #:unpack-path "github.com/steveyegge/gastown"
         #:phases
         #~(modify-phases %standard-phases
-            (add-after 'unpack 'remove-beads-directory
+            (add-after 'unpack 'run-go-generate
+              (lambda* (#:key import-path #:allow-other-keys)
+                ;; Run go generate to provision embedded formula files.
+                (with-directory-excursion
+                    (string-append "src/" (dirname (dirname import-path))
+                                   "/internal/formula")
+                  (invoke "go" "generate"))))
+            (add-after 'run-go-generate 'remove-beads-directory
               (lambda* (#:key import-path #:allow-other-keys)
                 ;; Remove .beads directory so integration tests skip gracefully.
                 ;; The directory contains only JSONL without an initialized
