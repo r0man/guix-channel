@@ -1753,8 +1753,8 @@ object-relational DBMS from Emacs.")
     (license license:gpl3+)))
 
 (define-public emacs-editor-code-assistant
-  (let ((commit "e1a939fe97197e94f8780025f55b66cbbc56de76")
-        (revision "4"))
+  (let ((commit "c6c56a4cd55ad1792f19fa09bd39bc48c81b23c9")
+        (revision "5"))
     (package
       (name "emacs-editor-code-assistant")
       (version (git-version "0.0.1" revision commit))
@@ -1766,7 +1766,7 @@ object-relational DBMS from Emacs.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "0cwz00qvif58d15wgv83m5y50jb5dd3xmkn3q4gicm3c65y53zah"))))
+          (base32 "0wmrb7z607n7xjx86b3vhafghjxzdi1hrwc2z40b7k5zivvq67nv"))))
       (build-system emacs-build-system)
       (home-page "https://github.com/editor-code-assistant/eca-emacs")
       (propagated-inputs (list emacs-compat emacs-dash emacs-f emacs-markdown-mode))
@@ -1775,11 +1775,11 @@ object-relational DBMS from Emacs.")
       (license license:asl2.0))))
 
 (define-public emacs-claudemacs
-  (let ((commit "5ba3416fc9e61575870b53424981cab00d1de825")
-        (revision "2"))
+  (let ((commit "23e6b12bca687060f5de2547ec021bafe395db70")
+        (revision "3"))
     (package
       (name "emacs-claudemacs")
-      (version (git-version "0.0.1" revision commit))
+      (version (git-version "0.2.0" revision commit))
       (source
        (origin
          (method git-fetch)
@@ -1788,7 +1788,7 @@ object-relational DBMS from Emacs.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "03cqa499c8za8k0lxgjbkgl4mya9bv2fv4wq2mqxvnq7k5q35pyn"))))
+          (base32 "1yqzg40y65db58rdf59ady6k9dyf5qd767vz4jy0wdgdxybmk38q"))))
       (build-system emacs-build-system)
       (arguments (list #:tests? #f)) ; no tests
       (home-page "https://github.com/cpoile/claudemacs")
@@ -1797,8 +1797,8 @@ object-relational DBMS from Emacs.")
       (license license:expat))))
 
 (define-public emacs-claude-code
-  (let ((commit "becece683bcf60f7b150a87a30ef14885dcf8ce3")
-        (revision "3"))
+  (let ((commit "4a9914bd4161eb43f489820f9174c62390e5adc8")
+        (revision "4"))
     (package
       (name "emacs-claude-code")
       (version (git-version "0.0.1" revision commit))
@@ -1810,12 +1810,12 @@ object-relational DBMS from Emacs.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "0z77nxazkw08pmqam2z27a56s9nyp72a1vvc0ba3vgcwfkjx0v81"))))
+          (base32 "13pbbypq5xjmp8wpiin9n6hiylsz85gpfj9dmwjffwb1mpm46a91"))))
       (build-system emacs-build-system)
       (arguments (list #:tests? #f)) ; no tests
       (home-page "https://github.com/stevemolitor/claude-code.el")
       (propagated-inputs (list emacs-eat emacs-inheritenv emacs-transient emacs-vterm))
-      (synopsis "Claude Code Emacs integration ")
+      (synopsis "Claude Code Emacs integration")
       (description "Emacs interface for Claude Code CLI, providing integration between
 Emacs and Claude AI for coding assistance.")
       (license license:asl2.0))))
@@ -1926,7 +1926,7 @@ through a unified protocol.")
 (define-public emacs-agent-shell
   (package
     (name "emacs-agent-shell")
-    (version "0.27.2")
+    (version "0.27.3")
     (source
      (origin
        (method git-fetch)
@@ -1935,7 +1935,7 @@ through a unified protocol.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0f9cq7h46x6283p3faypfhj052phhbwxixxfmfv79iszn8pbfqk9"))))
+        (base32 "13fqygfi3riyqyfw0ah5klm8xnrz9qk4g4aii69qs4h4ink2qvip"))))
     (build-system emacs-build-system)
     (propagated-inputs (list emacs-shell-maker emacs-acp))
     (home-page "https://github.com/xenodium/agent-shell")
