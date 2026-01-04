@@ -1536,7 +1536,7 @@ and outputs from within Emacs.")
       (build-system emacs-build-system)
       (home-page "https://github.com/ahyatt/semext")
       (propagated-inputs (list emacs-llm))
-      (synopsis "Semantic versions of existing Emacs functionality ")
+      (synopsis "Semantic versions of existing Emacs functionality")
       (description "Semext aims to provide LLM-powered version of Emacs command in ways
 that feel natural to Emacs users.  The goal is to be as Emacs-like as
 possible.")
