@@ -901,8 +901,8 @@ over TCP.  The process must output one JSON message per line.")
       (license license:gpl3+))))
 
 (define-public emacs-kubel
-  (let ((commit "b7f852a5bd1f49bcf590ace59f7bfb7c54a96cfa")
-        (revision "1"))
+  (let ((commit "e0138bf95583fd525e4d4cc17c4bc5ba884c3af9")
+        (revision "2"))
     (package
       (name "emacs-kubel")
       (version (git-version "3.0" revision commit))
@@ -910,11 +910,11 @@ over TCP.  The process must output one JSON message per line.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/abrochard/kubel.git")
+               (url "https://github.com/abrochard/kubel")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "1mkvbxhgmlwc4w0wmqpzrc0m4gpjqwn9xffibvgkj01grflp1dwd"))))
+          (base32 "1nlrj9nfgdz8vs10cpfb9maqczvn7jg8nmj8c41dzgc0wn3z8l7r"))))
       (build-system emacs-build-system)
       (propagated-inputs (list emacs-transient emacs-dash emacs-s emacs-yaml-mode))
       (arguments
