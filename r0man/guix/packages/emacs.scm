@@ -487,11 +487,11 @@ programmability through direct Elisp evaluation.")
       (license license:asl2.0))))
 
 (define-public emacs-eglot-java
-  (let ((commit "4cb3bdfaa954ad02e6eaac77c578987355db90cf")
-        (revision "1"))
+  (let ((commit "b42b5190f3f59976d330fcec5fd27fc8e2701336")
+        (revision "2"))
     (package
       (name "emacs-eglot-java")
-      (version "20231228.2257")
+      (version "20250527.1232")
       (source (origin
                 (method git-fetch)
                 (uri (git-reference
@@ -499,18 +499,18 @@ programmability through direct Elisp evaluation.")
                       (commit commit)))
                 (file-name (git-file-name name version))
                 (sha256 (base32
-                         "0wsyd2yiz1air2aiwqvprz89qgm05ak8zksh1jg4m5w5gbg9rlrj"))))
+                         "0224qm3fhw7avl8npsrm32iwzbnwv4kihiyrkh5ps459mpawbjg3"))))
       (build-system emacs-build-system)
       (propagated-inputs (list emacs-eglot emacs-jsonrpc))
       (home-page "https://github.com/yveszoundi/eglot-java")
       (synopsis "Eglot Java package for Emacs")
-      (description "Java extension for the Eglot LSP client")
+      (description "Java extension for the Eglot LSP client.")
       (license license:gpl3+))))
 
 (define-public emacs-elisa
   (package
     (name "emacs-elisa")
-    (version "0.1.1")
+    (version "1.1.7")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -518,7 +518,7 @@ programmability through direct Elisp evaluation.")
                     (commit version)))
               (file-name (git-file-name name version))
               (sha256 (base32
-                       "0mk7rg2nmi7qc91fml0ahiwpc0xkhaf2w6mla8kxavjpx0051i3n"))))
+                       "1jwv4blhf9021758g212q8cf68a4hipj8nqgad00f54dxrr4s2h5"))))
     (build-system emacs-build-system)
     (propagated-inputs (list emacs-async emacs-ellama))
     (home-page "https://github.com/s-kostyaev/elisa")
