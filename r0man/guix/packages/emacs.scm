@@ -1145,37 +1145,37 @@ CLI.")
       (license license:gpl3+))))
 
 (define-public emacs-ox-tufte
-  (let ((commit "7bd86582afb7d8d504322dcba9848c478579990b")
-        (revision "1"))
-    (package
-      (name "emacs-ox-tufte")
-      (version (git-version "4.0.4" revision commit))
-      (source (origin
-                (method git-fetch)
-                (uri (git-reference
-                      (url "https://github.com/ox-tufte/ox-tufte")
-                      (commit commit)))
-                (sha256 (base32
-                         "0pyhbwsqsby52h740jvkrip1d78dkssymiyr31dnqzv3yg7qzj0k"))))
-      (build-system emacs-build-system)
-      (propagated-inputs (list emacs-org))
-      (arguments '(#:include '("^[^/]+.el$" "^[^/]+.el.in$"
-                               "^dir$"
-                               "^[^/]+.info$"
-                               "^[^/]+.texi$"
-                               "^[^/]+.texinfo$"
-                               "^doc/dir$"
-                               "^doc/[^/]+.info$"
-                               "^doc/[^/]+.texi$"
-                               "^doc/[^/]+.texinfo$"
-                               "^src$")
-                   #:exclude '("^.dir-locals.el$" "^test.el$" "^tests.el$"
-                               "^[^/]+-test.el$" "^[^/]+-tests.el$")))
-      (home-page "https://github.com/ox-tufte/ox-tufte")
-      (synopsis "Emacs Org-mode export backend for Tufte HTML")
-      (description "This package provides an export backend for Org mode that exports
+  (package
+    (name "emacs-ox-tufte")
+    (version "4.2.1")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/ox-tufte/ox-tufte")
+                    (commit version)))
+              (file-name (git-file-name name version))
+              (sha256 (base32
+                       "0jn0f5r3yy0kcrdspkpk7hhblfd41qf8ayi7z207albvkvyisl4i"))))
+    (build-system emacs-build-system)
+    (propagated-inputs (list emacs-org))
+    (arguments '(#:tests? #f
+                 #:include '("^[^/]+.el$" "^[^/]+.el.in$"
+                             "^dir$"
+                             "^[^/]+.info$"
+                             "^[^/]+.texi$"
+                             "^[^/]+.texinfo$"
+                             "^doc/dir$"
+                             "^doc/[^/]+.info$"
+                             "^doc/[^/]+.texi$"
+                             "^doc/[^/]+.texinfo$"
+                             "^src$")
+                 #:exclude '("^.dir-locals.el$" "^test.el$" "^tests.el$"
+                             "^[^/]+-test.el$" "^[^/]+-tests.el$")))
+    (home-page "https://github.com/ox-tufte/ox-tufte")
+    (synopsis "Emacs Org-mode export backend for Tufte HTML")
+    (description "This package provides an export backend for Org mode that exports
 buffers to HTML that is compatible with Tufte CSS.")
-      (license license:gpl3+))))
+    (license license:gpl3+)))
 
 (define-public emacs-openai
   (let ((commit "e12330c217bb3358736f5534e9becba1ebaef0d4")
