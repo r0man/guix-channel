@@ -799,25 +799,23 @@ languages is very easy and this package already contains language statistics for
       (license license:gpl3+))))
 
 (define-public emacs-grip-mode
-  (let ((commit "e145adb22593a88249d964f77174207bcf755493")
-        (revision "1"))
-    (package
-      (name "emacs-grip-mode")
-      (version (git-version "2.3.0" revision commit))
-      (source
-       (origin
-         (method git-fetch)
-         (uri (git-reference
-               (url "https://github.com/seagle0128/grip-mode")
-               (commit commit)))
-         (file-name (git-file-name name version))
-         (sha256
-          (base32 "1jn15mid6qgqd9cam0afydka0k99ml9dwbr2g24zwfp0hzyblqkf"))))
-      (build-system emacs-build-system)
-      (home-page "https://github.com/seagle0128/grip-mode")
-      (synopsis "Instant GitHub-flavored Markdown/Org preview using grip.")
-      (description "Instant GitHub-flavored Markdown/Org preview using a grip subprocess.")
-      (license license:gpl3+))))
+  (package
+    (name "emacs-grip-mode")
+    (version "2.5.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/seagle0128/grip-mode")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1mrpmzcxgc9hkv55d6kv79f8y6ldqrf5b48f0a4fy30qlgby2wyz"))))
+    (build-system emacs-build-system)
+    (home-page "https://github.com/seagle0128/grip-mode")
+    (synopsis "Instant GitHub-flavored Markdown/Org preview using grip")
+    (description "Instant GitHub-flavored Markdown/Org preview using a grip subprocess.")
+    (license license:gpl3+)))
 
 (define-public emacs-jira
   (package
