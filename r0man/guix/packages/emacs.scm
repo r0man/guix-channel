@@ -19,7 +19,7 @@
 (define-public emacs-aider
   (package
     (name "emacs-aider")
-    (version "0.13.0")
+    (version "0.13.2")
     (source
      (origin
        (method git-fetch)
@@ -28,7 +28,7 @@
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0bqw48zxs31w5sajd4mchgz656w6qmmkgld86hb5x0b6mjaa8cp9"))))
+        (base32 "1932ghif057mxm9nz1213gf8j26ispl6ikfr90hrlag168c2f630"))))
     (build-system emacs-build-system)
     (propagated-inputs (list emacs-helm
                              emacs-magit
