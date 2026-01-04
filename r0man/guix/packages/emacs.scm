@@ -1305,8 +1305,8 @@ generate generate digital images from natural language descriptions.")
       (license license:gpl3+))))
 
 (define-public emacs-ox-jira
-  (let ((commit "00184f8fdef02a3a359a253712e8769cbfbea3ba")
-        (revision "1"))
+  (let ((commit "8748a908ee366e52539b19b863935d2ef7ebd0bf")
+        (revision "2"))
     (package
       (name "emacs-ox-jira")
       (version (git-version "0.0.1" revision commit))
@@ -1318,7 +1318,7 @@ generate generate digital images from natural language descriptions.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "1zyq4d0fvyawvb3w6072zl4zgbnrpzmxlz2l731wqrgnwm0l80gy"))))
+          (base32 "0b2cirdyxz7c26d999kyzi7lydxh23v925bf2jmfv229875c8izv"))))
       (build-system emacs-build-system)
       (propagated-inputs (list emacs-org))
       (home-page "https://github.com/stig/ox-jira.el")
