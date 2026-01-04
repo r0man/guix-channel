@@ -1329,8 +1329,8 @@ Org files to JIRA markup for pasting into JIRA tickets & comments.")
       (license license:gpl3+))))
 
 (define-public emacs-request-deferred
-  (let ((commit "01e338c335c07e4407239619e57361944a82cb8a")
-        (revision "1"))
+  (let ((commit "c22e3c23a6dd90f64be536e176ea0ed6113a5ba6")
+        (revision "2"))
     (package
       (name "emacs-request-deferred")
       (version (git-version "0.3.2" revision commit))
@@ -1342,7 +1342,7 @@ Org files to JIRA markup for pasting into JIRA tickets & comments.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "1arhjsybb1nhq14p06jzbvp25pyp1pddq1ldyq25vj1qrsh81rjq"))))
+          (base32 "15affk5cp6va3d8wf8567l45nri4ayiwk52p7i40h7nafjq4wp04"))))
       (build-system emacs-build-system)
       (propagated-inputs (list emacs-deferred emacs-request))
       (arguments '(#:include '("^request-deferred.el$")
