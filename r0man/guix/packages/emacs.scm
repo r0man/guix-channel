@@ -1791,8 +1791,8 @@ object-relational DBMS from Emacs.")
       (license license:expat))))
 
 (define-public emacs-claude-code
-  (let ((commit "becece683bcf60f7b150a87a30ef14885dcf8ce3")
-        (revision "3"))
+  (let ((commit "4a9914bd4161eb43f489820f9174c62390e5adc8")
+        (revision "4"))
     (package
       (name "emacs-claude-code")
       (version (git-version "0.0.1" revision commit))
@@ -1804,12 +1804,12 @@ object-relational DBMS from Emacs.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "0z77nxazkw08pmqam2z27a56s9nyp72a1vvc0ba3vgcwfkjx0v81"))))
+          (base32 "13pbbypq5xjmp8wpiin9n6hiylsz85gpfj9dmwjffwb1mpm46a91"))))
       (build-system emacs-build-system)
       (arguments (list #:tests? #f)) ; no tests
       (home-page "https://github.com/stevemolitor/claude-code.el")
       (propagated-inputs (list emacs-eat emacs-inheritenv emacs-transient emacs-vterm))
-      (synopsis "Claude Code Emacs integration ")
+      (synopsis "Claude Code Emacs integration")
       (description "Emacs interface for Claude Code CLI, providing integration between
 Emacs and Claude AI for coding assistance.")
       (license license:asl2.0))))
