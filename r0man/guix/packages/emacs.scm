@@ -603,21 +603,22 @@ However it will not work in Emacs 18.")
 (define-public emacs-emacsql-sqlite
   (package
     (name "emacs-emacsql-sqlite")
-    (version "20220218.1543")
+    (version "4.3.4")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/skeeto/emacsql.git")
-             (commit "374726060d74df0e2bcb9d0355ff41e2c400ed30")))
+             (url "https://github.com/magit/emacsql")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "0z382qksrwhkv0ayjp8nays65c3xwd4kylj41k1pc3nnqg6b2k45"))))
+        (base32 "10h0zb8pp4zbmsrkp8kd4a0rnclh6arbyg4f7n5l5n8cn0w2pf8l"))))
     (build-system emacs-build-system)
     (propagated-inputs (list emacs-emacsql))
     (arguments '(#:include '("^emacsql-sqlite.el$" "^sqlite$")
                  #:exclude '()
-                 #:tests? #f)) ; tests are failing
-    (home-page "https://github.com/skeeto/emacsql")
+                 #:tests? #f))
+    (home-page "https://github.com/magit/emacsql")
     (synopsis "EmacSQL back-end for SQLite")
     (description
      "During package installation EmacSQL will attempt to compile a custom native
