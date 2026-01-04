@@ -1223,8 +1223,8 @@ and `gfm back-ends.")
     (license license:gpl3+)))
 
 (define-public emacs-dall-e
-  (let ((commit "9e2cd3baa733622e35116b4385fe5e6026b7d59b")
-        (revision "1"))
+  (let ((commit "036941cf7f39226d9cdd86ca331941c69c16f2ca")
+        (revision "2"))
     (package
       (name "emacs-dall-e")
       (version (git-version "0.1.0" revision commit))
@@ -1236,7 +1236,7 @@ and `gfm back-ends.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "018alzk3lzl23jhsmzqzxs8wg43pz85wc2yjha0cz95s3pw48qhv"))))
+          (base32 "028cnyih81x1qxa92z8a5xf1kzngpg34775pjk8c3grh5lr0q0cv"))))
       (build-system emacs-build-system)
       (arguments (list #:tests? #f)) ; no tests
       (propagated-inputs (list emacs-async
