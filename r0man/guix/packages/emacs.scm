@@ -1078,23 +1078,26 @@ and debugging support.")
     (license license:gpl3+)))
 
 (define-public emacs-mermaid-mode
-  (package
-    (name "emacs-mermaid-mode")
-    (version "20241213.1913")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/abrochard/mermaid-mode.git")
-             (commit "e74d4da7612c7a88e07f9dd3369e3b9fd36f396c")))
-       (sha256
-        (base32 "0dqg3fyhyxn29b0fw7zr3ykhb5lpqlffhpfcbrk08h8h29mg7jvd"))))
-    (build-system emacs-build-system)
-    (home-page "https://github.com/abrochard/mermaid-mode")
-    (synopsis "major mode for working with mermaid graphs")
-    (description
-     "Major mode for working with mermaid graphs.  See https://mermaid-js.github.io/")
-    (license #f)))
+  (let ((commit "9535d513b41ed11bcd91f644815e2db6430c1560")
+        (revision "1"))
+    (package
+      (name "emacs-mermaid-mode")
+      (version (git-version "1.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/abrochard/mermaid-mode")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "174xlsm316rpxm8sbxfnyhvy1bjkl0qbx71s1mfcyda737y3dsbl"))))
+      (build-system emacs-build-system)
+      (home-page "https://github.com/abrochard/mermaid-mode")
+      (synopsis "Major mode for working with mermaid graphs")
+      (description
+       "Major mode for working with mermaid graphs.  See https://mermaid-js.github.io/.")
+      (license license:gpl3+))))
 
 (define-public emacs-tblui
   (let ((commit "62ab5f62982c061a902fd3e54d94a68a4706572c")
