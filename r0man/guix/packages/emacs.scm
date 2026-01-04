@@ -1012,8 +1012,9 @@ returns the language of the      current buffer  * language-detection-string
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/niku/markdown-preview-eww.git")
+             (url "https://github.com/niku/markdown-preview-eww")
              (commit "5853f836425c877c8a956501f0adda137ef1d3b7")))
+       (file-name (git-file-name name version))
        (sha256
         (base32 "1i5gr3j9dq41p2zl4bfyvzv6i5z7hgrxzrycmbdc3s7nja36k9z4"))))
     (build-system emacs-build-system)
