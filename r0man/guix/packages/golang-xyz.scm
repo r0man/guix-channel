@@ -91,32 +91,56 @@ explorer or cmd/powershell.")
 (define-public go-github-com-tetratelabs-wazero
   (package
     (name "go-github-com-tetratelabs-wazero")
-    (version "1.10.0")
+    (version "1.11.0")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/tetratelabs/wazero")
+             (url "https://github.com/wazero/wazero")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1wz9f9kbbr7315grx4apcszgxpzm8gygx2yi45f7lhgq7lydf9jl"))))
+        (base32 "15gpb9w2wq16z40042vkhqzs39yb6icpxd4l8cnwhdfzbj3rd1hm"))
+       (modules '((guix build utils)))
+       (snippet
+        #~(begin
+            (for-each delete-file-recursively
+                      (list
+                       ;; This directory holds the wazero site's source code.
+                       "site"
+                       ;; Windows related MSI packaging files.
+                       "packaging"))))))
     (build-system go-build-system)
     (arguments
      (list
       #:import-path "github.com/tetratelabs/wazero"
-      #:phases
-      #~(modify-phases %standard-phases
-          (replace 'check
-            (lambda* (#:key tests? import-path #:allow-other-keys)
-              (when tests?
-                ;; Only test main package, skip internal/integration tests
-                (invoke "go" "test" "-v" import-path)))))))
-    (home-page "https://wazero.io/")
-    (synopsis "WebAssembly runtime for Go")
+      #:test-flags
+      #~(list "-skip" (string-join
+                       (list "TestHugePageConfigs"
+                             "TestRun"
+                             "TestRun/3_1"
+                             "Test_cli"
+                             "Test_cli/cargo-wasi"
+                             "Test_cli/cargo-wasi/test.txt"
+                             "Test_cli/cargo-wasi/testcases/test.txt"
+                             "Test_cli/tinygo"
+                             "Test_cli/tinygo/test.txt"
+                             "Test_cli/tinygo/testcases/test.txt"
+                             "Test_cli/zig"
+                             "Test_cli/zig-cc"
+                             "Test_cli/zig-cc/test.txt"
+                             "Test_cli/zig-cc/testcases/test.txt"
+                             "Test_cli/zig/test.txt")
+                       "|"))))
+    (propagated-inputs (list go-golang-org-x-sys))
+    (home-page "https://github.com/wazero/wazero")
+    (synopsis "CGO-free WebAssembly runtime for Go")
     (description
-     "wazero is a WebAssembly runtime written in pure Go.  It provides a safe
-way to run compiled WebAssembly modules without CGO dependencies.")
+     "wazero is a WebAssembly Core Specification
+@url{https://www.w3.org/TR/2019/REC-wasm-core-1-20191205/,1.0} and
+@url{https://www.w3.org/TR/2022/WD-wasm-core-2-20220419/,2.0} compliant
+runtime.  It doesn't rely on CGO, which means you can run applications in
+other languages and still keep cross compilation.")
     (license license:asl2.0)))
 
 (define-public go-github-com-ncruces-go-sqlite3
@@ -401,17 +425,28 @@ replacement for mattn/go-sqlite3.")
 (define-public go-github-com-charmbracelet-x-errors
   (package
     (name "go-github-com-charmbracelet-x-errors")
-    (version "0.0.0-20240508181413-e8d8b6e2de86")
+    (version "0.0.0-20251028133951-21a390f3cede")
     (source
      (origin
-       (method git-fetch)
+       (method git-fetch/lfs)
        (uri (git-reference
              (url "https://github.com/charmbracelet/x")
-             (commit (go-version->git-ref version
-                                          #:subdir "errors"))))
+             (commit (go-version->git-ref version #:subdir "errors"))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "00yyl9bspc2jn79d3zxbqvp7kwaklqaiyahfh71gp1xzijbgnibp"))))
+        (base32 "088786ak8jsgvssbb5y16z066vfq9f6078sjc7iv766knfr2i0x2"))
+       (modules '((guix build utils)
+                  (ice-9 ftw)
+                  (srfi srfi-26)))
+       (snippet
+        #~(begin
+            (define (delete-all-but directory . preserve)
+              (with-directory-excursion directory
+                (let* ((pred (negate (cut member <>
+                                          (cons* "." ".." preserve))))
+                       (items (scandir "." pred)))
+                  (for-each (cut delete-file-recursively <>) items))))
+            (delete-all-but "." "errors")))))
     (build-system go-build-system)
     (arguments
      (list
@@ -419,7 +454,8 @@ replacement for mattn/go-sqlite3.")
       #:unpack-path "github.com/charmbracelet/x"))
     (home-page "https://github.com/charmbracelet/x")
     (synopsis "Error handling utilities for Go")
-    (description "Package errors provides error handling utilities.")
+    (description
+     "This package provides error handling utilities for Go applications.")
     (license license:expat)))
 
 (define-public go-github-com-charmbracelet-x-termios
@@ -428,66 +464,104 @@ replacement for mattn/go-sqlite3.")
     (version "0.1.1")
     (source
      (origin
-       (method git-fetch)
+       (method git-fetch/lfs)
        (uri (git-reference
              (url "https://github.com/charmbracelet/x")
-             (commit (go-version->git-ref version
-                                          #:subdir "termios"))))
+             (commit (go-version->git-ref version #:subdir "termios"))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "059b9kxqlmvfif2xrj8j21ih2476n0aphg5w5ajrf974hl0fy3k1"))))
+        (base32 "17nc4wz65j6kmxg00ww44qiqhgzkkr5cl0p7svq8qv3phpxy2kj7"))
+       (modules '((guix build utils)
+                  (ice-9 ftw)
+                  (srfi srfi-26)))
+       (snippet
+        #~(begin
+            (define (delete-all-but directory . preserve)
+              (with-directory-excursion directory
+                (let* ((pred (negate (cut member <>
+                                          (cons* "." ".." preserve))))
+                       (items (scandir "." pred)))
+                  (for-each (cut delete-file-recursively <>) items))))
+            (delete-all-but "." "termios")))))
     (build-system go-build-system)
     (arguments
      (list
       #:import-path "github.com/charmbracelet/x/termios"
       #:unpack-path "github.com/charmbracelet/x"))
-    (propagated-inputs (list go-golang-org-x-sys))
+    (propagated-inputs
+     (list go-golang-org-x-sys))
     (home-page "https://github.com/charmbracelet/x")
-    (synopsis "Unified termios API for Go")
+    (synopsis "Terminal I/O settings for Go")
     (description
-     "Package termios provides a unified termios API for Go.")
+     "This package provides utilities for working with terminal I/O settings
+in Go applications.")
     (license license:expat)))
 
 (define-public go-github-com-charmbracelet-x-conpty
   (package
     (name "go-github-com-charmbracelet-x-conpty")
-    (version "0.1.0")
+    (version "0.1.1")
     (source
      (origin
-       (method git-fetch)
+       (method git-fetch/lfs)
        (uri (git-reference
              (url "https://github.com/charmbracelet/x")
-             (commit (go-version->git-ref version
-                                          #:subdir "conpty"))))
+             (commit (go-version->git-ref version #:subdir "conpty"))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "00d3lxlly64aqcnaci5ds9cyxcq9ynq5qh4f368s17gxml5k40pz"))))
+        (base32 "0pk7hcsnb36awgr4h4s0mb3sg2p0y7zxb3k2akvxk667n8xpm3mj"))
+       (modules '((guix build utils)
+                  (ice-9 ftw)
+                  (srfi srfi-26)))
+       (snippet
+        #~(begin
+            (define (delete-all-but directory . preserve)
+              (with-directory-excursion directory
+                (let* ((pred (negate (cut member <>
+                                          (cons* "." ".." preserve))))
+                       (items (scandir "." pred)))
+                  (for-each (cut delete-file-recursively <>) items))))
+            (delete-all-but "." "conpty")))))
     (build-system go-build-system)
     (arguments
      (list
       #:import-path "github.com/charmbracelet/x/conpty"
       #:unpack-path "github.com/charmbracelet/x"))
-    (propagated-inputs (list go-golang-org-x-sys))
+    (propagated-inputs
+     (list go-golang-org-x-sys
+           go-github-com-charmbracelet-x-errors))
     (home-page "https://github.com/charmbracelet/x")
-    (synopsis "Windows Console Pseudo-terminal support for Go")
+    (synopsis "Windows ConPTY support for Go")
     (description
-     "Package conpty implements Windows Console Pseudo-terminal support.")
+     "This package provides support for Windows Console Pseudo-Terminal (ConPTY)
+in Go applications.")
     (license license:expat)))
 
 (define-public go-github-com-charmbracelet-x-exp-strings
   (package
     (name "go-github-com-charmbracelet-x-exp-strings")
-    (version "0.0.0-20240722160745-212f7b056ed0")
+    (version "0.0.0-20251028133951-21a390f3cede")
     (source
      (origin
-       (method git-fetch)
+       (method git-fetch/lfs)
        (uri (git-reference
              (url "https://github.com/charmbracelet/x")
-             (commit (go-version->git-ref version
-                                          #:subdir "exp/strings"))))
+             (commit (go-version->git-ref version #:subdir "exp/strings"))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "086q8qp2ip0gmz21yrfhmqfb4q57xwm5rpfgnw63vk5rvhl7qxlb"))))
+        (base32 "088786ak8jsgvssbb5y16z066vfq9f6078sjc7iv766knfr2i0x2"))
+       (modules '((guix build utils)
+                  (ice-9 ftw)
+                  (srfi srfi-26)))
+       (snippet
+        #~(begin
+            (define (delete-all-but directory . preserve)
+              (with-directory-excursion directory
+                (let* ((pred (negate (cut member <>
+                                          (cons* "." ".." preserve))))
+                       (items (scandir "." pred)))
+                  (for-each (cut delete-file-recursively <>) items))))
+            (delete-all-but "." "exp")))))
     (build-system go-build-system)
     (arguments
      (list
@@ -495,51 +569,50 @@ replacement for mattn/go-sqlite3.")
       #:unpack-path "github.com/charmbracelet/x"))
     (home-page "https://github.com/charmbracelet/x")
     (synopsis "String manipulation utilities for Go")
-    (description "Package strings provides string manipulation utilities.")
+    (description
+     "This package provides string manipulation utilities for Go applications.")
     (license license:expat)))
 
 (define-public go-github-com-charmbracelet-x-xpty
   (package
     (name "go-github-com-charmbracelet-x-xpty")
-    (version "0.1.2")
+    (version "0.1.1")
     (source
      (origin
-       (method git-fetch)
+       (method git-fetch/lfs)
        (uri (git-reference
              (url "https://github.com/charmbracelet/x")
-             (commit (go-version->git-ref version
-                                          #:subdir "xpty"))))
+             (commit (go-version->git-ref version #:subdir "xpty"))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1dnkbmgmmpr2hd4z464mvyia260pvl0qfrdgjjjqab7kqqk78pch"))))
+        (base32 "0nppkr1fci209m69rz1v690vv4y28z6ghfvwxbaxgyfqq1yq2ds7"))
+       (modules '((guix build utils)
+                  (ice-9 ftw)
+                  (srfi srfi-26)))
+       (snippet
+        #~(begin
+            (define (delete-all-but directory . preserve)
+              (with-directory-excursion directory
+                (let* ((pred (negate (cut member <>
+                                          (cons* "." ".." preserve))))
+                       (items (scandir "." pred)))
+                  (for-each (cut delete-file-recursively <>) items))))
+            (delete-all-but "." "xpty")))))
     (build-system go-build-system)
     (arguments
      (list
       #:import-path "github.com/charmbracelet/x/xpty"
-      #:unpack-path "github.com/charmbracelet/x"
-      #:phases
-      #~(modify-phases %standard-phases
-          (add-after 'install 'install-sibling-packages
-            (lambda* (#:key outputs #:allow-other-keys)
-              ;; xpty imports conpty, term, and termios from the same monorepo.
-              ;; Install them alongside xpty so dependents can use them.
-              (let ((out (assoc-ref outputs "out")))
-                (for-each
-                 (lambda (pkg)
-                   (let ((src (string-append "src/github.com/charmbracelet/x/" pkg))
-                         (dest (string-append out "/src/github.com/charmbracelet/x/" pkg)))
-                     (when (file-exists? src)
-                       (mkdir-p dest)
-                       (copy-recursively src dest))))
-                 '("conpty" "term" "termios"))))))))
-    (propagated-inputs (list go-github-com-creack-pty
-                             go-golang-org-x-sys))
+      #:unpack-path "github.com/charmbracelet/x"))
+    (propagated-inputs
+     (list go-github-com-charmbracelet-x-conpty
+           go-github-com-charmbracelet-x-term
+           go-github-com-charmbracelet-x-termios
+           go-github-com-creack-pty))
     (home-page "https://github.com/charmbracelet/x")
-    (synopsis "Cross-platform PTY interface for Go")
+    (synopsis "Cross-platform pseudo-terminal interface for Go")
     (description
-     "Package xpty provides platform-independent interfaces to interact with
-pseudo-terminals (PTYs) in Go.  It abstracts the differences between Unix and
-Windows systems and supports both ConPTY and classic Unix PTYs.")
+     "This package provides a cross-platform pseudo-terminal (PTY) interface
+for Go, supporting both Unix-like systems and Windows ConPTY.")
     (license license:expat)))
 
 (define-public go-github-com-mattn-go-localereader
@@ -652,38 +725,65 @@ components are used in production in Glow, Charm and many other applications.")
     (version "0.8.0")
     (source
      (origin
-       (method git-fetch)
+       (method git-fetch/lfs)
        (uri (git-reference
              (url "https://github.com/charmbracelet/huh")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "166j1hrspj74z0ffbw1zbwapisfq1zz7l0bkj8xsqa08rz7nspjv"))))
+        (base32 "0gbmlw9njfd3ayg3isbj61v9g0f30v772dwp4jv32h6nx14dbqc2"))))
     (build-system go-build-system)
     (arguments
      (list
+      #:skip-build? #t
       #:import-path "github.com/charmbracelet/huh"
-      #:phases
-      #~(modify-phases %standard-phases
-          (replace 'check
-            (lambda* (#:key tests? import-path #:allow-other-keys)
-              (when tests?
-                ;; Test main package only, skip spinner example
-                (invoke "go" "test" "-v" import-path)))))))
-    (propagated-inputs (list go-github-com-mitchellh-hashstructure-v2
-                             go-github-com-charmbracelet-x-xpty
-                             go-github-com-charmbracelet-x-term
-                             go-github-com-charmbracelet-x-exp-strings
-                             go-github-com-charmbracelet-x-cellbuf
-                             go-github-com-charmbracelet-x-ansi
-                             go-github-com-charmbracelet-lipgloss
-                             go-github-com-charmbracelet-bubbletea
-                             go-github-com-charmbracelet-bubbles
-                             go-github-com-catppuccin-go))
+      ;; Test only the main library packages.  The examples/ directory is a
+      ;; separate Go module with additional dependencies.
+      #:test-subdirs #~'("" "spinner" "accessibility")))
+    (propagated-inputs
+     (list go-github-com-catppuccin-go
+           go-github-com-charmbracelet-bubbles
+           go-github-com-charmbracelet-bubbletea
+           go-github-com-charmbracelet-lipgloss
+           go-github-com-charmbracelet-x-ansi
+           go-github-com-charmbracelet-x-cellbuf
+           go-github-com-charmbracelet-x-exp-strings
+           go-github-com-charmbracelet-x-term
+           go-github-com-charmbracelet-x-xpty
+           go-github-com-mitchellh-hashstructure))
     (home-page "https://github.com/charmbracelet/huh")
     (synopsis "Terminal forms and prompts library for Go")
     (description
-     "Package huh provides components to build terminal-based forms and prompts.")
+     "This package provides components to build terminal-based forms and
+prompts with an interactive and user-friendly interface.  It supports various
+input types including text fields, text areas, selects, multi-selects, and
+confirm dialogs.")
+    (license license:expat)))
+
+(define-public go-github-com-mitchellh-hashstructure
+  (package
+    (name "go-github-com-mitchellh-hashstructure")
+    (version "2.0.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/mitchellh/hashstructure")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0yyr1igvyv7dzjxs9hbwk7qhshwxys0hq59sy2g2a46hjgi311iv"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/mitchellh/hashstructure/v2"))
+    (home-page "https://github.com/mitchellh/hashstructure")
+    (synopsis "Go library for creating hash values from Go structures")
+    (description
+     "This package provides a Go library for creating a unique hash value for
+arbitrary values in Go.  It can hash nearly any Go type, including complex
+types like structs, arrays, slices, and maps.  This is useful for creating
+cache keys, detecting changes, or implementing set operations.")
     (license license:expat)))
 
 (define-public go-github-com-steveyegge-beads
