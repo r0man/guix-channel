@@ -95,8 +95,8 @@ machines.")
     (license license:expat)))
 
 (define-public gastown
-  (let ((commit "60ecf1ff7671c46fcc575df78a96b5e58754de39")
-        (revision "2203"))
+  (let ((commit "7ae08ed2198375f4993851ebe1204430df250cbd")
+        (revision "2314"))
     (package
       (name "gastown")
       (version (git-version "0.1.1" revision commit))
@@ -108,7 +108,7 @@ machines.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "1bxdgzx3gx23759smxydqdc39p2q6cbskxvyi3m8d1fjv4lricdx"))))
+          (base32 "0nj7xx0p24z4khsf0qv0i7x67n2zs6cx3iy4plr6gls3my5w6s67"))))
       (build-system go-build-system)
       (arguments
        (list
@@ -120,9 +120,10 @@ machines.")
             (add-after 'unpack 'run-go-generate
               (lambda* (#:key import-path #:allow-other-keys)
                 ;; Run go generate to provision embedded formula files.
-                (with-directory-excursion
-                    (string-append "src/" (dirname (dirname import-path))
-                                   "/internal/formula")
+                (with-directory-excursion (string-append "src/"
+                                                         (dirname (dirname
+                                                                   import-path))
+                                                         "/internal/formula")
                   (invoke "go" "generate"))))
             (add-after 'run-go-generate 'remove-beads-directory
               (lambda* (#:key import-path #:allow-other-keys)
