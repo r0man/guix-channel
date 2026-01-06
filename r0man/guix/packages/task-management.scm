@@ -69,7 +69,23 @@
                                  "/util/sql3util/wasm/sql3parse_table.wasm"))))))
           (add-before 'build 'set-home
             (lambda _
-              (setenv "HOME" "/tmp"))))))
+              (setenv "HOME" "/tmp")))
+          (add-after 'install 'install-completions
+            (lambda* (#:key outputs #:allow-other-keys)
+              (let* ((out (assoc-ref outputs "out"))
+                     (bd (string-append out "/bin/bd"))
+                     (bash-dir (string-append out "/etc/bash_completion.d"))
+                     (zsh-dir (string-append out "/share/zsh/site-functions"))
+                     (fish-dir (string-append out "/share/fish/vendor_completions.d")))
+                (mkdir-p bash-dir)
+                (mkdir-p zsh-dir)
+                (mkdir-p fish-dir)
+                (with-output-to-file (string-append bash-dir "/bd")
+                  (lambda () (system* bd "completion" "bash")))
+                (with-output-to-file (string-append zsh-dir "/_bd")
+                  (lambda () (system* bd "completion" "zsh")))
+                (with-output-to-file (string-append fish-dir "/bd.fish")
+                  (lambda () (system* bd "completion" "fish")))))))))
     (native-inputs (list git))
     (propagated-inputs (list go-github-com-anthropics-anthropic-sdk-go
                              go-github-com-charmbracelet-huh
@@ -148,7 +164,23 @@ machines.")
                           "./...")))))
           (add-before 'build 'set-home
             (lambda _
-              (setenv "HOME" "/tmp"))))))
+              (setenv "HOME" "/tmp")))
+          (add-after 'install 'install-completions
+            (lambda* (#:key outputs #:allow-other-keys)
+              (let* ((out (assoc-ref outputs "out"))
+                     (gt (string-append out "/bin/gt"))
+                     (bash-dir (string-append out "/etc/bash_completion.d"))
+                     (zsh-dir (string-append out "/share/zsh/site-functions"))
+                     (fish-dir (string-append out "/share/fish/vendor_completions.d")))
+                (mkdir-p bash-dir)
+                (mkdir-p zsh-dir)
+                (mkdir-p fish-dir)
+                (with-output-to-file (string-append bash-dir "/gt")
+                  (lambda () (system* gt "completion" "bash")))
+                (with-output-to-file (string-append zsh-dir "/_gt")
+                  (lambda () (system* gt "completion" "zsh")))
+                (with-output-to-file (string-append fish-dir "/gt.fish")
+                  (lambda () (system* gt "completion" "fish")))))))))
     (native-inputs (list beads git tmux))
     (propagated-inputs (list go-github-com-burntsushi-toml
                              go-github-com-charmbracelet-bubbles
