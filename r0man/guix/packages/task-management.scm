@@ -111,94 +111,96 @@ machines.")
     (license license:expat)))
 
 (define-public gastown
-  (package
-    (name "gastown")
-    (version "0.2.1")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/steveyegge/gastown")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "0nj7xx0p24z4khsf0qv0i7x67n2zs6cx3iy4plr6gls3my5w6s67"))))
-    (build-system go-build-system)
-    (arguments
-     (list
-      #:install-source? #f
-      #:import-path "github.com/steveyegge/gastown/cmd/gt"
-      #:unpack-path "github.com/steveyegge/gastown"
-      #:phases
-      #~(modify-phases %standard-phases
-          (add-after 'unpack 'run-go-generate
-            (lambda* (#:key import-path #:allow-other-keys)
-              ;; Run go generate to provision embedded formula files.
-              (with-directory-excursion (string-append "src/"
-                                                       (dirname (dirname
-                                                                 import-path))
-                                                       "/internal/formula")
-                (invoke "go" "generate"))))
-          (add-after 'run-go-generate 'remove-beads-directory
-            (lambda* (#:key import-path #:allow-other-keys)
-              ;; Remove .beads directory so integration tests skip gracefully.
-              ;; The directory contains only JSONL without an initialized
-              ;; SQLite database, which would cause TestIntegration to fail.
-              (let ((beads-dir (string-append "src/"
-                                              (dirname (dirname import-path))
-                                              "/.beads")))
-                (when (file-exists? beads-dir)
-                  (delete-file-recursively beads-dir)))))
-          (replace 'check
-            (lambda* (#:key tests? import-path #:allow-other-keys)
-              (when tests?
+  (let ((commit "6e4f2bea299521b0b32a7ad642117d3d6b96ca3c")
+        (revision "2363"))
+    (package
+      (name "gastown")
+      (version (git-version "0.1.1" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/steveyegge/gastown")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "0c4kn3jr0nansns7cjlpv2x83hk4riwiz85mjvhjivczjpz82bhb"))))
+      (build-system go-build-system)
+      (arguments
+       (list
+        #:install-source? #f
+        #:import-path "github.com/steveyegge/gastown/cmd/gt"
+        #:unpack-path "github.com/steveyegge/gastown"
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-after 'unpack 'run-go-generate
+              (lambda* (#:key import-path #:allow-other-keys)
+                ;; Run go generate to provision embedded formula files.
                 (with-directory-excursion (string-append "src/"
                                                          (dirname (dirname
-                                                                   import-path)))
-                  ;; Run test suite, skipping tests that require beads initialization
-                  (invoke "go"
-                          "test"
-                          "-v"
-                          "-skip"
-                          "TestInitAgentBeads"
-                          "./...")))))
-          (add-before 'build 'set-home
-            (lambda _
-              (setenv "HOME" "/tmp")))
-          (add-after 'install 'install-completions
-            (lambda* (#:key outputs #:allow-other-keys)
-              (let* ((out (assoc-ref outputs "out"))
-                     (gt (string-append out "/bin/gt"))
-                     (bash-dir (string-append out "/etc/bash_completion.d"))
-                     (zsh-dir (string-append out "/share/zsh/site-functions"))
-                     (fish-dir (string-append out "/share/fish/vendor_completions.d")))
-                (mkdir-p bash-dir)
-                (mkdir-p zsh-dir)
-                (mkdir-p fish-dir)
-                (with-output-to-file (string-append bash-dir "/gt")
-                  (lambda () (system* gt "completion" "bash")))
-                (with-output-to-file (string-append zsh-dir "/_gt")
-                  (lambda () (system* gt "completion" "zsh")))
-                (with-output-to-file (string-append fish-dir "/gt.fish")
-                  (lambda () (system* gt "completion" "fish")))))))))
-    (native-inputs (list beads git tmux))
-    (propagated-inputs (list go-github-com-burntsushi-toml
-                             go-github-com-charmbracelet-bubbles
-                             go-github-com-charmbracelet-bubbletea
-                             go-github-com-charmbracelet-lipgloss
-                             go-github-com-gofrs-flock
-                             go-github-com-google-uuid
-                             go-github-com-spf13-cobra
-                             go-golang-org-x-term
-                             go-golang-org-x-text))
-    (home-page "https://github.com/steveyegge/gastown")
-    (synopsis "Multi-agent orchestrator for Claude Code")
-    (description
-     "@command{gt} (Gastown) is a multi-agent orchestrator for Claude Code
+                                                                   import-path))
+                                                         "/internal/formula")
+                  (invoke "go" "generate"))))
+            (add-after 'run-go-generate 'remove-beads-directory
+              (lambda* (#:key import-path #:allow-other-keys)
+                ;; Remove .beads directory so integration tests skip gracefully.
+                ;; The directory contains only JSONL without an initialized
+                ;; SQLite database, which would cause TestIntegration to fail.
+                (let ((beads-dir (string-append "src/"
+                                                (dirname (dirname import-path))
+                                                "/.beads")))
+                  (when (file-exists? beads-dir)
+                    (delete-file-recursively beads-dir)))))
+            (replace 'check
+              (lambda* (#:key tests? import-path #:allow-other-keys)
+                (when tests?
+                  (with-directory-excursion (string-append "src/"
+                                                           (dirname (dirname
+                                                                     import-path)))
+                    ;; Run test suite, skipping tests that require beads initialization
+                    (invoke "go"
+                            "test"
+                            "-v"
+                            "-skip"
+                            "TestInitAgentBeads"
+                            "./...")))))
+            (add-before 'build 'set-home
+              (lambda _
+                (setenv "HOME" "/tmp")))
+            (add-after 'install 'install-completions
+              (lambda* (#:key outputs #:allow-other-keys)
+                (let* ((out (assoc-ref outputs "out"))
+                       (gt (string-append out "/bin/gt"))
+                       (bash-dir (string-append out "/etc/bash_completion.d"))
+                       (zsh-dir (string-append out "/share/zsh/site-functions"))
+                       (fish-dir (string-append out "/share/fish/vendor_completions.d")))
+                  (mkdir-p bash-dir)
+                  (mkdir-p zsh-dir)
+                  (mkdir-p fish-dir)
+                  (with-output-to-file (string-append bash-dir "/gt")
+                    (lambda () (system* gt "completion" "bash")))
+                  (with-output-to-file (string-append zsh-dir "/_gt")
+                    (lambda () (system* gt "completion" "zsh")))
+                  (with-output-to-file (string-append fish-dir "/gt.fish")
+                    (lambda () (system* gt "completion" "fish")))))))))
+      (native-inputs (list beads git tmux))
+      (propagated-inputs (list go-github-com-burntsushi-toml
+                               go-github-com-charmbracelet-bubbles
+                               go-github-com-charmbracelet-bubbletea
+                               go-github-com-charmbracelet-lipgloss
+                               go-github-com-gofrs-flock
+                               go-github-com-google-uuid
+                               go-github-com-spf13-cobra
+                               go-golang-org-x-term
+                               go-golang-org-x-text))
+      (home-page "https://github.com/steveyegge/gastown")
+      (synopsis "Multi-agent orchestrator for Claude Code")
+      (description
+       "@command{gt} (Gastown) is a multi-agent orchestrator for Claude Code
 that coordinates multiple AI agents working on software development tasks.
 It uses a git-backed issue tracker called Beads to maintain work state,
 ensuring tasks survive crashes and agent restarts.  Agents are organized
 into roles (Polecats for workers, Witness for monitoring, Refinery for
 code review, Mayor for cross-project coordination) within containerized
 project spaces called Rigs.")
-    (license license:expat)))
+      (license license:expat))))
