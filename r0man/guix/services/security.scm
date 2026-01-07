@@ -2,7 +2,6 @@
   #:use-module (gnu services)
   #:use-module (gnu services shepherd)
   #:use-module (gnu system shadow)
-  #:use-module (gnu packages admin)
   #:use-module (guix gexp)
   #:use-module (guix records)
   #:use-module (ice-9 match)
@@ -155,11 +154,12 @@ object or #f")))))))
                  (when (file-exists? dst)
                    (if (symbolic-link? dst)
                        (delete-file dst)
-                       (when (and (directory-exists? dst)
-                                  (null? (scandir dst
-                                           (lambda (f)
-                                             (not (member f '("." "..")))))))
-                         (rmdir dst))))
+                       (let ((contents (and (directory-exists? dst)
+                                           (scandir dst
+                                             (lambda (f)
+                                               (not (member f '("." ".."))))))))
+                        (when (and contents (null? contents))
+                          (rmdir dst)))))
                  ;; Create symlink if destination doesn't exist
                  (unless (file-exists? dst)
                    (symlink src dst)))))
@@ -177,13 +177,15 @@ object or #f")))))))
                  (dst-lib (string-append "/opt/traps/" lib-name)))
              (when (and (file-exists? src-lib)
                         (not (file-exists? dst-lib)))
-               (copy-recursively src-lib dst-lib)
-               (for-each (lambda (f) (chmod f #o755))
-                         (find-files dst-lib)))))
+               (copy-recursively src-lib dst-lib))))
          '("lib" "lib32"))
 
         ;; Create /bin/bash symlink for scripts that expect it
         (mkdir-p "/bin")
+        ;; Remove broken symlink if present (file-exists? returns #f for broken links)
+        (when (and (not (file-exists? "/bin/bash"))
+                   (false-if-exception (readlink "/bin/bash")))
+          (delete-file "/bin/bash"))
         (unless (file-exists? "/bin/bash")
           (symlink (string-append #$(file-append (@ (gnu packages bash) bash)
                                                   "/bin/bash"))
@@ -245,7 +247,8 @@ object or #f")))))))
                         (if pid
                             (format #t "Cortex XDR agent running (PID ~a)~%"
                                    pid)
-                            (format #t "Cortex XDR agent not running~%")))))))))))
+                            (format #t "Cortex XDR agent not running~%"))
+                        #t)))))))))
 
 (define cortex-agent-service-type
   (service-type

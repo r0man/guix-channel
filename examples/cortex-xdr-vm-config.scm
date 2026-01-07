@@ -10,7 +10,7 @@
              (r0man guix packages security))
 
 (use-service-modules base desktop networking ssh)
-(use-package-modules admin linux lsof nss ssh)
+(use-package-modules admin linux lsof ssh)
 
 (operating-system
   (host-name "cortex-xdr-test")
@@ -53,10 +53,10 @@
                              "\n%wheel ALL=(ALL) NOPASSWD: ALL\n")))
 
   ;; System packages for testing and debugging
+  ;; Note: nss-certs is included in %base-packages by default
   (packages (append (list
                      ;; Basic utilities
                      openssh
-                     nss-certs
 
                      ;; Debugging tools
                      strace
@@ -86,6 +86,8 @@
               (unprivileged-user "cortexuser")))
 
     ;; OpenSSH for remote access
+    ;; WARNING: This config is INSECURE - for local VM testing only!
+    ;; Never use in production: allows root login and empty passwords.
     (service openssh-service-type
              (openssh-configuration
               (permit-root-login #t)
