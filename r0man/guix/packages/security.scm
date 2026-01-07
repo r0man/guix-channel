@@ -44,11 +44,12 @@
                 (system* "ls" "-la" "opt/traps/"))))
           (add-after 'extract-rpm 'patch-binaries
             (lambda* (#:key outputs #:allow-other-keys)
-              (let ((out (assoc-ref outputs "out"))
-                    (rpath (string-append
-                            (assoc-ref outputs "out") "/opt/traps/glibc/lib:"
-                            (assoc-ref %build-inputs "openssl") "/lib:"
-                            (assoc-ref %build-inputs "glibc") "/lib")))
+              (let* ((out (assoc-ref outputs "out"))
+                     (rpath (string-append
+                             out "/opt/traps/lib:"
+                             out "/opt/traps/glibc/lib:"
+                             (assoc-ref %build-inputs "openssl") "/lib:"
+                             (assoc-ref %build-inputs "glibc") "/lib")))
                 ;; Patch ELF binaries to use correct interpreter and rpath
                 (for-each
                  (lambda (binary)
