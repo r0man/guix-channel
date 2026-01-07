@@ -33,6 +33,13 @@
 ;;; Provides endpoint security including Anti-Virus, EDR, Ransomware
 ;;; Protection, and Exploit Prevention.
 ;;;
+;;; IMPORTANT: This service requires nscd (Name Service Cache Daemon) to be
+;;; running for NSS user lookups needed by IPC operations.  The nscd service
+;;; is included in %base-services, so typical system configurations will have
+;;; it.  Without nscd, user lookup operations (getpwnam, etc.) will fail
+;;; because the patched binaries use Guix's glibc but cannot load the system's
+;;; NSS modules directly.
+;;;
 ;;; Code:
 
 (define-record-type* <cortex-agent-configuration>
@@ -316,8 +323,12 @@ object or #f")))))))
                      #:log-file "/var/log/traps/pmd.log"
                      #:directory "/opt/traps"
                      #:environment-variables
-                     ;; Include FHS paths for scripts that expect them
-                     (list "LD_LIBRARY_PATH=/opt/traps/lib:/opt/traps/glibc/lib"
+                     ;; Note: Do NOT include /opt/traps/glibc/lib here.
+                     ;; The binaries are patched to use Guix's glibc, which
+                     ;; enables NSS lookups via nscd. Including the bundled
+                     ;; glibc in LD_LIBRARY_PATH would override this and
+                     ;; break user lookups needed for IPC.
+                     (list "LD_LIBRARY_PATH=/opt/traps/lib"
                            (string-append
                             "PATH=/opt/traps/bin"
                             ":/run/current-system/profile/bin"

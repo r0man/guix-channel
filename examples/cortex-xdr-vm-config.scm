@@ -73,6 +73,9 @@
     ;; NOTE: This is a basic configuration for VM testing.
     ;; In production, you would provide actual distribution-id
     ;; and distribution-server values.
+    ;;
+    ;; IMPORTANT: The agent requires nscd for NSS user lookups (IPC).
+    ;; The %base-services below includes nscd-service-type by default.
     (service cortex-agent-service-type
              (cortex-agent-configuration
               ;; Test configuration - replace with real values
