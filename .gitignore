@@ -1,0 +1,18 @@
+# Binary packages
+*.deb
+*.rpm
+
+# Build artifacts
+*.o
+*.so
+*.a
+
+# Guix build results
+/result
+/result-*
+
+# Temporary files
+*~
+*.swp
+*.swo
+.DS_Store
