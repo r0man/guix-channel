@@ -160,3 +160,102 @@ For more details, see README.md and QUICKSTART.md.
 - NEVER stop before pushing - that leaves work stranded locally
 - NEVER say "ready to push when you are" - YOU must push
 - If push fails, resolve and retry until it succeeds
+
+## Testing in Virtual Machines
+
+**When to use VM testing:**
+- Service definition changes (shepherd services)
+- System activation code changes
+- FHS compatibility changes (symlinks, paths)
+- Any change that requires a running Guix System to verify
+
+### Building a VM Image
+
+```bash
+# Build a qcow2 image for QEMU (use example config or create your own)
+guix system image -L . --image-type=qcow2 \
+  examples/cortex-xdr-vm-config.scm \
+  -r /tmp/test-vm.qcow2
+```
+
+### Running the VM (Non-Graphical Mode)
+
+```bash
+# Start VM with SSH port forwarding, no graphics
+qemu-system-x86_64 \
+  -m 2048 \
+  -smp 2 \
+  -enable-kvm \
+  -drive file=/tmp/test-vm.qcow2,format=qcow2,snapshot=on \
+  -net nic,model=virtio \
+  -net user,hostfwd=tcp::2222-:22 \
+  -nographic &
+
+# Wait for boot (~30-40 seconds)
+sleep 40
+
+# SSH into the VM
+ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
+  -p 2222 root@localhost "your-test-command"
+```
+
+**Key flags:**
+- `-nographic`: No GUI window, output to terminal
+- `-snapshot=on`: Don't persist changes to disk image
+- `hostfwd=tcp::2222-:22`: Forward local port 2222 to VM's SSH
+
+### Common Test Commands
+
+```bash
+# Check service status
+ssh -p 2222 root@localhost "herd status cortex-agent"
+
+# Check process environment
+ssh -p 2222 root@localhost "cat /proc/PID/environ | tr '\0' '\n'"
+
+# Check logs
+ssh -p 2222 root@localhost "cat /var/log/traps/pmd.log"
+
+# Verify symlinks
+ssh -p 2222 root@localhost "ls -la /usr/bin/stat"
+```
+
+### Cleanup
+
+```bash
+# Kill the VM when done
+killall qemu-system-x86_64
+
+# Remove image symlink if needed
+rm -f /tmp/test-vm.qcow2
+```
+
+## Interactive Debugging with tmux
+
+For interactive debugging (gdb, Python REPL, etc.), use the `/tmux` skill:
+
+```
+/tmux <session-name> <command>
+```
+
+**Use cases:**
+- Debugging with gdb/lldb
+- Interactive Python/Node REPL sessions
+- Running commands that require user input
+- Long-running processes you want to monitor
+
+**Example workflow:**
+```bash
+# Start a tmux session for debugging
+/tmux debug gdb /opt/traps/bin/cytool
+
+# Send commands to the session
+/tmux debug "break main"
+/tmux debug "run"
+
+# Check output
+/tmux debug --read
+```
+
+This is useful when VM testing reveals issues that need interactive
+debugging, or when you need to inspect a running process in detail
