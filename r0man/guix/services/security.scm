@@ -235,9 +235,23 @@ object or #f")))))))
                   '("/etc/cron.d"
                     "/var/spool/cron/crontabs"))
 
-        ;; Create /bin/bash symlink for scripts that expect it
-        (mkdir-p "/bin")
-        ;; Remove broken symlink if present (file-exists? returns #f for broken links)
+        ;; Create CA certificate symlinks for RHEL/CentOS-style paths
+        ;; The agent looks for certificates at distribution-specific locations
+        (let ((guix-ca-bundle "/etc/ssl/certs/ca-certificates.crt"))
+          (when (file-exists? guix-ca-bundle)
+            ;; Create /etc/pki structure for RHEL-style lookup
+            (mkdir-p "/etc/pki/tls/certs")
+            (unless (file-exists? "/etc/pki/tls/certs/ca-bundle.crt")
+              (symlink guix-ca-bundle "/etc/pki/tls/certs/ca-bundle.crt"))
+            ;; Also create alternate location
+            (unless (file-exists? "/etc/ssl/ca-bundle.pem")
+              (symlink guix-ca-bundle "/etc/ssl/ca-bundle.pem"))))
+
+        ;; Create FHS-compatible directory structure for scripts expecting
+        ;; standard Linux paths (/bin, /sbin, /usr/bin, /usr/sbin)
+        (for-each mkdir-p '("/bin" "/sbin" "/usr/bin" "/usr/sbin"))
+
+        ;; Symlink bash to /bin/bash for scripts that expect it
         (when (and (not (file-exists? "/bin/bash"))
                    (false-if-exception (readlink "/bin/bash")))
           (delete-file "/bin/bash"))
@@ -245,6 +259,20 @@ object or #f")))))))
           (symlink (string-append #$(file-append (@ (gnu packages bash) bash)
                                                   "/bin/bash"))
                    "/bin/bash"))
+
+        ;; Symlink common utilities to FHS locations
+        (let ((profile "/run/current-system/profile"))
+          (for-each
+           (lambda (cmd)
+             (let ((src (string-append profile "/bin/" cmd))
+                   (dst (string-append "/usr/bin/" cmd)))
+               (when (and (file-exists? src)
+                          (not (file-exists? dst)))
+                 (symlink src dst))))
+           '("env" "sh" "cat" "grep" "sed" "awk" "id" "whoami"
+             "uname" "hostname" "date" "ls" "cp" "mv" "rm" "mkdir"
+             "chmod" "chown" "ps" "kill" "sleep" "head" "tail" "wc"
+             "sort" "uniq" "cut" "tr" "tee" "xargs" "find" "which")))
 
         ;; Create writable directories (these remain as real directories)
         (for-each mkdir-p
@@ -281,8 +309,13 @@ object or #f")))))))
                      #:log-file "/var/log/traps/pmd.log"
                      #:directory "/opt/traps"
                      #:environment-variables
+                     ;; Include FHS paths for scripts that expect them
                      (list "LD_LIBRARY_PATH=/opt/traps/lib:/opt/traps/glibc/lib"
-                           "PATH=/opt/traps/bin:/run/current-system/profile/bin"
+                           (string-append
+                            "PATH=/opt/traps/bin"
+                            ":/run/current-system/profile/bin"
+                            ":/run/current-system/profile/sbin"
+                            ":/bin:/sbin:/usr/bin:/usr/sbin")
                            "TRAPS_HOME=/opt/traps")))
            (stop #~(lambda (pid)
                      ;; First stop the pmd process
