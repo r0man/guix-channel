@@ -316,7 +316,12 @@ object or #f")))))))
                             ":/run/current-system/profile/bin"
                             ":/run/current-system/profile/sbin"
                             ":/bin:/sbin:/usr/bin:/usr/sbin")
-                           "TRAPS_HOME=/opt/traps")))
+                           "TRAPS_HOME=/opt/traps"
+                           ;; SSL/TLS certificate environment variables
+                           "SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt"
+                           "SSL_CERT_DIR=/etc/ssl/certs"
+                           "CURL_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt"
+                           "REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt")))
            (stop #~(lambda (pid)
                      ;; First stop the pmd process
                      (kill pid SIGTERM)
