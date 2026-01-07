@@ -260,20 +260,26 @@ object or #f")))))))
                                                   "/bin/bash"))
                    "/bin/bash"))
 
-        ;; Symlink common utilities to FHS locations
-        (let ((profile "/run/current-system/profile"))
+        ;; Symlink common utilities to FHS locations (/bin and /usr/bin)
+        (let ((profile "/run/current-system/profile")
+              (utils '("env" "sh" "cat" "grep" "sed" "awk" "id" "whoami"
+                       "uname" "hostname" "date" "ls" "cp" "mv" "rm" "mkdir"
+                       "chmod" "chown" "ps" "kill" "sleep" "head" "tail" "wc"
+                       "sort" "uniq" "cut" "tr" "tee" "xargs" "find" "which"
+                       "stat" "readlink" "dirname" "basename")))
           (for-each
            (lambda (cmd)
-             (let ((src (string-append profile "/bin/" cmd))
-                   (dst (string-append "/usr/bin/" cmd)))
-               (when (and (file-exists? src)
-                          (not (file-exists? dst)))
-                 (symlink src dst))))
-           '("env" "sh" "cat" "grep" "sed" "awk" "id" "whoami"
-             "uname" "hostname" "date" "ls" "cp" "mv" "rm" "mkdir"
-             "chmod" "chown" "ps" "kill" "sleep" "head" "tail" "wc"
-             "sort" "uniq" "cut" "tr" "tee" "xargs" "find" "which"
-             "stat" "readlink" "dirname" "basename")))
+             (let ((src (string-append profile "/bin/" cmd)))
+               (when (file-exists? src)
+                 ;; Symlink to /usr/bin
+                 (let ((dst (string-append "/usr/bin/" cmd)))
+                   (unless (file-exists? dst)
+                     (symlink src dst)))
+                 ;; Symlink to /bin for scripts that use /bin/grep, etc.
+                 (let ((dst (string-append "/bin/" cmd)))
+                   (unless (file-exists? dst)
+                     (symlink src dst))))))
+           utils))
 
         ;; Create writable directories (these remain as real directories)
         (for-each mkdir-p
