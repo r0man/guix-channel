@@ -129,24 +129,79 @@ object or #f")))))))
 (define (cortex-agent-activation config)
   "Return the activation gexp for Cortex XDR Agent."
   (let ((config-file (or (cortex-agent-configuration-config-file config)
-                        (cortex-agent-generate-config-file config))))
+                        (cortex-agent-generate-config-file config)))
+        (package (cortex-agent-configuration-package config)))
     #~(begin
         (use-modules (guix build utils))
 
-        ;; Create necessary directories
+        ;; Create configuration directories
         (mkdir-p "/etc/panw")
         (mkdir-p "/etc/traps")
         (mkdir-p "/var/log/traps")
         (mkdir-p "/var/log/traps/agent")
-        (mkdir-p "/opt/traps/persist")
-        (mkdir-p "/opt/traps/download")
-        (mkdir-p "/opt/traps/upload")
-        (mkdir-p "/opt/traps/tmp")
-        (mkdir-p "/opt/traps/ipc")
-        (mkdir-p "/opt/traps/ipc_agent")
-        (mkdir-p "/opt/traps/forensics")
-        (mkdir-p "/opt/traps/edr")
-        (mkdir-p "/opt/traps/trace")
+
+        ;; Create /opt/traps base directory
+        (mkdir-p "/opt/traps")
+
+        ;; Symlink static content from the package to /opt/traps
+        ;; This allows the agent to find its files at the expected paths
+        (let ((pkg-traps (string-append #$package "/opt/traps")))
+          (for-each
+           (lambda (subdir)
+             (let ((src (string-append pkg-traps "/" subdir))
+                   (dst (string-append "/opt/traps/" subdir)))
+               (when (file-exists? src)
+                 ;; Remove existing symlink or empty directory
+                 (when (file-exists? dst)
+                   (if (symbolic-link? dst)
+                       (delete-file dst)
+                       (when (and (directory-exists? dst)
+                                  (null? (scandir dst
+                                           (lambda (f)
+                                             (not (member f '("." "..")))))))
+                         (rmdir dst))))
+                 ;; Create symlink if destination doesn't exist
+                 (unless (file-exists? dst)
+                   (symlink src dst)))))
+           ;; Static directories to symlink
+           ;; Note: 'lib' and 'lib32' NOT symlinked - need writable for locks
+           '("analyzerd" "apparmor" "bin" "config" "ecl" "glibc"
+             "init" "init.d" "kms" "km_utils"
+             "policy" "rpm-installer" "scripts" "selinux" "systemd"
+             "version.txt")))
+
+        ;; Copy lib and lib32 directories (need to be writable for lock files)
+        (for-each
+         (lambda (lib-name)
+           (let ((src-lib (string-append #$package "/opt/traps/" lib-name))
+                 (dst-lib (string-append "/opt/traps/" lib-name)))
+             (when (and (file-exists? src-lib)
+                        (not (file-exists? dst-lib)))
+               (copy-recursively src-lib dst-lib)
+               (for-each (lambda (f) (chmod f #o755))
+                         (find-files dst-lib)))))
+         '("lib" "lib32"))
+
+        ;; Create /bin/bash symlink for scripts that expect it
+        (mkdir-p "/bin")
+        (unless (file-exists? "/bin/bash")
+          (symlink (string-append #$(file-append (@ (gnu packages bash) bash)
+                                                  "/bin/bash"))
+                   "/bin/bash"))
+
+        ;; Create writable directories (these remain as real directories)
+        (for-each mkdir-p
+                  '("/opt/traps/persist"
+                    "/opt/traps/download"
+                    "/opt/traps/upload"
+                    "/opt/traps/tmp"
+                    "/opt/traps/ipc"
+                    "/opt/traps/ipc_agent"
+                    "/opt/traps/forensics"
+                    "/opt/traps/edr"
+                    "/opt/traps/fim"
+                    "/opt/traps/trace"
+                    "/opt/traps/quarantine"))
 
         ;; Copy or generate config file
         #$@(if config-file
@@ -164,22 +219,21 @@ object or #f")))))))
            (provision '(cortex-agent traps-pmd))
            (requirement '(networking file-systems))
            (start #~(make-forkexec-constructor
-                     (list (string-append #$package "/opt/traps/bin/pmd"))
+                     ;; Run from /opt/traps which is symlinked to the package
+                     (list "/opt/traps/bin/pmd")
                      #:log-file "/var/log/traps/pmd.log"
+                     #:directory "/opt/traps"
                      #:environment-variables
-                     (list (string-append "LD_LIBRARY_PATH="
-                                         #$package "/opt/traps/lib:"
-                                         #$package "/opt/traps/glibc/lib")
-                           "PATH=/run/current-system/profile/bin")))
+                     (list "LD_LIBRARY_PATH=/opt/traps/lib:/opt/traps/glibc/lib"
+                           "PATH=/opt/traps/bin:/run/current-system/profile/bin"
+                           "TRAPS_HOME=/opt/traps")))
            (stop #~(lambda (pid)
                      ;; First stop the pmd process
                      (kill pid SIGTERM)
                      (sleep 2)
                      ;; Run km_manage stop if it exists
-                     (let ((km-manage (string-append #$package
-                                         "/opt/traps/km_utils/km_manage")))
-                       (when (file-exists? km-manage)
-                         (system* km-manage "stop")))
+                     (when (file-exists? "/opt/traps/km_utils/km_manage")
+                       (system* "/opt/traps/km_utils/km_manage" "stop"))
                      #f))
            (respawn? #t)
            (actions

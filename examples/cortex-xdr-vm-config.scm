@@ -9,8 +9,8 @@
              (r0man guix services security)
              (r0man guix packages security))
 
-(use-service-modules desktop networking ssh)
-(use-package-modules admin certs ssh)
+(use-service-modules base desktop networking ssh)
+(use-package-modules admin linux lsof nss ssh)
 
 (operating-system
   (host-name "cortex-xdr-test")
@@ -19,6 +19,9 @@
 
   ;; Boot with QEMU firmware
   (firmware '())
+
+  ;; Enable serial console output for headless VM testing
+  (kernel-arguments '("console=ttyS0,115200"))
 
   ;; Use a simple bootloader for VMs
   (bootloader (bootloader-configuration
@@ -86,9 +89,16 @@
     (service openssh-service-type
              (openssh-configuration
               (permit-root-login #t)
-              (password-authentication? #t)))
+              (password-authentication? #t)
+              (allow-empty-passwords? #t)))
 
     ;; DHCP client for network
     (service dhcpcd-service-type)
+
+    ;; Serial console for headless VM testing
+    (service mingetty-service-type
+             (mingetty-configuration
+              (tty "ttyS0")
+              (auto-login "root")))
 
     %base-services)))
