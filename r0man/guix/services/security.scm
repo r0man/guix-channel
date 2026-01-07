@@ -1,4 +1,6 @@
 (define-module (r0man guix services security)
+  #:use-module (gnu packages admin)
+  #:use-module (gnu packages base)
   #:use-module (gnu services)
   #:use-module (gnu services shepherd)
   #:use-module (gnu system shadow)
@@ -125,6 +127,17 @@ object or #f")))))))
         (plain-file "cortex.conf"
                     (string-join args "\n")))))
 
+(define (cortex-agent-accounts config)
+  "Return the user accounts needed for Cortex XDR Agent."
+  (let ((user (cortex-agent-configuration-unprivileged-user config)))
+    (list (user-account
+           (name user)
+           (group "nogroup")
+           (system? #t)
+           (comment "Cortex XDR Agent unprivileged user")
+           (home-directory "/var/empty")
+           (shell (file-append shadow "/sbin/nologin"))))))
+
 (define (cortex-agent-activation config)
   "Return the activation gexp for Cortex XDR Agent."
   (let ((config-file (or (cortex-agent-configuration-config-file config)
@@ -163,22 +176,64 @@ object or #f")))))))
                  ;; Create symlink if destination doesn't exist
                  (unless (file-exists? dst)
                    (symlink src dst)))))
-           ;; Static directories to symlink
-           ;; Note: 'lib' and 'lib32' NOT symlinked - need writable for locks
-           '("analyzerd" "apparmor" "bin" "config" "ecl" "glibc"
+           ;; Static directories to symlink (read-only is fine)
+           '("analyzerd" "apparmor" "bin" "ecl" "glibc"
              "init" "init.d" "kms" "km_utils"
              "policy" "rpm-installer" "scripts" "selinux" "systemd"
              "version.txt")))
 
-        ;; Copy lib and lib32 directories (need to be writable for lock files)
+        ;; Copy directories that need to be writable
+        ;; - lib/lib32: lock files
+        ;; - config: FIPS module generates fipsmodule.cnf at runtime
         (for-each
-         (lambda (lib-name)
-           (let ((src-lib (string-append #$package "/opt/traps/" lib-name))
-                 (dst-lib (string-append "/opt/traps/" lib-name)))
-             (when (and (file-exists? src-lib)
-                        (not (file-exists? dst-lib)))
-               (copy-recursively src-lib dst-lib))))
-         '("lib" "lib32"))
+         (lambda (dir-name)
+           (let ((src-dir (string-append #$package "/opt/traps/" dir-name))
+                 (dst-dir (string-append "/opt/traps/" dir-name)))
+             (when (and (file-exists? src-dir)
+                        (not (file-exists? dst-dir)))
+               (copy-recursively src-dir dst-dir)
+               ;; Make config files writable so FIPS module can be generated
+               (when (string=? dir-name "config")
+                 (chmod dst-dir #o755)))))
+         '("lib" "lib32" "config"))
+
+        ;; Generate FIPS module config file if it doesn't exist
+        ;; Must use the bootstrap config (openssl-fipsinstall.cnf) which
+        ;; doesn't include the not-yet-existing fipsmodule.cnf
+        ;; IMPORTANT: Fork to isolate environment variables
+        ;; (LD_LIBRARY_PATH would break Guile/Shepherd if leaked)
+        (let ((fips-config "/opt/traps/config/fipsmodule.cnf")
+              (glibc-lib "/opt/traps/glibc/lib/x86_64-linux-gnu"))
+          (unless (file-exists? fips-config)
+            (let ((ld-linux (string-append glibc-lib "/ld-linux-x86-64.so.2")))
+              (when (file-exists? ld-linux)
+                ;; Fork and exec to isolate environment changes
+                (let ((pid (primitive-fork)))
+                  (cond
+                   ((zero? pid)
+                    ;; Child process: set env and exec
+                    (setenv "OPENSSL_CONF"
+                            "/opt/traps/config/openssl-fipsinstall.cnf")
+                    (setenv "LD_LIBRARY_PATH"
+                            (string-append glibc-lib ":/opt/traps/lib"))
+                    (execl ld-linux ld-linux
+                           "/opt/traps/bin/openssl"
+                           "fipsinstall"
+                           "-no_conditional_errors"
+                           "-module" "/opt/traps/lib/fips.so"
+                           "-out" fips-config)
+                    (primitive-exit 1))
+                   (else
+                    ;; Parent: wait for child
+                    (waitpid pid))))
+                ;; Set appropriate permissions
+                (when (file-exists? fips-config)
+                  (chmod fips-config #o644))))))
+
+        ;; Create directories the agent expects (Guix doesn't have cron by default)
+        (for-each mkdir-p
+                  '("/etc/cron.d"
+                    "/var/spool/cron/crontabs"))
 
         ;; Create /bin/bash symlink for scripts that expect it
         (mkdir-p "/bin")
@@ -261,6 +316,8 @@ Protection, and Exploit Prevention.")
                              cortex-agent-shepherd-service)
           (service-extension activation-service-type
                              cortex-agent-activation)
+          (service-extension account-service-type
+                             cortex-agent-accounts)
           (service-extension profile-service-type
                              (lambda (config)
                                (list (cortex-agent-configuration-package
