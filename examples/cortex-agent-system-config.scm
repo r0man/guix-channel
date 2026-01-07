@@ -4,7 +4,7 @@
 ;; service in your Guix System configuration.
 
 (use-modules (gnu)
-             (r0man guix services security))
+             (r0man guix services cortex))
 
 (use-service-modules networking ssh)
 (use-package-modules admin)

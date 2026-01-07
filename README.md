@@ -43,7 +43,7 @@ In your `/etc/config.scm` (or system configuration file):
 
 ```scheme
 (use-modules (gnu)
-             (r0man guix services security))
+             (r0man guix services cortex))
 
 (operating-system
   ;; ... your existing configuration ...

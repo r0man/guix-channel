@@ -1,4 +1,23 @@
-(define-module (r0man guix services security)
+;;; GNU Guix --- Functional package management for GNU
+;;; Copyright (C) 2024 Roman Scherer <roman@burningswell.com>
+;;;
+;;; This file is part of guix-channel-cortex.
+;;;
+;;; guix-channel-cortex is free software; you can redistribute it and/or
+;;; modify it under the terms of the GNU General Public License as
+;;; published by the Free Software Foundation; either version 3 of the
+;;; License, or (at your option) any later version.
+;;;
+;;; guix-channel-cortex is distributed in the hope that it will be useful,
+;;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+;;; General Public License for more details.
+;;;
+;;; You should have received a copy of the GNU General Public License
+;;; along with guix-channel-cortex.  If not, see
+;;; <http://www.gnu.org/licenses/>.
+
+(define-module (r0man guix services cortex)
   #:use-module (gnu packages admin)
   #:use-module (gnu packages base)
   #:use-module (gnu services)
@@ -8,7 +27,7 @@
   #:use-module (guix records)
   #:use-module (ice-9 match)
   #:use-module (srfi srfi-1)
-  #:use-module (r0man guix packages security)
+  #:use-module (r0man guix packages cortex)
   #:export (cortex-agent-configuration
             cortex-agent-configuration?
             cortex-agent-configuration-package
@@ -30,15 +49,132 @@
 ;;; Commentary:
 ;;;
 ;;; Cortex XDR Agent service for Guix System.
-;;; Provides endpoint security including Anti-Virus, EDR, Ransomware
-;;; Protection, and Exploit Prevention.
 ;;;
-;;; IMPORTANT: This service requires nscd (Name Service Cache Daemon) to be
-;;; running for NSS user lookups needed by IPC operations.  The nscd service
-;;; is included in %base-services, so typical system configurations will have
-;;; it.  Without nscd, user lookup operations (getpwnam, etc.) will fail
-;;; because the patched binaries use Guix's glibc but cannot load the system's
-;;; NSS modules directly.
+;;; This module provides a Guix System service for running the Palo Alto
+;;; Networks Cortex XDR endpoint security agent.  The service provides:
+;;; - Anti-Virus/Anti-Malware protection
+;;; - EDR (Endpoint Detection and Response)
+;;; - Ransomware Protection
+;;; - Exploit Prevention
+;;; - Behavioral Threat Protection (requires kernel module)
+;;;
+;;; Quick Start:
+;;;
+;;; Add to your system configuration:
+;;;
+;;;   (use-modules (r0man guix services cortex))
+;;;
+;;;   (operating-system
+;;;     ;; ...
+;;;     (services
+;;;      (cons* (service cortex-agent-service-type
+;;;                      (cortex-agent-configuration
+;;;                       (distribution-id "your-distribution-id")
+;;;                       (distribution-server "https://your-server.com")))
+;;;             %base-services)))
+;;;
+;;; Then reconfigure: sudo guix system reconfigure /etc/config.scm
+;;;
+;;; Configuration Options:
+;;;
+;;; The `cortex-agent-configuration` record supports these options:
+;;;
+;;;   package             - Cortex XDR Agent package (default: cortex-agent)
+;;;   config-file         - Custom cortex.conf file (default: #f, auto-generated)
+;;;   distribution-id     - Distribution ID from Cortex XDR console (required)
+;;;   distribution-server - Cortex XDR management server URL (required)
+;;;   endpoint-tags       - List of tags for endpoint organization
+;;;   proxy-list          - List of HTTP proxy servers
+;;;   unprivileged-user   - User for unprivileged operations (default: "cortexuser")
+;;;   kernel-module?      - Enable kernel module (default: #t)
+;;;   temporary-session?  - Temporary session mode for VDI (default: #f)
+;;;   vm-template?        - VM template mode (default: #f)
+;;;   restrictions        - List of feature restrictions
+;;;   extra-options       - Additional installer options
+;;;
+;;; Available Restrictions:
+;;;
+;;;   "live_terminal"    - Disable Live Terminal feature
+;;;   "script_execution" - Disable remote script execution
+;;;   "file_retrieval"   - Disable file retrieval capability
+;;;   "all"              - Apply all restrictions
+;;;
+;;; Service Management:
+;;;
+;;;   # Check status
+;;;   sudo herd status cortex-agent
+;;;
+;;;   # Start/stop/restart
+;;;   sudo herd start cortex-agent
+;;;   sudo herd stop cortex-agent
+;;;   sudo herd restart cortex-agent
+;;;
+;;;   # View logs
+;;;   sudo tail -f /var/log/traps/pmd.log
+;;;
+;;;   # Use cytool utility
+;;;   sudo /run/current-system/profile/opt/traps/bin/cytool status
+;;;
+;;; File Locations:
+;;;
+;;;   /etc/panw/cortex.conf      - Generated configuration file
+;;;   /var/log/traps/pmd.log     - Agent log file
+;;;   /opt/traps/                - Agent installation directory
+;;;   /opt/traps/config/         - Agent XML configuration
+;;;   /opt/traps/bin/            - Agent binaries (pmd, cytool, initd)
+;;;
+;;; Security Considerations:
+;;;
+;;; 1. Credentials: Store distribution-id and distribution-server securely.
+;;;    Consider using Guix secrets management for production deployments.
+;;;
+;;; 2. Config Permissions: The /etc/panw/cortex.conf file is created with
+;;;    mode 0600 (root-only readable) automatically.
+;;;
+;;; 3. Unprivileged User: The agent creates a dedicated cortexuser account
+;;;    for unprivileged operations, minimizing root exposure.
+;;;
+;;; 4. Feature Restrictions: Use the restrictions option to limit agent
+;;;    capabilities based on your security policy.
+;;;
+;;; 5. Network Access: The agent requires outbound HTTPS access to your
+;;;    Cortex XDR server.  Configure firewalls accordingly.
+;;;
+;;; Known Limitations:
+;;;
+;;; 1. Kernel Module Compatibility
+;;;    The kernel module requires a compatible kernel version (2.6.32+,
+;;;    3.4+ recommended).  If you experience issues, disable it:
+;;;      (kernel-module? #f)
+;;;    This disables behavioral threat protection but allows the agent to run.
+;;;
+;;; 2. nscd Dependency
+;;;    This service requires nscd (Name Service Cache Daemon) for user lookups
+;;;    needed by IPC operations.  The nscd service is included in %base-services,
+;;;    so typical system configurations will have it.  Without nscd, user lookup
+;;;    operations (getpwnam, etc.) will fail because the patched binaries use
+;;;    Guix's glibc but cannot load the system's NSS modules directly.
+;;;
+;;;    If using a minimal service configuration, ensure nscd is included:
+;;;      (services
+;;;       (cons* (service nscd-service-type)
+;;;              (service cortex-agent-service-type)
+;;;              ;; ...
+;;;              ))
+;;;
+;;; Troubleshooting:
+;;;
+;;; Service Won't Start:
+;;;   Check logs: sudo tail -100 /var/log/traps/pmd.log
+;;;   Common causes:
+;;;   - Missing or invalid distribution-id/distribution-server
+;;;   - Network connectivity issues to Cortex XDR server
+;;;   - License validation failures
+;;;   - Kernel module compatibility issues
+;;;
+;;; Binary Execution Errors:
+;;;   Check library paths: ldd /run/current-system/profile/opt/traps/bin/pmd
+;;;   Verify interpreter: file /run/current-system/profile/opt/traps/bin/pmd
 ;;;
 ;;; Code:
 
@@ -379,3 +515,5 @@ Protection, and Exploit Prevention.")
                                (list (cortex-agent-configuration-package
                                       config))))))
    (default-value (cortex-agent-configuration))))
+
+;;; cortex.scm ends here

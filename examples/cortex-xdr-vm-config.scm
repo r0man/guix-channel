@@ -6,8 +6,8 @@
 (use-modules (gnu)
              (gnu system)
              (gnu system vm)
-             (r0man guix services security)
-             (r0man guix packages security))
+             (r0man guix services cortex)
+             (r0man guix packages cortex))
 
 (use-service-modules base desktop networking ssh)
 (use-package-modules admin linux lsof ssh)

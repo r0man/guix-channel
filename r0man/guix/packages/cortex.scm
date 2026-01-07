@@ -1,4 +1,23 @@
-(define-module (r0man guix packages security)
+;;; GNU Guix --- Functional package management for GNU
+;;; Copyright (C) 2024 Roman Scherer <roman@burningswell.com>
+;;;
+;;; This file is part of guix-channel-cortex.
+;;;
+;;; guix-channel-cortex is free software; you can redistribute it and/or
+;;; modify it under the terms of the GNU General Public License as
+;;; published by the Free Software Foundation; either version 3 of the
+;;; License, or (at your option) any later version.
+;;;
+;;; guix-channel-cortex is distributed in the hope that it will be useful,
+;;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+;;; General Public License for more details.
+;;;
+;;; You should have received a copy of the GNU General Public License
+;;; along with guix-channel-cortex.  If not, see
+;;; <http://www.gnu.org/licenses/>.
+
+(define-module (r0man guix packages cortex)
   #:use-module ((guix licenses) #:prefix license:)
   #:use-module (gnu packages base)
   #:use-module (gnu packages compression)
@@ -11,6 +30,57 @@
   #:use-module (guix gexp)
   #:use-module (guix packages)
   #:use-module (guix utils))
+
+;;; Commentary:
+;;;
+;;; Palo Alto Networks Cortex XDR Agent package for Guix System.
+;;;
+;;; Cortex XDR provides comprehensive endpoint security including:
+;;; - Anti-Virus/Anti-Malware protection
+;;; - EDR (Endpoint Detection and Response)
+;;; - Ransomware Protection
+;;; - Exploit Prevention
+;;; - Behavioral Threat Protection
+;;;
+;;; System Requirements:
+;;; - Architecture: x86_64 only
+;;; - Kernel: Linux 2.6.32+ (3.4+ recommended for full functionality)
+;;; - RAM: 4GB minimum (8GB recommended)
+;;; - Disk: 10GB available space
+;;; - Network: HTTPS access to Cortex XDR management server
+;;; - License: Valid Palo Alto Networks Cortex XDR license
+;;;
+;;; Installation:
+;;;
+;;; Add this channel to ~/.config/guix/channels.scm:
+;;;
+;;;   (cons* (channel
+;;;           (name 'guix-channel-cortex)
+;;;           (url "https://github.com/r0man/guix-channel-cortex")
+;;;           (branch "main"))
+;;;          %default-channels)
+;;;
+;;; Then run: guix pull
+;;;
+;;; To build the package:
+;;;
+;;;   guix build -L . cortex-agent
+;;;
+;;; For service configuration, see (r0man guix services cortex).
+;;;
+;;; Known Limitations:
+;;;
+;;; 1. Kernel Module Compatibility
+;;;    The kernel module requires a compatible kernel version.  If you
+;;;    experience issues, disable it in the service configuration with
+;;;    (kernel-module? #f).  This disables behavioral threat protection.
+;;;
+;;; 2. Proprietary Software
+;;;    The Cortex XDR Agent is proprietary software from Palo Alto Networks.
+;;;    This package repackages the official RPM distribution for Guix System.
+;;;    You must have a valid license to use the agent.
+;;;
+;;; Code:
 
 (define-public cortex-agent
   (package
@@ -77,3 +147,5 @@ Response), Ransomware Protection, Exploit Prevention, and Malicious Behavioral
 Prevention.  This package contains the agent for Linux systems.")
     (home-page "https://www.paloaltonetworks.com/cortex/cortex-xdr")
     (license #f))) ; Proprietary
+
+;;; cortex.scm ends here

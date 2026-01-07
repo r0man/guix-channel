@@ -101,13 +101,29 @@ sudo tail -f /var/log/traps/pmd.log
 sudo /run/current-system/profile/opt/traps/bin/cytool status
 ```
 
+## Module Import
+
+Add to your system configuration:
+
+```scheme
+(use-modules (r0man guix services cortex))
+```
+
+For package access (e.g., adding to system packages):
+
+```scheme
+(use-modules (r0man guix packages cortex))
+```
+
 ## Documentation
 
 For more detailed information, see:
 
-- **Main documentation**: `../history/CORTEX-XDR-TEST-REPORT.md`
+- **Package documentation**: `(r0man guix packages cortex)` module commentary
+- **Service documentation**: `(r0man guix services cortex)` module commentary
 - **VM testing guide**: `VM-TESTING-GUIDE.md`
 - **Configuration examples**: `cortex-agent-system-config.scm`
+- **Test report**: `../history/CORTEX-XDR-TEST-REPORT.md`
 
 ## Requirements
 
