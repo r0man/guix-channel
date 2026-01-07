@@ -272,7 +272,8 @@ object or #f")))))))
            '("env" "sh" "cat" "grep" "sed" "awk" "id" "whoami"
              "uname" "hostname" "date" "ls" "cp" "mv" "rm" "mkdir"
              "chmod" "chown" "ps" "kill" "sleep" "head" "tail" "wc"
-             "sort" "uniq" "cut" "tr" "tee" "xargs" "find" "which")))
+             "sort" "uniq" "cut" "tr" "tee" "xargs" "find" "which"
+             "stat" "readlink" "dirname" "basename")))
 
         ;; Create writable directories (these remain as real directories)
         (for-each mkdir-p
