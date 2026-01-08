@@ -9,7 +9,7 @@
 (define-public node-anthropic-ai-claude-code
   (package
     (name "node-anthropic-ai-claude-code")
-    (version "2.0.76")
+    (version "2.1.1")
     (source
      (origin
        (method url-fetch)
@@ -17,7 +17,7 @@
              "https://registry.npmjs.org/@anthropic-ai/claude-code/"
              "-/claude-code-" version ".tgz"))
        (sha256
-        (base32 "1ndrj51yfgkp1xgph5r3v6n946rlamj3v0y6wk4114wfzwv9k8zw"))))
+        (base32 "1sqn80dmbfwdczzzmc4bcy0wykl9wyf07gpr7x009hsk3ays5jd0"))))
     (build-system node-build-system)
     (arguments
      (list
@@ -28,7 +28,8 @@
           (add-after 'install 'replace-vendored-ripgrep
             (lambda* (#:key inputs outputs #:allow-other-keys)
               (let* ((out (assoc-ref outputs "out"))
-                     (lib (string-append out "/lib/node_modules/@anthropic-ai/claude-code"))
+                     (lib (string-append out "/lib/node_modules"
+                                         "/@anthropic-ai/claude-code"))
                      (vendor-rg-dir (string-append lib "/vendor/ripgrep"))
                      (rg-bin (search-input-file inputs "/bin/rg")))
                 ;; Delete all vendored ripgrep binaries
@@ -37,8 +38,10 @@
                 ;; Recreate the expected directory structure with symlinks to Guix ripgrep
                 (mkdir-p (string-append vendor-rg-dir "/arm64-linux"))
                 (mkdir-p (string-append vendor-rg-dir "/x64-linux"))
-                (symlink rg-bin (string-append vendor-rg-dir "/arm64-linux/rg"))
-                (symlink rg-bin (string-append vendor-rg-dir "/x64-linux/rg")))))
+                (symlink rg-bin
+                         (string-append vendor-rg-dir "/arm64-linux/rg"))
+                (symlink rg-bin
+                         (string-append vendor-rg-dir "/x64-linux/rg")))))
           (delete 'validate-runpath))))
     (inputs (list ripgrep))
     (home-page "https://github.com/anthropics/claude-code")
