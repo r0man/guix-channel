@@ -111,11 +111,11 @@ machines.")
     (license license:expat)))
 
 (define-public gastown
-  (let ((commit "a07fa8bf7feb184ac168e9ce8cd300cf7a0ce090")
-        (revision "2450"))
+  (let ((commit "f4cbcb4ce948db392134913edd6359f12298a475")
+        (revision "2474"))
     (package
       (name "gastown")
-      (version (git-version "0.1.1" revision commit))
+      (version (git-version "0.2.1" revision commit))
       (source
        (origin
          (method git-fetch)
@@ -124,7 +124,7 @@ machines.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "1dwxhpbkfk99yc2w9bhblxi4dckal6wdwdwxbvar17g8bval26b1"))))
+          (base32 "0acvd78c9bcha7ivwksdjfi8w1akb0v4z0vi48368pmj13d8px5s"))))
       (build-system go-build-system)
       (arguments
        (list
@@ -157,12 +157,17 @@ machines.")
                   (with-directory-excursion (string-append "src/"
                                                            (dirname (dirname
                                                                      import-path)))
-                    ;; Run test suite, skipping tests that require beads initialization
+                    ;; Run test suite, skipping tests that require beads
+                    ;; initialization or tmux integration
                     (invoke "go"
                             "test"
                             "-v"
                             "-skip"
-                            "TestInitAgentBeads"
+                            (string-append
+                             "TestInitAgentBeads"
+                             "|TestSlingFormulaOnBead"
+                             "RoutesBDCommandsToTargetRig"
+                             "|TestRigLevelCustomAgentIntegration")
                             "./...")))))
             (add-before 'build 'set-home
               (lambda _
@@ -173,16 +178,20 @@ machines.")
                        (gt (string-append out "/bin/gt"))
                        (bash-dir (string-append out "/etc/bash_completion.d"))
                        (zsh-dir (string-append out "/share/zsh/site-functions"))
-                       (fish-dir (string-append out "/share/fish/vendor_completions.d")))
+                       (fish-dir (string-append out
+                                  "/share/fish/vendor_completions.d")))
                   (mkdir-p bash-dir)
                   (mkdir-p zsh-dir)
                   (mkdir-p fish-dir)
                   (with-output-to-file (string-append bash-dir "/gt")
-                    (lambda () (system* gt "completion" "bash")))
+                    (lambda ()
+                      (system* gt "completion" "bash")))
                   (with-output-to-file (string-append zsh-dir "/_gt")
-                    (lambda () (system* gt "completion" "zsh")))
+                    (lambda ()
+                      (system* gt "completion" "zsh")))
                   (with-output-to-file (string-append fish-dir "/gt.fish")
-                    (lambda () (system* gt "completion" "fish")))))))))
+                    (lambda ()
+                      (system* gt "completion" "fish")))))))))
       (native-inputs (list beads git tmux))
       (propagated-inputs (list go-github-com-burntsushi-toml
                                go-github-com-charmbracelet-bubbles
