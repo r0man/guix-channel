@@ -1872,7 +1872,7 @@ running over SSH or inside terminal multiplexers like tmux or GNU Screen.")
 (define-public emacs-shell-maker
   (package
     (name "emacs-shell-maker")
-    (version "0.84.4")
+    (version "0.84.7")
     (source
      (origin
        (method git-fetch)
@@ -1881,8 +1881,7 @@ running over SSH or inside terminal multiplexers like tmux or GNU Screen.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32
-         "13hw8qx8mxd89q7my18xbpg6v4nn2zbdffypv9vqy66sc5vz4fwj"))))
+        (base32 "0x10qjhcym4nnv5zh4nwy7d46lp158q06w2iwgi265nl1bz9s7yq"))))
     (build-system emacs-build-system)
     (home-page "https://github.com/xenodium/shell-maker")
     (synopsis "Emacs package for creating interactive command shells")
@@ -1920,7 +1919,7 @@ through a unified protocol.")
 (define-public emacs-agent-shell
   (package
     (name "emacs-agent-shell")
-    (version "0.27.2")
+    (version "0.27.3")
     (source
      (origin
        (method git-fetch)
@@ -1929,7 +1928,7 @@ through a unified protocol.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0f9cq7h46x6283p3faypfhj052phhbwxixxfmfv79iszn8pbfqk9"))))
+        (base32 "13fqygfi3riyqyfw0ah5klm8xnrz9qk4g4aii69qs4h4ink2qvip"))))
     (build-system emacs-build-system)
     (propagated-inputs (list emacs-shell-maker emacs-acp))
     (home-page "https://github.com/xenodium/agent-shell")
