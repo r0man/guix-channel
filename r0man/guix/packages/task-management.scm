@@ -15,11 +15,11 @@
     #:use-module (r0man guix packages golang-xyz))
 
 (define-public beads-next
-  (let ((commit "7c83187bdde66884ec128d6bcc41b81cc8217c92")
-        (revision "1"))
+  (let ((commit "f459ec2913ee70b7b1922dfb1544ab8027507272")
+        (revision "0"))
     (package
       (name "beads-next")
-      (version (git-version "0.46.0" revision commit))
+      (version (git-version "0.47.0" revision commit))
       (source
        (origin
          (method git-fetch)
@@ -28,7 +28,7 @@
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "1f3xz4vdscl9lgr7jiknbqqw478qr8f9fsrkr9z9brawvnm8w184"))))
+          (base32 "0q4kmw0428986la0xp5rr4xm042sia0wm3a70lmg9wmyav17ifd7"))))
       (build-system go-build-system)
       (arguments
        (list
@@ -45,11 +45,13 @@
                   (with-directory-excursion (string-append "src/" import-path)
                     ;; Run tests that don't require full environment
                     (invoke "go"
-                     "test"
-                     "-v"
-                     "-run"
-                     "^Test(Parse|ValidationResults|VersionCommand|Truncate|GitRevParse)"
-                     ".")))))
+                            "test"
+                            "-v"
+                            "-run"
+                            (string-append "^Test(Parse|ValidationResults"
+                                           "|VersionCommand|Truncate"
+                                           "|GitRevParse)")
+                            ".")))))
             (add-after 'unpack 'delete-broken-test
               (lambda _
                 (delete-file
@@ -67,8 +69,10 @@
                                     (let ((target (readlink path)))
                                       (delete-file path)
                                       (copy-file target path)))))
-                              (scandir dir (lambda (f)
-                                             (not (member f '("." ".."))))))))
+                              (scandir dir
+                                       (lambda (f)
+                                         (not (member f
+                                                      '("." ".."))))))))
                 ;; Fix sqlite3 WASM files
                 (let ((sqlite-dir "src/github.com/ncruces/go-sqlite3"))
                   (for-each (lambda (wasm-file)
