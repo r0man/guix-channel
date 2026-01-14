@@ -140,7 +140,7 @@ machines.")
       (license license:expat))))
 
 (define-public gastown-next
-  (let ((commit "a1195cb6e6c38e1ab7ceeb88a8cf5ef7aea49c5f")
+  (let ((commit "a1195cb1042c856437ec11830e2a2c4829df08ca")
         (revision "2"))
     (package
       (name "gastown-next")
