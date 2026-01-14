@@ -112,7 +112,7 @@ perform refactors and more.")
 (define-public editor-code-assistant
   (package
     (name "editor-code-assistant")
-    (version "0.64.0")
+    (version "0.91.2")
     (source (origin
               (method url-fetch/zipbomb)
               (uri (string-append "https://github.com/editor-code-assistant"
@@ -126,9 +126,9 @@ perform refactors and more.")
               (sha256
                (base32
                 (cond ((target-aarch64?)
-                       "1gcpkk97y90wm2wd1wspsmqraww3k248bs6cmb8kqsv0akwcqj21")
+                       "0ww7r8zvg810hvcj5m8zy1plshb0i5q5w753qhljh7qi3bbjg4f1")
                       ((target-x86-64?)
-                       "0f8y3bd7lvidbdl8d50g8fxpnyvm6pfc3sk0naqxli0yws5j2crc"))))))
+                       "1m7f215lfnmlpwjgana1c0gdbr1jymzalhgxj7bzfrg7jw2kjs8i"))))))
     (build-system binary-build-system)
     (arguments
      (list
