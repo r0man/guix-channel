@@ -112,37 +112,37 @@ perform refactors and more.")
 (define-public editor-code-assistant
   (package
     (name "editor-code-assistant")
-    (version "0.91.2")
-    (source (origin
-              (method url-fetch/zipbomb)
-              (uri (string-append "https://github.com/editor-code-assistant"
-                                  "/eca/releases/download/"
-                                  version "/eca-native-linux-"
-                                  (cond ((target-aarch64?)
-                                         "aarch64")
-                                        ((target-x86-64?)
-                                         "amd64"))
-                                  ".zip"))
-              (sha256
-               (base32
-                (cond ((target-aarch64?)
-                       "0ww7r8zvg810hvcj5m8zy1plshb0i5q5w753qhljh7qi3bbjg4f1")
-                      ((target-x86-64?)
-                       "1m7f215lfnmlpwjgana1c0gdbr1jymzalhgxj7bzfrg7jw2kjs8i"))))))
+    (version "0.92.0")
+    (source
+     (origin
+       (method url-fetch/zipbomb)
+       (uri (string-append "https://github.com/editor-code-assistant"
+                           "/eca/releases/download/"
+                           version
+                           "/eca-native-linux-"
+                           (cond
+                             ((target-aarch64?)
+                              "aarch64")
+                             ((target-x86-64?)
+                              "amd64"))
+                           ".zip"))
+       (sha256
+        (base32 (cond
+                  ((target-aarch64?)
+                   "1sqz90rxysp4p2zf7kvdkhggxn7p65hn3zy5njx3x5j75srs083g")
+                  ((target-x86-64?)
+                   "0divw47yficwcxfj9sn2hkgwhbwjsm1s4qqkngz6ch52icnqikvz"))))))
     (build-system binary-build-system)
     (arguments
      (list
-      #:patchelf-plan
-      (if (target-aarch64?)
-          `'(("eca" ("gcc" "libc" "zlib")))
-          #f)
-      #:install-plan
-      `'(("eca" "/bin/"))))
+      #:patchelf-plan (if (target-aarch64?)
+                          `'(("eca" ("gcc" "libc" "zlib"))) #f)
+      #:install-plan `'(("eca" "/bin/"))))
     (inputs (list `(,gcc "lib") zlib))
     (supported-systems '("aarch64-linux" "x86_64-linux"))
     (home-page "https://github.com/editor-code-assistant/eca")
     (synopsis "Editor Code Assistant")
-    (description "AI pair programming capabilities in any editor")
+    (description "AI pair programming capabilities in any editor.")
     (license license:expat)))
 
 (define-public bbin
