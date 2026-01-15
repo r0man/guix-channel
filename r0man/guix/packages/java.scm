@@ -4,14 +4,14 @@
   #:use-module (gnu packages bash)
   #:use-module (gnu packages commencement)
   #:use-module (gnu packages compression)
+  #:use-module (gnu packages elf)
   #:use-module (gnu packages gcc)
   #:use-module (gnu packages linux)
   #:use-module (guix build-system copy)
   #:use-module (guix download)
   #:use-module (guix gexp)
   #:use-module (guix packages)
-  #:use-module (guix utils)
-  #:use-module (nonguix build-system binary))
+  #:use-module (guix utils))
 
 (define-public graalvm-ce
   (package
@@ -20,93 +20,15 @@
     (source
      (origin
        (method url-fetch)
-       (uri "https://download.oracle.com/graalvm/25/latest/graalvm-jdk-25_linux-x64_bin.tar.gz")
+       (uri (string-append
+             "https://download.oracle.com/graalvm/25/latest/"
+             "graalvm-jdk-25_linux-x64_bin.tar.gz"))
        (sha256
         (base32 "0dqq8dy7psij36py304q0x4hs79f4hfgkzbl6gq3kri922x05ayl"))))
-    (build-system binary-build-system)
+    (build-system copy-build-system)
     (arguments
      (list
-      #:validate-runpath? #f  ;; GraalVM libs have internal dependencies
-      #:patchelf-plan
-      #~`(;; Main executables (excluding symlinks)
-          ("bin/java" ("gcc" "glibc" "zlib"))
-          ("bin/javac" ("gcc" "glibc" "zlib"))
-          ("bin/javap" ("gcc" "glibc" "zlib"))
-          ("bin/javadoc" ("gcc" "glibc" "zlib"))
-          ("bin/jar" ("gcc" "glibc" "zlib"))
-          ("bin/jarsigner" ("gcc" "glibc" "zlib"))
-          ("bin/jcmd" ("gcc" "glibc" "zlib"))
-          ("bin/jconsole" ("gcc" "glibc" "zlib"))
-          ("bin/jdb" ("gcc" "glibc" "zlib"))
-          ("bin/jdeprscan" ("gcc" "glibc" "zlib"))
-          ("bin/jdeps" ("gcc" "glibc" "zlib"))
-          ("bin/jfr" ("gcc" "glibc" "zlib"))
-          ("bin/jhsdb" ("gcc" "glibc" "zlib"))
-          ("bin/jimage" ("gcc" "glibc" "zlib"))
-          ("bin/jinfo" ("gcc" "glibc" "zlib"))
-          ("bin/jlink" ("gcc" "glibc" "zlib"))
-          ("bin/jmap" ("gcc" "glibc" "zlib"))
-          ("bin/jmod" ("gcc" "glibc" "zlib"))
-          ("bin/jnativescan" ("gcc" "glibc" "zlib"))
-          ("bin/jpackage" ("gcc" "glibc" "zlib"))
-          ("bin/jps" ("gcc" "glibc" "zlib"))
-          ("bin/jrunscript" ("gcc" "glibc" "zlib"))
-          ("bin/jshell" ("gcc" "glibc" "zlib"))
-          ("bin/jstack" ("gcc" "glibc" "zlib"))
-          ("bin/jstat" ("gcc" "glibc" "zlib"))
-          ("bin/jstatd" ("gcc" "glibc" "zlib"))
-          ("bin/jwebserver" ("gcc" "glibc" "zlib"))
-          ("bin/keytool" ("gcc" "glibc" "zlib"))
-          ("bin/native-image-inspect" ("gcc" "glibc" "zlib"))
-          ("bin/rmiregistry" ("gcc" "glibc" "zlib"))
-          ("bin/serialver" ("gcc" "glibc" "zlib"))
-          ;; Shared libraries
-          ("lib/jspawnhelper" ("gcc" "glibc" "zlib"))
-          ("lib/libjli.so" ("gcc" "glibc" "zlib"))
-          ("lib/libjava.so" ("gcc" "glibc" "zlib"))
-          ("lib/libjimage.so" ("gcc" "glibc" "zlib"))
-          ("lib/libjsig.so" ("gcc" "glibc" "zlib"))
-          ("lib/libnet.so" ("gcc" "glibc" "zlib"))
-          ("lib/libnio.so" ("gcc" "glibc" "zlib"))
-          ("lib/libverify.so" ("gcc" "glibc" "zlib"))
-          ("lib/libzip.so" ("gcc" "glibc" "zlib"))
-          ("lib/libawt.so" ("gcc" "glibc" "zlib"))
-          ("lib/libawt_headless.so" ("gcc" "glibc" "zlib"))
-          ("lib/libawt_xawt.so" ("gcc" "glibc" "zlib"))
-          ("lib/libfontmanager.so" ("gcc" "glibc" "zlib"))
-          ("lib/libjavajpeg.so" ("gcc" "glibc" "zlib"))
-          ("lib/libjawt.so" ("gcc" "glibc" "zlib"))
-          ("lib/libjsound.so" ("gcc" "glibc" "zlib"))
-          ("lib/liblcms.so" ("gcc" "glibc" "zlib"))
-          ("lib/libmlib_image.so" ("gcc" "glibc" "zlib"))
-          ("lib/libsplashscreen.so" ("gcc" "glibc" "zlib"))
-          ("lib/libinstrument.so" ("gcc" "glibc" "zlib"))
-          ("lib/libmanagement.so" ("gcc" "glibc" "zlib"))
-          ("lib/libprefs.so" ("gcc" "glibc" "zlib"))
-          ("lib/librmi.so" ("gcc" "glibc" "zlib"))
-          ("lib/libj2gss.so" ("gcc" "glibc" "zlib"))
-          ("lib/libj2pcsc.so" ("gcc" "glibc" "zlib"))
-          ("lib/libattach.so" ("gcc" "glibc" "zlib"))
-          ("lib/libj2pkcs11.so" ("gcc" "glibc" "zlib"))
-          ("lib/libsaproc.so" ("gcc" "glibc" "zlib"))
-          ("lib/libjsvml.so" ("gcc" "glibc" "zlib"))
-          ("lib/libdt_socket.so" ("gcc" "glibc" "zlib"))
-          ("lib/libjdwp.so" ("gcc" "glibc" "zlib"))
-          ("lib/libmanagement_ext.so" ("gcc" "glibc" "zlib"))
-          ("lib/libmanagement_agent.so" ("gcc" "glibc" "zlib"))
-          ("lib/libextnet.so" ("gcc" "glibc" "zlib"))
-          ("lib/libsctp.so" ("gcc" "glibc" "zlib"))
-          ("lib/libjaas.so" ("gcc" "glibc" "zlib"))
-          ("lib/libsimdsort.so" ("gcc" "glibc" "zlib"))
-          ("lib/libsyslookup.so" ("gcc" "glibc" "zlib"))
-          ("lib/libjvmcicompiler.so" ("gcc" "glibc" "zlib"))
-          ("lib/libnative-image-agent.so" ("gcc" "glibc" "zlib"))
-          ("lib/libnative-image-diagnostics-agent.so" ("gcc" "glibc" "zlib"))
-          ("lib/server/libjsig.so" ("gcc" "glibc" "zlib"))
-          ("lib/server/libjvm.so" ("gcc" "glibc" "zlib"))
-          ;; SVM components - native-image is NOT patched (glibc symbol issues)
-          ;; It's invoked via ld-linux wrapper instead
-          ("lib/svm/builder/lib/libreporterchelper.so" ("gcc" "glibc" "zlib")))
+      #:validate-runpath? #f  ; Optional X11/audio libs not always available
       #:install-plan
       #~`(("." "./" #:exclude ("GRAALVM-README.md"
                                "LICENSE.txt"
@@ -114,92 +36,80 @@
                                "license-information-user-manual.zip")))
       #:phases
       #~(modify-phases %standard-phases
-          (replace 'unpack
+          (add-before 'install 'unpack-tarball
             (lambda* (#:key source #:allow-other-keys)
-              ;; Extract and strip the top-level directory
               (invoke "tar" "xzf" source "--strip-components=1")))
-          (add-after 'install 'fix-internal-rpaths
+          (add-after 'install 'patch-elf-files
             (lambda* (#:key inputs outputs #:allow-other-keys)
-              (use-modules (ice-9 popen)
-                           (ice-9 rdelim)
-                           (ice-9 regex))
-              (define (get-interpreter file)
-                (let* ((port (open-pipe* OPEN_READ "patchelf" "--print-interpreter" file))
-                       (interp (read-line port)))
-                  (close-pipe port)
-                  (if (eof-object? interp) #f interp)))
-              ;; Get glibc path from the interpreter set by patchelf phase
-              ;; to ensure consistency between interpreter and RPATH
-              (define (glibc-from-interpreter interp)
-                (and interp
-                     (let ((m (string-match "/gnu/store/[^/]+-glibc-[^/]+" interp)))
-                       (and m (match:substring m)))))
-              (let* ((out (assoc-ref outputs "out"))
-                     (lib (string-append out "/lib"))
-                     (lib-server (string-append out "/lib/server"))
-                     (gcc-lib (assoc-ref inputs "gcc"))
-                     ;; Get glibc from already-patched java binary for consistency
-                     (java-interp (get-interpreter (string-append out "/bin/java")))
-                     (glibc (or (glibc-from-interpreter java-interp)
-                                (assoc-ref inputs "glibc")))
-                     (zlib (assoc-ref inputs "zlib")))
-                ;; Add internal lib paths to executables
-                (for-each
-                 (lambda (file)
-                   (let ((path (string-append out "/bin/" file)))
-                     (when (and (file-exists? path)
-                                (not (symbolic-link? path)))
-                       (invoke "patchelf" "--set-rpath"
-                               (string-append lib ":" lib-server ":"
-                                             gcc-lib "/lib:"
-                                             glibc "/lib:"
-                                             zlib "/lib")
-                               path))))
-                 '("java" "javac" "javap" "javadoc" "jar" "jarsigner"
-                   "jcmd" "jconsole" "jdb" "jdeprscan" "jdeps" "jfr"
-                   "jhsdb" "jimage" "jinfo" "jlink" "jmap" "jmod"
-                   "jnativescan" "jpackage" "jps" "jrunscript" "jshell"
-                   "jstack" "jstat" "jstatd" "jwebserver" "keytool"
-                   "native-image-inspect" "rmiregistry" "serialver"))
-                ;; Add internal lib paths to shared libraries
-                (for-each
-                 (lambda (file)
-                   (let ((path (string-append lib "/" file)))
-                     (when (file-exists? path)
-                       (invoke "patchelf" "--set-rpath"
-                               (string-append lib ":" lib-server ":"
-                                             gcc-lib "/lib:"
-                                             glibc "/lib:"
-                                             zlib "/lib")
-                               path))))
-                 '("jspawnhelper" "libjli.so" "libjava.so" "libjimage.so"
-                   "libjsig.so" "libnet.so" "libnio.so" "libverify.so"
-                   "libzip.so"))
-                ;; Note: native-image is NOT patched due to glibc symbol issues
-                ;; It's wrapped to invoke via ld-linux instead
-                )))
-          ;; Patch native-image interpreter only (no RPATH) and create wrapper
-          ;; with LD_LIBRARY_PATH. Direct execution allows /proc/self/exe
-          ;; to work correctly for home directory detection.
-          (add-after 'fix-internal-rpaths 'patch-native-image
-            (lambda* (#:key inputs outputs #:allow-other-keys)
-              (use-modules (ice-9 popen)
-                           (ice-9 rdelim)
-                           (ice-9 regex))
+              (use-modules (ice-9 ftw)
+                           (ice-9 popen)
+                           (ice-9 rdelim))
               (let* ((out (assoc-ref outputs "out"))
                      (glibc (assoc-ref inputs "glibc"))
-                     (ld-linux (string-append glibc "/lib/ld-linux-x86-64.so.2"))
-                     (native-image-bin
-                      (string-append out "/lib/svm/bin/native-image")))
-                ;; Patch only the interpreter, not RPATH
-                ;; This allows native-image to run directly so /proc/self/exe
-                ;; returns the correct path for home directory detection
-                (invoke "patchelf" "--set-interpreter" ld-linux
-                        native-image-bin))))
-          (add-after 'patch-native-image 'wrap-native-image
+                     (gcc-lib (assoc-ref inputs "gcc"))
+                     (zlib (assoc-ref inputs "zlib"))
+                     (ld-linux (string-append glibc
+                                              "/lib/ld-linux-x86-64.so.2"))
+                     (rpath (string-join
+                             (list (string-append out "/lib")
+                                   (string-append out "/lib/server")
+                                   (string-append gcc-lib "/lib")
+                                   (string-append glibc "/lib")
+                                   (string-append zlib "/lib"))
+                             ":")))
+                (define (elf-file? file)
+                  "Check if FILE is an ELF binary using file magic bytes."
+                  (and (file-exists? file)
+                       (not (symbolic-link? file))
+                       (let ((port (open-file file "rb")))
+                         (dynamic-wind
+                           (lambda () #t)
+                           (lambda ()
+                             (let ((b0 (read-char port))
+                                   (b1 (read-char port))
+                                   (b2 (read-char port))
+                                   (b3 (read-char port)))
+                               (and (not (eof-object? b0))
+                                    (char=? b0 (integer->char #x7f))
+                                    (char=? b1 #\E)
+                                    (char=? b2 #\L)
+                                    (char=? b3 #\F))))
+                           (lambda () (close-port port))))))
+                (define (patch-elf file)
+                  "Patch ELF file with interpreter and rpath."
+                  (let* ((port (open-pipe* OPEN_READ "patchelf"
+                                           "--print-interpreter" file))
+                         (has-interp (not (eof-object? (read-line port)))))
+                    (close-pipe port)
+                    ;; Set interpreter if file has one (executables)
+                    (when has-interp
+                      (invoke "patchelf" "--set-interpreter"
+                              ld-linux file))
+                    ;; Always set rpath
+                    (invoke "patchelf" "--set-rpath" rpath file)))
+                (define (process-directory dir)
+                  "Process all ELF files in DIR recursively."
+                  (define native-image-bin
+                    (string-append out "/lib/svm/bin/native-image"))
+                  (ftw dir
+                       (lambda (path statinfo flag)
+                         (when (and (eq? flag 'regular)
+                                    (elf-file? path)
+                                    ;; Skip native-image, handled separately
+                                    (not (string=? path native-image-bin)))
+                           (format #t "Patching: ~a~%" path)
+                           (catch #t
+                             (lambda () (patch-elf path))
+                             (lambda (key . args)
+                               (format #t "Warning: failed to patch ~a~%"
+                                       path))))
+                         #t)))
+                ;; Patch all ELF files
+                (process-directory out))))
+          (add-after 'patch-elf-files 'wrap-native-image
             (lambda* (#:key inputs outputs #:allow-other-keys)
-              (use-modules (ice-9 popen)
-                           (ice-9 rdelim))
+              (use-modules (ice-9 ftw)
+                           (ice-9 match))
               (let* ((out (assoc-ref outputs "out"))
                      (glibc (assoc-ref inputs "glibc"))
                      (gcc-lib (assoc-ref inputs "gcc"))
@@ -208,60 +118,77 @@
                      (linux-headers (assoc-ref inputs "linux-libre-headers"))
                      (zlib (assoc-ref inputs "zlib"))
                      (bash (search-input-file inputs "/bin/bash"))
+                     (ld-linux (string-append glibc
+                                              "/lib/ld-linux-x86-64.so.2"))
                      (native-image-bin
                       (string-append out "/lib/svm/bin/native-image"))
                      (native-image-wrapper
                       (string-append out "/bin/native-image"))
-                     ;; Get gcc's internal include paths
-                     (gcc-internal-include
-                      (string-append gcc-lib
-                       "/lib/gcc/x86_64-unknown-linux-gnu/14.3.0/include"))
-                     (gcc-fixed-include
-                      (string-append gcc-lib
-                       "/lib/gcc/x86_64-unknown-linux-gnu/14.3.0/include-fixed")))
-                ;; Remove the symlink that points to lib/svm/bin/native-image
+                     ;; Find GCC include paths dynamically
+                     (gcc-lib-dir (string-append gcc-lib "/lib/gcc"))
+                     (gcc-include-dir
+                      (let ((dirs '()))
+                        (ftw gcc-lib-dir
+                             (lambda (path statinfo flag)
+                               (when (and (eq? flag 'directory)
+                                          (string-suffix? "/include" path))
+                                 (set! dirs (cons path dirs)))
+                               #t))
+                        (car (filter (lambda (d)
+                                       (not (string-contains d "include-fixed")))
+                                     dirs))))
+                     (gcc-fixed-include-dir
+                      (string-append (dirname gcc-include-dir)
+                                     "/include-fixed")))
+                ;; Patch native-image interpreter only (no rpath due to
+                ;; glibc symbol issues - uses LD_LIBRARY_PATH instead)
+                (invoke "patchelf" "--set-interpreter" ld-linux
+                        native-image-bin)
+                ;; Remove symlink and create wrapper
                 (when (file-exists? native-image-wrapper)
                   (delete-file native-image-wrapper))
-                ;; Create wrapper script that sets up environment and runs
-                ;; native-image directly (not via ld-linux)
                 (call-with-output-file native-image-wrapper
                   (lambda (port)
                     (format port "#!~a~%" bash)
                     (format port "export PATH=\"~a/bin:~a/bin${PATH:+:}$PATH\"~%"
                             gcc-toolchain binutils)
-                    (format port "export LIBRARY_PATH=\"~a/lib:~a/lib:~a/lib${LIBRARY_PATH:+:}$LIBRARY_PATH\"~%"
-                            glibc zlib gcc-toolchain)
-                    (format port "export C_INCLUDE_PATH=\"~a/include:~a/include:~a/include:~a/include${C_INCLUDE_PATH:+:}$C_INCLUDE_PATH\"~%"
-                            glibc linux-headers zlib gcc-toolchain)
-                    ;; LD_LIBRARY_PATH for runtime library loading
-                    (format port "export LD_LIBRARY_PATH=\"~a/lib:~a/lib/server:~a/lib:~a/lib:~a/lib${LD_LIBRARY_PATH:+:}$LD_LIBRARY_PATH\"~%"
-                            out out glibc gcc-lib zlib)
-                    ;; Pass include paths and library paths directly to native-image
-                    ;; via -H: options since env vars may not be inherited by gcc
+                    (format port "~a~%"
+                            (string-append
+                             "export LIBRARY_PATH=\""
+                             glibc "/lib:" zlib "/lib:" gcc-toolchain "/lib"
+                             "${LIBRARY_PATH:+:}$LIBRARY_PATH\""))
+                    (format port "~a~%"
+                            (string-append
+                             "export C_INCLUDE_PATH=\""
+                             glibc "/include:" linux-headers "/include:"
+                             zlib "/include:" gcc-toolchain "/include"
+                             "${C_INCLUDE_PATH:+:}$C_INCLUDE_PATH\""))
+                    (format port "~a~%"
+                            (string-append
+                             "export LD_LIBRARY_PATH=\""
+                             out "/lib:" out "/lib/server:"
+                             glibc "/lib:" gcc-lib "/lib:" zlib "/lib"
+                             "${LD_LIBRARY_PATH:+:}$LD_LIBRARY_PATH\""))
                     (format port "exec \"~a\" \\~%" native-image-bin)
                     (format port "  -H:+UnlockExperimentalVMOptions \\~%")
                     (format port "  \"-H:CCompilerOption=-I~a\" \\~%"
-                            gcc-internal-include)
+                            gcc-include-dir)
                     (format port "  \"-H:CCompilerOption=-I~a\" \\~%"
-                            gcc-fixed-include)
+                            gcc-fixed-include-dir)
                     (format port "  \"-H:CCompilerOption=-I~a/include\" \\~%"
                             glibc)
                     (format port "  \"-H:CCompilerOption=-I~a/include\" \\~%"
                             linux-headers)
-                    (format port "  \"-H:CLibraryPath=~a/lib\" \\~%"
-                            glibc)
-                    (format port "  \"-H:CLibraryPath=~a/lib\" \\~%"
-                            zlib)
+                    (format port "  \"-H:CLibraryPath=~a/lib\" \\~%" glibc)
+                    (format port "  \"-H:CLibraryPath=~a/lib\" \\~%" zlib)
                     (format port "  \"$@\"~%")))
-                (chmod native-image-wrapper #o755))))
-          ;; Disable dynamic linker cache - some GraalVM ELF files have
-          ;; unusual format that confuses the cache generator
-          (delete 'make-dynamic-linker-cache))))
+                (chmod native-image-wrapper #o755)))))))
+    (native-inputs (list patchelf tar))
     (inputs
      (list `(,gcc "lib")
            bash-minimal
-           gcc-toolchain
            binutils
+           gcc-toolchain
            glibc
            linux-libre-headers
            zlib))
