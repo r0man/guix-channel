@@ -243,3 +243,109 @@ dolthub fork of Google FlatBuffers with custom modifications for Dolt.")
        (file-name (git-file-name "go-github-com-go-sql-driver-mysql" version))
        (sha256
         (base32 "01n2aj6rgb51cfcd9z68wpkd1ha9c8hh7mfaywq6sjxnn67qvc6z"))))))
+
+(define-public go-github-com-jinzhu-inflection
+  (package
+    (name "go-github-com-jinzhu-inflection")
+    (version "1.0.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/jinzhu/inflection")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "165i20d11s03771gi43skl66salxj36212r25fbs0cgr4qgfj7fy"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/jinzhu/inflection"))
+    (home-page "https://github.com/jinzhu/inflection")
+    (synopsis "Pluralization and singularization for Go")
+    (description
+     "This package provides utilities for inflecting English words between
+singular and plural forms in Go applications.")
+    (license license:expat)))
+
+(define-public go-github-com-jinzhu-now
+  (package
+    (name "go-github-com-jinzhu-now")
+    (version "1.1.5")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/jinzhu/now")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "10ywpaxs6d3y8gqlzx6rh3yw4ya83bnx0hrs0k0wq5bxbjhfmlil"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/jinzhu/now"))
+    (home-page "https://github.com/jinzhu/now")
+    (synopsis "Time utilities for Go")
+    (description
+     "This package provides convenient time manipulation utilities for Go,
+including functions for getting the beginning and end of various time periods.")
+    (license license:expat)))
+
+(define-public go-gorm-io-gorm
+  (package
+    (name "go-gorm-io-gorm")
+    (version "1.25.10")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/go-gorm/gorm")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1klhggxqxgksm5x1wja2r1nb6wphxyx15b7vjqrmlgznqb2skf68"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "gorm.io/gorm"
+      ;; Tests require database connections
+      #:tests? #f))
+    (propagated-inputs
+     (list go-github-com-jinzhu-inflection
+           go-github-com-jinzhu-now))
+    (home-page "https://gorm.io")
+    (synopsis "The fantastic ORM library for Go")
+    (description
+     "GORM is a developer-friendly ORM library for Go, providing associations,
+hooks, transactions, and many other features for database operations.")
+    (license license:expat)))
+
+(define-public go-gorm-io-driver-mysql
+  (package
+    (name "go-gorm-io-driver-mysql")
+    (version "1.5.6")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/go-gorm/mysql")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "161f69jrhip3wijjsxl5jfqhynj9i7y7v93h6zz71648a5ayl03q"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "gorm.io/driver/mysql"
+      ;; Tests require database connections
+      #:tests? #f))
+    (propagated-inputs
+     (list go-github-com-go-sql-driver-mysql-1.9
+           go-gorm-io-gorm))
+    (home-page "https://github.com/go-gorm/mysql")
+    (synopsis "MySQL driver for GORM")
+    (description
+     "This package provides the official MySQL driver for the GORM ORM
+framework, enabling database operations with MySQL databases.")
+    (license license:expat)))
