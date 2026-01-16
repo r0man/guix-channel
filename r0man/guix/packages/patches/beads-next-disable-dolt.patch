@@ -1,10 +1,35 @@
-Disable Dolt driver support due to missing dependencies in Guix.
+Disable Dolt driver support due to missing cloud storage dependencies.
 
 The experimental Dolt backend support added in v0.47.2 requires the
-github.com/dolthub/driver package and its many transitive dependencies,
-which are not yet packaged in Guix. This patch comments out the import
-to allow the package to build. The Dolt backend is experimental and
-not required for core functionality.
+github.com/dolthub/driver package, which has been successfully packaged
+for Guix along with its core dependencies. However, building beads-next
+with Dolt support enabled requires additional cloud storage dependencies
+(AWS SDK, Google Cloud Storage, Oracle OCI, Alibaba OSS) that are not
+yet packaged in Guix.
+
+These cloud storage backends are used by Dolt for remote storage features
+but are not required for local Dolt database operations. This patch
+comments out the driver import to allow beads-next to build. The Dolt
+backend remains experimental and is not required for core beads
+functionality.
+
+To enable Dolt support in the future, the following packages would need
+to be added to Guix:
+- github.com/aws/aws-sdk-go (AWS S3 support)
+- cloud.google.com/go/storage (Google Cloud Storage)
+- github.com/oracle/oci-go-sdk/v65 (Oracle Cloud Infrastructure)
+- github.com/aliyun/aliyun-oss-go-sdk (Alibaba Cloud OSS)
+- github.com/HdrHistogram/hdrhistogram-go
+- github.com/cenkalti/backoff/v4
+- github.com/google/btree
+- github.com/denisbrodbeck/machineid
+- github.com/juju/gnuflag
+- go.uber.org/zap
+
+Note: The core Dolt driver and all its immediate dependencies
+(go-mysql-server, vitess, flatbuffers, gozstd, swiss, etc.) have been
+packaged and are available in the r0man channel at:
+r0man/guix/packages/golang-dolthub.scm
 
 Upstream status: Not upstreamable (Guix-specific workaround)
 
@@ -17,7 +42,7 @@ index 1234567..abcdefg 100644
 
  	// Import Dolt driver
 -	_ "github.com/dolthub/driver"
-+	// Disabled in Guix build due to missing dependencies
++	// Disabled in Guix build due to missing cloud storage dependencies
 +	// _ "github.com/dolthub/driver"
  )
 

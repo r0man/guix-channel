@@ -12,6 +12,7 @@
     #:use-module (guix gexp)
     #:use-module (guix git-download)
     #:use-module (guix packages)
+    #:use-module (r0man guix packages golang-dolthub)
     #:use-module (r0man guix packages golang-xyz))
 
 (define-public beads-next
