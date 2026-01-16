@@ -507,3 +507,96 @@ MySQL wire protocol compatibility.  It is used by Dolt for SQL query
 processing and provides a full-featured MySQL-compatible SQL database that
 can be embedded in Go applications.")
       (license license:asl2.0))))
+
+(define-public go-github-com-dolthub-dolt-go-gen-proto-dolt-services-eventsapi
+  (let ((commit "02e9f99a3a9be4822078a1435267ce8884756d29")
+        (revision "0"))
+    (package
+      (name "go-github-com-dolthub-dolt-go-gen-proto-dolt-services-eventsapi")
+      (version (git-version "0.0.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/dolthub/dolt")
+               (commit commit)))
+         (file-name (git-file-name "go-github-com-dolthub-dolt" version))
+         (sha256
+          (base32 "0hmvdmx1j2fh7mcc965n2rxhkr4fnpxc5jyrgxd5h6a0digmqhn2"))))
+      (build-system go-build-system)
+      (arguments
+       (list
+        #:import-path "github.com/dolthub/dolt/go/gen/proto/dolt/services/eventsapi/v1alpha1"
+        #:unpack-path "github.com/dolthub/dolt"
+        #:tests? #f))  ; Tests not applicable for generated protobuf code
+      (propagated-inputs
+       (list go-google-golang-org-grpc
+             go-google-golang-org-protobuf))
+      (home-page "https://github.com/dolthub/dolt")
+      (synopsis "Protocol buffer definitions for Dolt events API")
+      (description
+       "This package provides generated protobuf code for Dolt's events API,
+used for telemetry and event tracking in Dolt applications.")
+      (license license:asl2.0))))
+
+(define-public go-github-com-dolthub-dolt-go
+  (let ((commit "bcf4dd5f5cc1ca460a1712305d499b26f6036f1f")
+        (revision "0"))
+    (package
+      (name "go-github-com-dolthub-dolt-go")
+      (version (git-version "0.40.5" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/dolthub/dolt")
+               (commit commit)))
+         (file-name (git-file-name "go-github-com-dolthub-dolt" version))
+         (sha256
+          (base32 "14qybp3h7zjms03jcv07xlfqyshiz3fpina3gw3zmmwsn5rd9cbq"))
+         (modules '((guix build utils)))
+         (snippet
+          '(begin
+             ;; Remove circular symlinks that cause unpacking issues
+             (delete-file "go/gen/proto/github.com/dolthub/dolt/go/gen/proto")
+             (delete-file "go/performance/utils/benchmark_runner/tpcc.lua")))))
+      (build-system go-build-system)
+      (arguments
+       (list
+        #:import-path "github.com/dolthub/dolt/go"
+        #:unpack-path "github.com/dolthub/dolt"
+        ;; Tests require database setup and extensive test data
+        #:tests? #f
+        #:install-source? #t
+        #:skip-build? #t))  ; Source-only package with multiple modules
+      (propagated-inputs
+       (list go-github-com-burntsushi-toml
+             go-github-com-dolthub-flatbuffers-v23
+             go-github-com-dolthub-fslock
+             go-github-com-dolthub-go-mysql-server
+             go-github-com-dolthub-gozstd
+             go-github-com-dolthub-sqllogictest-go
+             go-github-com-dolthub-swiss
+             go-github-com-dolthub-vitess
+             go-github-com-fatih-color
+             go-github-com-go-sql-driver-mysql
+             go-github-com-google-uuid
+             go-github-com-pkg-errors
+             go-github-com-shopspring-decimal
+             go-github-com-sirupsen-logrus
+             go-github-com-stretchr-testify
+             go-golang-org-x-crypto
+             go-golang-org-x-net
+             go-golang-org-x-sync
+             go-golang-org-x-sys
+             go-google-golang-org-grpc
+             go-google-golang-org-protobuf
+             go-gopkg-in-src-d-go-errors-v1
+             go-gopkg-in-yaml-v2))
+      (home-page "https://github.com/dolthub/dolt")
+      (synopsis "Dolt version-controlled database library")
+      (description
+       "This package provides the core libraries for Dolt, a version-controlled
+SQL database.  It provides storage, versioning, and merge capabilities for
+building applications with Git-like version control for database data.")
+      (license license:asl2.0))))
