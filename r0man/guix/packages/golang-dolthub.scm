@@ -22,6 +22,8 @@
   #:use-module (gnu packages icu4c)
   #:use-module (gnu packages golang)
   #:use-module (gnu packages golang-build)
+  #:use-module (gnu packages golang-check)
+  #:use-module (gnu packages golang-web)
   #:use-module (gnu packages golang-xyz)
   #:use-module (r0man guix packages golang-xyz)
   #:use-module (guix build-system go)
@@ -349,3 +351,39 @@ hooks, transactions, and many other features for database operations.")
      "This package provides the official MySQL driver for the GORM ORM
 framework, enabling database operations with MySQL databases.")
     (license license:expat)))
+
+(define-public go-github-com-dolthub-vitess
+  (let ((commit "205efc8530f1d6db26a342ec86f6daf8505ef83f")
+        (revision "0"))
+    (package
+      (name "go-github-com-dolthub-vitess")
+      (version (git-version "0.0.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/dolthub/vitess")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "077cvp5dglcxn6wzvnl1anwspknjva8hxk65vyyd07lj9baachvg"))))
+      (build-system go-build-system)
+      (arguments
+       (list
+        #:import-path "github.com/dolthub/vitess/go"
+        #:unpack-path "github.com/dolthub/vitess"
+        #:tests? #f  ; Tests require additional setup
+        #:install-source? #t
+        #:skip-build? #t))  ; Source-only package with multiple modules
+      (propagated-inputs
+       (list go-github-com-google-go-cmp
+             go-github-com-stretchr-testify
+             go-golang-org-x-tools
+             go-google-golang-org-grpc
+             go-google-golang-org-protobuf))
+      (home-page "https://github.com/dolthub/vitess")
+      (synopsis "Vitess distributed database toolkit (dolthub fork)")
+      (description
+       "This package provides a database clustering system for horizontal
+scaling of MySQL, forked and modified by dolthub for Dolt integration.")
+      (license license:asl2.0))))
