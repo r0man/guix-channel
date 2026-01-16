@@ -119,6 +119,69 @@ implementation using the standard library's maphash package.")
 on Google's Swiss tables design.")
     (license license:asl2.0)))
 
+(define-public go-github-com-dolthub-jsonpath
+  (let ((commit "19675ab05c71df43bda05c9f24e73942a5bb9483")
+        (revision "0"))
+    (package
+      (name "go-github-com-dolthub-jsonpath")
+      (version (git-version "0.0.2" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/dolthub/jsonpath")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "04xy8j80h4gpb6i2xci06j823aqjq7ym274l4v983v03zhykqdi7"))))
+      (build-system go-build-system)
+      (arguments
+       (list
+        #:import-path "github.com/dolthub/jsonpath"
+        ;; Tests require testify
+        #:tests? #f))
+      (propagated-inputs
+       (list go-github-com-pkg-errors
+             go-gopkg-in-src-d-go-errors-v1))
+      (home-page "https://github.com/dolthub/jsonpath")
+      (synopsis "JSONPath implementation for Go")
+      (description
+       "This package implements JSONPath query language for extracting data
+from JSON documents.")
+      (license license:asl2.0))))
+
+(define-public go-github-com-dolthub-sqllogictest-go
+  (let ((commit "816f3ae12d8148a10fc7ca03bd48bdc47035d0ee")
+        (revision "0"))
+    (package
+      (name "go-github-com-dolthub-sqllogictest-go")
+      (version (git-version "0.0.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/dolthub/sqllogictest")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "18n3qpziv6nn2jh1x9kfaz1sw46mhxk3s94f299n4dw8908vacwn"))))
+      (build-system go-build-system)
+      (arguments
+       (list
+        #:import-path "github.com/dolthub/sqllogictest/go/logictest"
+        #:unpack-path "github.com/dolthub/sqllogictest"
+        ;; Tests require database connections
+        #:tests? #f))
+      (propagated-inputs
+       (list go-github-com-go-sql-driver-mysql
+             go-github-com-stretchr-testify))
+      (home-page "https://github.com/dolthub/sqllogictest")
+      (synopsis "SQL Logic Test framework for Go")
+      (description
+       "This package provides a SQL Logic Test framework for validating SQL
+database implementations against the official SQL Logic Test suite.")
+      (license license:asl2.0))))
+
 (define-public go-gopkg-in-src-d-go-errors-v1
   (package
     (name "go-gopkg-in-src-d-go-errors-v1")
