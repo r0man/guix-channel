@@ -638,3 +638,28 @@ embedding Dolt databases within Go applications.  It enables local access to
 Dolt databases through the file system, similar to SQLite, without requiring
 a separate server process.")
     (license license:asl2.0)))
+
+(define-public go-github-com-juju-gnuflag
+  (package
+    (name "go-github-com-juju-gnuflag")
+    (version "1.0.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/juju/gnuflag")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0rky87fv1nbmfk12c1m478gvl3xi8jx6d353xay4zlj286mqdbhg"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/juju/gnuflag"))
+    (home-page "https://github.com/juju/gnuflag")
+    (synopsis "GNU-compatible command-line flag parsing for Go")
+    (description
+     "This package provides a GNU-compatible command-line flag parsing library
+for Go.  It supports GNU-style long options with single-dash short options,
+making it suitable for command-line tools that follow GNU conventions.")
+    (license license:lgpl3)))
