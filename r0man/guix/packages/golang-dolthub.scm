@@ -23,6 +23,7 @@
   #:use-module (gnu packages golang)
   #:use-module (gnu packages golang-build)
   #:use-module (gnu packages golang-xyz)
+  #:use-module (r0man guix packages golang-xyz)
   #:use-module (guix build-system go)
   #:use-module (guix gexp)
   #:use-module (guix git-download)
@@ -136,6 +137,8 @@ on Google's Swiss tables design.")
       #:tests? #f
       #:install-source? #t
       #:skip-build? #t))
+    (propagated-inputs
+     (list go-github-com-pkg-errors))
     (home-page "https://gopkg.in/src-d/go-errors.v1")
     (synopsis "Error handling library for Go")
     (description
@@ -171,10 +174,7 @@ with support for error kinds and stack traces.")
 for high-performance compression used by Dolt.")
     (license license:asl2.0)))
 
-;; TODO: Package go-github-com-dolthub-go-icu-regex
-;; Requires: github.com/tetratelabs/wazero (not yet packaged)
-
-(define-public go-github-com-dolthub-go-icu-regex-disabled
+(define-public go-github-com-dolthub-go-icu-regex
   (package
     (name "go-github-com-dolthub-go-icu-regex")
     (version "0.0.0-20230524105445-af7e7991c97e")
@@ -194,7 +194,8 @@ for high-performance compression used by Dolt.")
       ;; Tests require test files
       #:tests? #f))
     (propagated-inputs
-     (list go-gopkg-in-src-d-go-errors-v1))
+     (list go-github-com-tetratelabs-wazero
+           go-gopkg-in-src-d-go-errors-v1))
     (native-inputs
      (list icu4c))
     (home-page "https://github.com/dolthub/go-icu-regex")
