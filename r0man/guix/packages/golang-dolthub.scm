@@ -600,3 +600,41 @@ used for telemetry and event tracking in Dolt applications.")
 SQL database.  It provides storage, versioning, and merge capabilities for
 building applications with Git-like version control for database data.")
       (license license:asl2.0))))
+
+(define-public go-github-com-dolthub-driver
+  (package
+    (name "go-github-com-dolthub-driver")
+    (version "0.2.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/dolthub/driver")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1ikgxbfr02lxrygmzzzww81xz2r8dllrsc9q9rzz8z2y9c798h42"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/dolthub/driver"
+      ;; Tests require database setup and running Dolt server
+      #:tests? #f
+      #:install-source? #t
+      #:skip-build? #t))  ; Source-only package, library code only
+    (propagated-inputs
+     (list go-github-com-dolthub-dolt-go
+           go-github-com-dolthub-go-mysql-server
+           go-github-com-dolthub-vitess
+           go-github-com-go-sql-driver-mysql
+           go-github-com-stretchr-testify
+           go-gorm-io-driver-mysql
+           go-gorm-io-gorm))
+    (home-page "https://github.com/dolthub/driver")
+    (synopsis "Database/sql driver for embedded Dolt")
+    (description
+     "This package provides a Go @code{database/sql} compatible driver for
+embedding Dolt databases within Go applications.  It enables local access to
+Dolt databases through the file system, similar to SQLite, without requiring
+a separate server process.")
+    (license license:asl2.0)))
