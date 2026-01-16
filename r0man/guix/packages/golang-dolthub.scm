@@ -229,3 +229,17 @@ for MySQL-compatible regular expressions.")
      "This package provides a memory efficient serialization library, a
 dolthub fork of Google FlatBuffers with custom modifications for Dolt.")
     (license license:asl2.0)))
+
+(define-public go-github-com-go-sql-driver-mysql-1.9
+  (package
+    (inherit go-github-com-go-sql-driver-mysql)
+    (version "1.9.3")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/go-sql-driver/mysql")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name "go-github-com-go-sql-driver-mysql" version))
+       (sha256
+        (base32 "01n2aj6rgb51cfcd9z68wpkd1ha9c8hh7mfaywq6sjxnn67qvc6z"))))))
