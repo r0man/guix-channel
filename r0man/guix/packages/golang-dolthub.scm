@@ -204,3 +204,28 @@ for high-performance compression used by Dolt.")
      "This package provides minimal CGO bindings to ICU regex implementation
 for MySQL-compatible regular expressions.")
     (license license:asl2.0)))
+
+(define-public go-github-com-dolthub-flatbuffers-v23
+  (package
+    (name "go-github-com-dolthub-flatbuffers-v23")
+    (version "23.3.3-dh.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/dolthub/flatbuffers")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1g5f7kc2s8ff5kqdrzwk5a6sm99mziynaqscbyzqnjb56qprswac"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/dolthub/flatbuffers/v23/go"
+      #:unpack-path "github.com/dolthub/flatbuffers/v23"))
+    (home-page "https://github.com/dolthub/flatbuffers")
+    (synopsis "Dolthub fork of Google FlatBuffers for Go")
+    (description
+     "This package provides a memory efficient serialization library, a
+dolthub fork of Google FlatBuffers with custom modifications for Dolt.")
+    (license license:asl2.0)))
