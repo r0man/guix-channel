@@ -23,6 +23,8 @@
   #:use-module (gnu packages golang)
   #:use-module (gnu packages golang-build)
   #:use-module (gnu packages golang-check)
+  #:use-module (gnu packages golang-crypto)
+  #:use-module (gnu packages golang-maths)
   #:use-module (gnu packages golang-web)
   #:use-module (gnu packages golang-xyz)
   #:use-module (r0man guix packages golang-xyz)
@@ -449,4 +451,59 @@ framework, enabling database operations with MySQL databases.")
       (description
        "This package provides a database clustering system for horizontal
 scaling of MySQL, forked and modified by dolthub for Dolt integration.")
+      (license license:asl2.0))))
+
+(define-public go-github-com-dolthub-go-mysql-server
+  (let ((commit "d7eb602c04eef7f5966c87fd3c39c3a7b6f435e0")
+        (revision "0"))
+    (package
+      (name "go-github-com-dolthub-go-mysql-server")
+      (version (git-version "0.18.2" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/dolthub/go-mysql-server")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "19awcahhlfnqx9m7pqyjqbwadsq7waxpwiwdwg8jjajqn958mxky"))))
+      (build-system go-build-system)
+      (arguments
+       (list
+        #:import-path "github.com/dolthub/go-mysql-server"
+        ;; Tests require database setup and extensive test data
+        #:tests? #f
+        #:install-source? #t
+        #:skip-build? #t))  ; Source-only package, library code only
+      (propagated-inputs
+       (list go-github-com-cespare-xxhash-v2
+             go-github-com-dolthub-flatbuffers-v23
+             go-github-com-dolthub-go-icu-regex
+             go-github-com-dolthub-jsonpath
+             go-github-com-dolthub-sqllogictest-go
+             go-github-com-dolthub-vitess
+             go-github-com-go-sql-driver-mysql
+             go-github-com-google-uuid
+             go-github-com-hashicorp-golang-lru
+             go-github-com-pkg-errors
+             go-github-com-pmezard-go-difflib
+             go-github-com-shopspring-decimal
+             go-github-com-sirupsen-logrus
+             go-github-com-stretchr-testify
+             go-golang-org-x-exp
+             go-golang-org-x-sync
+             go-golang-org-x-sys
+             go-golang-org-x-text
+             go-golang-org-x-tools
+             go-google-golang-org-grpc
+             go-gopkg-in-src-d-go-errors-v1
+             go-gopkg-in-yaml-v3))
+      (home-page "https://github.com/dolthub/go-mysql-server")
+      (synopsis "Pure Go MySQL-compatible database engine")
+      (description
+       "This package provides a complete SQL engine implementation in Go with
+MySQL wire protocol compatibility.  It is used by Dolt for SQL query
+processing and provides a full-featured MySQL-compatible SQL database that
+can be embedded in Go applications.")
       (license license:asl2.0))))
