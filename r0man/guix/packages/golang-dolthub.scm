@@ -116,5 +116,90 @@ implementation using the standard library's maphash package.")
 on Google's Swiss tables design.")
     (license license:asl2.0)))
 
-;; TODO: Package go-github-com-dolthub-jsonpath
-;; Requires: gopkg.in/src-d/go-errors.v1 (not yet packaged)
+(define-public go-gopkg-in-src-d-go-errors-v1
+  (package
+    (name "go-gopkg-in-src-d-go-errors-v1")
+    (version "1.0.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://gopkg.in/src-d/go-errors.v1")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0fqsrjm6asqhvkk24plwyzf81scvg9fz0p74k3b272jwwi49gd7v"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "gopkg.in/src-d/go-errors.v1"
+      #:tests? #f
+      #:install-source? #t
+      #:skip-build? #t))
+    (home-page "https://gopkg.in/src-d/go-errors.v1")
+    (synopsis "Error handling library for Go")
+    (description
+     "This package provides utilities for creating and handling errors in Go
+with support for error kinds and stack traces.")
+    (license license:expat)))
+
+(define-public go-github-com-dolthub-gozstd
+  (package
+    (name "go-github-com-dolthub-gozstd")
+    (version "0.0.0-20240423170813-23a2903bca63")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/dolthub/gozstd")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1gi13nmg7cc2vbr1si0i073gid9kxsmvnppnww0yxmm1rkklp8lx"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/dolthub/gozstd"
+      ;; Tests require test data files
+      #:tests? #f))
+    (native-inputs
+     (list zstd))
+    (home-page "https://github.com/dolthub/gozstd")
+    (synopsis "CGO wrapper for Zstandard compression")
+    (description
+     "This package provides Go bindings to the Zstandard compression library
+for high-performance compression used by Dolt.")
+    (license license:asl2.0)))
+
+;; TODO: Package go-github-com-dolthub-go-icu-regex
+;; Requires: github.com/tetratelabs/wazero (not yet packaged)
+
+(define-public go-github-com-dolthub-go-icu-regex-disabled
+  (package
+    (name "go-github-com-dolthub-go-icu-regex")
+    (version "0.0.0-20230524105445-af7e7991c97e")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/dolthub/go-icu-regex")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "05642ds8cm6ka5wjg14a1p0rh44shqnk2qwy6gmsdz1bcxan50al"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/dolthub/go-icu-regex"
+      ;; Tests require test files
+      #:tests? #f))
+    (propagated-inputs
+     (list go-gopkg-in-src-d-go-errors-v1))
+    (native-inputs
+     (list icu4c))
+    (home-page "https://github.com/dolthub/go-icu-regex")
+    (synopsis "ICU regex bindings for Go")
+    (description
+     "This package provides minimal CGO bindings to ICU regex implementation
+for MySQL-compatible regular expressions.")
+    (license license:asl2.0)))

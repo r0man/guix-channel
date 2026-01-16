@@ -1,0 +1,24 @@
+Disable Dolt driver support due to missing dependencies in Guix.
+
+The experimental Dolt backend support added in v0.47.2 requires the
+github.com/dolthub/driver package and its many transitive dependencies,
+which are not yet packaged in Guix. This patch comments out the import
+to allow the package to build. The Dolt backend is experimental and
+not required for core functionality.
+
+Upstream status: Not upstreamable (Guix-specific workaround)
+
+diff --git a/internal/storage/dolt/store.go b/internal/storage/dolt/store.go
+index 1234567..abcdefg 100644
+--- a/internal/storage/dolt/store.go
++++ b/internal/storage/dolt/store.go
+@@ -27,7 +27,8 @@ import (
+ 	"time"
+
+ 	// Import Dolt driver
+-	_ "github.com/dolthub/driver"
++	// Disabled in Guix build due to missing dependencies
++	// _ "github.com/dolthub/driver"
+ )
+
+ // DoltStore implements the Storage interface using Dolt

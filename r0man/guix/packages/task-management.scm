@@ -15,11 +15,11 @@
     #:use-module (r0man guix packages golang-xyz))
 
 (define-public beads-next
-  (let ((commit "ff67b88ea9bc6fe699b24c26a5c46a69c05b6d38")
-        (revision "2"))
+  (let ((commit "493b7008a236b1cfbae52b1d4395c26dc6391a56")
+        (revision "3"))
     (package
       (name "beads-next")
-      (version (git-version "0.47.1" revision commit))
+      (version (git-version "0.47.2" revision commit))
       (source
        (origin
          (method git-fetch)
@@ -28,7 +28,8 @@
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "0nmdbg1sk8yxk73h9b47yjrql8piiz55ygfbg04hwa98y3g5cw9n"))))
+          (base32 "0d0zc65l56ww83z09i6i5qp7y21x65y1xwxbhpfhcy6wfn0p7x6j"))
+         (patches (list (local-file "patches/beads-next-disable-dolt.patch")))))
       (build-system go-build-system)
       (arguments
        (list
