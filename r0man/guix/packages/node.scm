@@ -58,7 +58,7 @@ Anthropic's Claude AI assistant.")
 (define-public node-zed-industries-claude-code-acp
   (package
     (name "node-zed-industries-claude-code-acp")
-    (version "0.12.6")
+    (version "0.13.1")
     (source
      (origin
        (method url-fetch)
@@ -66,7 +66,7 @@ Anthropic's Claude AI assistant.")
              "https://registry.npmjs.org/@zed-industries/claude-code-acp/"
              "-/claude-code-acp-" version ".tgz"))
        (sha256
-        (base32 "0d5q8yvapx4yh725si6fjgbszs6an0s8lab8p6iymca4qabpglxk"))))
+        (base32 "08ghq6dav74i5ilrvf1fpl3yylv4cb30cn69h5zkcnmisdn5k9m8"))))
     (build-system node-build-system)
     (arguments
      (list
@@ -77,7 +77,9 @@ Anthropic's Claude AI assistant.")
           (delete 'build)
           (replace 'install
             (lambda _
-              (let* ((lib (string-append #$output "/lib/node_modules/@zed-industries/claude-code-acp"))
+              (let* ((lib (string-append #$output
+                                         "/lib/node_modules"
+                                         "/@zed-industries/claude-code-acp"))
                      (bin (string-append #$output "/bin")))
                 (mkdir-p lib)
                 (mkdir-p bin)
