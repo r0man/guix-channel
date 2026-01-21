@@ -663,3 +663,98 @@ a separate server process.")
 for Go.  It supports GNU-style long options with single-dash short options,
 making it suitable for command-line tools that follow GNU conventions.")
     (license license:lgpl3)))
+
+(define-public go-cloud-google-com-go
+  (package
+    (name "go-cloud-google-com-go")
+    (version "0.110.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/googleapis/google-cloud-go")
+             (commit "storage/v1.31.0")))
+       (file-name (git-file-name "google-cloud-go" version))
+       (sha256
+        (base32 "0w0bml1pprb86hf86h17ngq37pi6lwnplfc04z4mggi0kqxvb6p4"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "cloud.google.com/go"
+      #:unpack-path "cloud.google.com/go"
+      #:tests? #f
+      #:install-source? #t
+      #:skip-build? #t))  ; Source-only package
+    (home-page "https://cloud.google.com/go")
+    (synopsis "Google Cloud Client Libraries for Go")
+    (description
+     "This package provides the base module for Google Cloud Client Libraries
+for Go.  It contains common functionality shared across Google Cloud services.")
+    (license license:asl2.0)))
+
+(define-public go-cloud-google-com-go-iam
+  (package
+    (name "go-cloud-google-com-go-iam")
+    (version "1.1.6")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/googleapis/google-cloud-go")
+             (commit (go-version->git-ref version #:subdir "iam"))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1hmp6sav9slyxfflwkfjvyg331ak1p0gn88ad7b929ggsrqfxg8h"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "cloud.google.com/go/iam"
+      #:unpack-path "cloud.google.com/go"))
+    (propagated-inputs
+     (list go-github-com-googleapis-gax-go-v2
+           go-google-golang-org-api
+           go-google-golang-org-grpc
+           go-google-golang-org-protobuf))
+    (home-page "https://pkg.go.dev/cloud.google.com/go/iam")
+    (synopsis "IAM support for Google Cloud Client Libraries")
+    (description
+     "This package provides Identity and Access Management (IAM) support for
+Google Cloud services in Go.")
+    (license license:asl2.0)))
+
+(define-public go-cloud-google-com-go-storage
+  (package
+    (name "go-cloud-google-com-go-storage")
+    (version "1.38.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/googleapis/google-cloud-go")
+             (commit (go-version->git-ref version #:subdir "storage"))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "000s17dxffjikz3l4d6mhh0ckn0kiz8dxjwf6kxwkr01mhmn1lbk"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "cloud.google.com/go/storage"
+      #:unpack-path "cloud.google.com/go"))
+    (propagated-inputs
+     (list go-cloud-google-com-go
+           go-cloud-google-com-go-compute-metadata
+           go-cloud-google-com-go-iam
+           go-github-com-google-go-cmp
+           go-github-com-google-uuid
+           go-github-com-googleapis-gax-go-v2
+           go-golang-org-x-oauth2
+           go-google-golang-org-api
+           go-google-golang-org-grpc
+           go-google-golang-org-protobuf))
+    (home-page "https://pkg.go.dev/cloud.google.com/go/storage")
+    (synopsis "Google Cloud Storage client library for Go")
+    (description
+     "This package provides a client library for Google Cloud Storage,
+allowing Go applications to store and retrieve data in Google Cloud Storage
+buckets.")
+    (license license:asl2.0)))
