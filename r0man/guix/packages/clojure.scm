@@ -2,6 +2,7 @@
   #:use-module ((guix licenses) #:prefix license:)
   #:use-module (gnu packages bash)
   #:use-module (gnu packages bootstrap)
+  #:use-module (gnu packages clojure)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages gcc)
   #:use-module (gnu packages readline)
@@ -14,7 +15,8 @@
   #:use-module (guix git-download)
   #:use-module (guix packages)
   #:use-module (guix utils)
-  #:use-module (nonguix build-system binary))
+  #:use-module (nonguix build-system binary)
+  #:use-module (nongnu packages clojure))
 
 (define-public babashka
   (package
@@ -144,6 +146,20 @@ perform refactors and more.")
     (synopsis "Editor Code Assistant")
     (description "AI pair programming capabilities in any editor.")
     (license license:expat)))
+
+(define-public clojure-tools-bin-latest
+  (package
+    (inherit clojure-tools-bin)
+    (name "clojure-tools-bin-latest")
+    (version "1.12.4.1582")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append
+             "https://download.clojure.org/install/clojure-tools-"
+             version ".tar.gz"))
+       (sha256
+        (base32 "08gzfblnz0zhnk6pwr9vcm6y168psgrwmqww3wqk1v7j5gr68n7x"))))))
 
 (define-public bbin
   (package
