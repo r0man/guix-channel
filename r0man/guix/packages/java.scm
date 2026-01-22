@@ -13,18 +13,19 @@
   #:use-module (guix packages)
   #:use-module (guix utils))
 
-(define-public graalvm-ce
+(define* (make-graalvm-ce version hash)
+  "Create a GraalVM Community Edition package for the given VERSION and HASH."
   (package
     (name "graalvm-ce")
-    (version "25.0.1")
+    (version version)
     (source
      (origin
        (method url-fetch)
        (uri (string-append
-             "https://download.oracle.com/graalvm/25/latest/"
-             "graalvm-jdk-25_linux-x64_bin.tar.gz"))
-       (sha256
-        (base32 "0dqq8dy7psij36py304q0x4hs79f4hfgkzbl6gq3kri922x05ayl"))))
+             "https://github.com/graalvm/graalvm-ce-builds/releases/download/"
+             "jdk-" version "/graalvm-community-jdk-" version
+             "_linux-x64_bin.tar.gz"))
+       (sha256 (base32 hash))))
     (build-system copy-build-system)
     (arguments
      (list
@@ -200,5 +201,17 @@
 GraalVM compiler, which can be used as a just-in-time (JIT) compiler for
 the JVM, and the native-image tool for ahead-of-time compilation of Java
 applications to native executables.  This package provides the Community
-Edition of GraalVM based on OpenJDK 25.")
+Edition of GraalVM.")
     (license license:gpl2+)))
+
+(define-public graalvm-ce-21
+  (make-graalvm-ce "21.0.2" "0j5ffszcaqv3fq159hyb611jm8w1q4n1cywmbd7vi69smad0cj5h"))
+
+(define-public graalvm-ce-24
+  (make-graalvm-ce "24.0.2" "080774x1chpa0n8bpmw575g5myi63ikffwgcvq3r7nvdh9n88qkd"))
+
+(define-public graalvm-ce-25
+  (make-graalvm-ce "25.0.2" "1w3ac0cl9d2ja98klyq5f1hp6j9ixx7q5jx0n2v06kfsiwf7kgp0"))
+
+;; Default to the latest stable release (JDK 24)
+(define-public graalvm-ce graalvm-ce-24)
