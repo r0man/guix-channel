@@ -214,4 +214,4 @@ Edition of GraalVM.")
   (make-graalvm-ce "25.0.2" "1w3ac0cl9d2ja98klyq5f1hp6j9ixx7q5jx0n2v06kfsiwf7kgp0"))
 
 ;; Default to the latest stable release (JDK 24)
-(define-public graalvm-ce graalvm-ce-24)
+(define-public graalvm-ce graalvm-ce-25)
