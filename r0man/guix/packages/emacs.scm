@@ -530,7 +530,7 @@ programmability through direct Elisp evaluation.")
               (sha256 (base32
                        "0mk7rg2nmi7qc91fml0ahiwpc0xkhaf2w6mla8kxavjpx0051i3n"))))
     (build-system emacs-build-system)
-    (propagated-inputs (list emacs-async emacs-ellama))
+    (propagated-inputs (list emacs-async emacs-ellama emacs-yaml))
     (home-page "https://github.com/s-kostyaev/elisa")
     (synopsis "Emacs Lisp Information System Assistant")
     (description
