@@ -202,7 +202,7 @@ GraalVM compiler, which can be used as a just-in-time (JIT) compiler for
 the JVM, and the native-image tool for ahead-of-time compilation of Java
 applications to native executables.  This package provides the Community
 Edition of GraalVM.")
-    (license license:gpl2+)))
+    (license license:gpl2))) ;gpl2 only, with classpath exception
 
 (define-public graalvm-ce-21
   (make-graalvm-ce "21.0.2" "0j5ffszcaqv3fq159hyb611jm8w1q4n1cywmbd7vi69smad0cj5h"))
