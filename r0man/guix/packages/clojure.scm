@@ -21,7 +21,7 @@
 (define-public babashka
   (package
     (name "babashka")
-    (version "1.12.213")
+    (version "1.12.214")
     (source
      (origin
        (method url-fetch/tarbomb)
@@ -40,9 +40,9 @@
        (sha256
         (base32 (cond
                   ((target-aarch64?)
-                   "1sjj4rfh5883i9c04416h20hg3g2y9sh45ic5h8lj1942vj9z1dh")
+                   "1zj5j6gr5lhympl2bjrdhjf72im0259mdgfd56s07cqwlhl6vg5n")
                   ((target-x86-64?)
-                   "0mr091jizad7vm7xwi1n5v7zqsbycqjn2gb8hvmhf8j0vi6a37n9"))))))
+                   "18xlvbj78pasaf9vcn8rcjgd5022hi3ip1q722r31qpn023hj9i9"))))))
     (build-system binary-build-system)
     (arguments
      (list
