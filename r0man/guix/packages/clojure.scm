@@ -164,7 +164,7 @@ perform refactors and more.")
 (define-public bbin
   (package
     (name "bbin")
-    (version "0.2.4")
+    (version "0.2.5")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -173,7 +173,7 @@ perform refactors and more.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1f4sxqvggsp8fx6mqzmm5g1zaalqyvgmm3swiakym2wbfjl9kayv"))))
+                "12x5r0m1slbzh9xblq90yqqparijj31ghn88jj9qa8lhcbjbsicj"))))
     (build-system copy-build-system)
     (arguments
      (list
