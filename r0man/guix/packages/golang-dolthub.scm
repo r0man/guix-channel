@@ -167,30 +167,32 @@ hash.  It uses AES instructions when available for optimal performance.")
     (license license:asl2.0)))
 
 (define-public go-github-com-dolthub-fslock
-  (package
-    (name "go-github-com-dolthub-fslock")
-    (version "0.0.3")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/dolthub/fslock")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "1bhpa2krf478rn6mqswrq3qsbw66afcyihvw7xnl5i2bgni124dp"))))
-    (build-system go-build-system)
-    (arguments
-     (list
-      #:import-path "github.com/dolthub/fslock"))
-    (native-inputs (list go-gopkg-in-check-v1))
-    (home-page "https://github.com/dolthub/fslock")
-    (synopsis "Cross-platform file locking library for Go")
-    (description
-     "This package provides a cross-process mutex based on file locks that
+  (let ((commit "ef20baba23181a40c4ae76dfb303c99d3188e1c9")
+        (revision "0"))
+    (package
+      (name "go-github-com-dolthub-fslock")
+      (version (git-version "0.0.3" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/dolthub/fslock")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "126sk70ni646z9m4zzmvgl7g8vid1fg9sk4xyj53l9m5y95n4hay"))))
+      (build-system go-build-system)
+      (arguments
+       (list
+        #:import-path "github.com/dolthub/fslock"))
+      (native-inputs (list go-gopkg-in-check-v1))
+      (home-page "https://github.com/dolthub/fslock")
+      (synopsis "Cross-platform file locking library for Go")
+      (description
+       "This package provides a cross-process mutex based on file locks that
 works on Windows and Unix platforms.  It uses LockFileEx on Windows and flock
 on Unix systems.")
-    (license license:lgpl3)))
+      (license license:lgpl3))))
 
 (define-public go-github-com-dolthub-jsonpath
   (package
@@ -303,57 +305,47 @@ maximum performance.")
 (define-public go-github-com-dolthub-go-icu-regex
   (package
     (name "go-github-com-dolthub-go-icu-regex")
-    (version "0.0.0-20230524105445-af7e7991c97e")
+    (version "0.0.0-20250916051405-78a38d478790")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
              (url "https://github.com/dolthub/go-icu-regex")
-             (commit "af7e7991c97e3c6ac3d94c3a1e31cc1b7c3729ec")))
+             (commit "78a38d478790877d822b14380da7dc8d4fda2849")))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "05642ds8cm6ka5wjg14a1p0rh44shqnk2qwy6gmsdz1bcxan50al"))))
+        (base32 "1bln24lbpv73nvdlh9qm0j6yrfphy52zf212vhmc62zfyim3kq8f"))))
     (build-system go-build-system)
     (arguments
      (list
       #:import-path "github.com/dolthub/go-icu-regex"
+      ;; Library package; skip build (CGO requires ICU4C at compile time)
+      #:tests? #f
       #:phases
       #~(modify-phases %standard-phases
-          (add-after 'unpack 'fix-embed-symlinks
-            (lambda _
-              ;; Replace symlinked icu.wasm with actual copy
-              (let ((wasm-file (string-append
-                                "src/github.com/dolthub/go-icu-regex"
-                                "/icu/wasm/icu.wasm")))
-                (when (and (file-exists? wasm-file)
-                           (symbolic-link? wasm-file))
-                  (let ((target (readlink wasm-file)))
-                    (delete-file wasm-file)
-                    (copy-file target wasm-file)))))))))
-    (native-inputs (list go-github-com-stretchr-testify))
-    (propagated-inputs (list go-github-com-tetratelabs-wazero
-                             go-gopkg-in-src-d-go-errors-v1))
+          (delete 'build))))
+    (propagated-inputs (list go-gopkg-in-src-d-go-errors-v1))
     (home-page "https://github.com/dolthub/go-icu-regex")
-    (synopsis "ICU regex bindings for Go via WebAssembly")
+    (synopsis "ICU regex bindings for Go via CGO")
     (description
-     "This package provides minimal bindings to ICU4C's regex implementation
-via WebAssembly.  It supports MySQL-compatible regular expression functionality
-using the wazero WebAssembly runtime.")
+     "This package provides Go bindings to ICU4C's regex implementation via
+CGO.  It supports MySQL-compatible regular expression functionality for use
+in go-mysql-server and Dolt.")
     (license license:asl2.0)))
 
 (define-public go-github-com-dolthub-vitess
   (package
     (name "go-github-com-dolthub-vitess")
-    (version "0.0.0-20240709194214-9938efd011aa")
+    (version "0.0.0-20260128180459-bd171d35a7e2")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
              (url "https://github.com/dolthub/vitess")
-             (commit "9938efd011aa2364b713cd3e647019156836c776")))
+             (commit "bd171d35a7e2b6c9aed0e943e082bc5cfc8de861")))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1wna0p25lvh6mj6xcxciclsb4j2dc44b014xij96h48g1ca70lsa"))))
+        (base32 "1fibza3y33bhv468fzvipmd4v755s6vsvhhhndabrw02wsvrj364"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -379,16 +371,16 @@ and other projects requiring MySQL SQL parsing capabilities.")
 (define-public go-github-com-dolthub-go-mysql-server
   (package
     (name "go-github-com-dolthub-go-mysql-server")
-    (version "0.18.2-0.20240702022058-d7eb602c04ee")
+    (version "0.20.1-0.20260128201837-5b7ec92cc6e9")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
              (url "https://github.com/dolthub/go-mysql-server")
-             (commit "d7eb602c04eef7f5966c87fd3c39c3a7b6f435e0")))
+             (commit "5b7ec92cc6e9a9f0d1798fce74178a240cdb28d0")))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "19awcahhlfnqx9m7pqyjqbwadsq7waxpwiwdwg8jjajqn958mxky"))))
+        (base32 "0p3fv77vqaswpfrq6wam7fd9vd8k3md3130irmjaxj7ma8n66lly"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -418,19 +410,18 @@ and other projects requiring MySQL SQL parsing capabilities.")
                                        (not (member f '("." "..")))))))))))))
     (propagated-inputs
      (list go-github-com-cespare-xxhash
-           go-github-com-go-kit-kit
            go-github-com-dolthub-flatbuffers
            go-github-com-dolthub-go-icu-regex
            go-github-com-dolthub-jsonpath
            go-github-com-dolthub-vitess
            go-github-com-go-sql-driver-mysql
+           go-github-com-gocraft-dbr-v2
            go-github-com-google-uuid
            go-github-com-hashicorp-golang-lru
            go-github-com-lestrrat-go-strftime
            go-github-com-pkg-errors
            go-github-com-shopspring-decimal
            go-github-com-sirupsen-logrus
-           go-golang-org-x-exp
            go-golang-org-x-sync
            go-golang-org-x-sys
            go-golang-org-x-text
@@ -478,23 +469,150 @@ designed for use in Dolt, a version-controlled database.")
 events API service, used for event tracking and telemetry in Dolt.")
     (license license:asl2.0)))
 
+(define-public go-github-com-dolthub-eventsapi-schema
+  (let ((commit "eadfd39051ca67f6555efbc79af066929fefd295")
+        (revision "0"))
+    (package
+      (name "go-github-com-dolthub-eventsapi-schema")
+      (version (git-version "0.0.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/dolthub/eventsapi_schema")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1f3za7nyjw15sf0a9m77ysnbgy5vgmka3rfj06pisapd9pdv29b3"))))
+      (build-system go-build-system)
+      (arguments
+       (list
+        #:import-path "github.com/dolthub/eventsapi_schema"
+        #:tests? #f
+        #:phases
+        #~(modify-phases %standard-phases
+            (delete 'build))))
+      (propagated-inputs (list go-google-golang-org-grpc
+                               go-google-golang-org-protobuf))
+      (home-page "https://github.com/dolthub/eventsapi_schema")
+      (synopsis "Protocol buffer schema for Dolt events API")
+      (description
+       "This package provides generated Protocol Buffer definitions for the Dolt
+events API service, used for event tracking and telemetry in Dolt.")
+      (license license:asl2.0))))
+
+(define-public go-github-com-dolthub-aws-sdk-go-ini-parser
+  (let ((commit "2821c37f6c12dd269368057faa32c9d3c5a21692")
+        (revision "0"))
+    (package
+      (name "go-github-com-dolthub-aws-sdk-go-ini-parser")
+      (version (git-version "0.0.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/dolthub/aws-sdk-go-ini-parser")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1b1fpkb4s1z1d71r9bqkv3j0hr88mrk99hq0bp0syqidwg3k5l96"))))
+      (build-system go-build-system)
+      (arguments
+       (list
+        #:import-path "github.com/dolthub/aws-sdk-go-ini-parser"
+        #:tests? #f
+        #:phases
+        #~(modify-phases %standard-phases
+            (delete 'build))))
+      (home-page "https://github.com/dolthub/aws-sdk-go-ini-parser")
+      (synopsis "INI file parser extracted from AWS SDK for Go")
+      (description
+       "This package provides an INI file parser extracted from the AWS SDK for
+Go, used by Dolt for reading AWS configuration files.")
+      (license license:asl2.0))))
+
+(define-public go-github-com-gocraft-dbr-v2
+  (package
+    (name "go-github-com-gocraft-dbr-v2")
+    (version "2.7.6")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/gocraft/dbr")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0k63mk54q7r7b2ipcpdj6x7f6vr6p54iafnkifj6rppfsf4j2p4p"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/gocraft/dbr/v2"
+      #:tests? #f
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'build))))
+    (home-page "https://github.com/gocraft/dbr")
+    (synopsis "Additions to Go's database/sql for SQL generation")
+    (description
+     "This package provides additions to Go's database/sql for super fast
+performance and convenience, including a fluent SQL builder.")
+    (license license:expat)))
+
+(define-public go-github-com-esote-minmaxheap
+  (package
+    (name "go-github-com-esote-minmaxheap")
+    (version "1.0.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/esote/minmaxheap")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0mx1zqn7ll8rqmgrmwzwgi3d5ssvhg0cy767423sgbch7fj2nmhy"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/esote/minmaxheap"))
+    (home-page "https://github.com/esote/minmaxheap")
+    (synopsis "Min-max heap for Go")
+    (description
+     "This package provides a min-max heap implementation for Go, enabling
+logarithmic-time removal of both minimum and maximum elements.")
+    (license license:cc0)))
+
 (define-public go-github-com-dolthub-dolt-go
   (package
     (name "go-github-com-dolthub-dolt-go")
-    (version "0.40.5-0.20240702155756-bcf4dd5f5cc1")
+    (version "0.40.5-0.20260129204643-460dc5864c05")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
              (url "https://github.com/dolthub/dolt")
-             (commit "bcf4dd5f5cc1ca460a1712305d499b26f6036f1f")))
+             (commit "460dc5864c05a376b4b714609eb78192999ab43b")))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "14qybp3h7zjms03jcv07xlfqyshiz3fpina3gw3zmmwsn5rd9cbq"))
+        (base32 "031nbqcbccpbpzy505c6m924zw9w7b34nnsr1bhxqnqj4bvrl2x3"))
        (modules '((guix build utils)))
        (snippet
-        ;; Remove eventsapi symlinks which cause issues during unpack
-        '(delete-file-recursively "go/gen/proto/dolt/services/eventsapi"))))
+        ;; Replace google.golang.org/grpc/experimental/credentials
+        ;; (not available in grpc v1.69.2) with standard credentials.NewTLS
+        '(begin
+           (substitute*
+               "go/libraries/doltcore/env/grpc_dial_provider.go"
+             (("\texpcreds \"google.golang.org/grpc/experimental/credentials\"\n")
+              "")
+             (("expcreds\\.NewTLSWithALPNDisabled")
+              "credentials.NewTLS"))
+           (substitute*
+               "go/libraries/doltcore/sqle/cluster/controller.go"
+             (("\texpcreds \"google.golang.org/grpc/experimental/credentials\"\n")
+              "")
+             (("expcreds\\.NewTLSWithALPNDisabled")
+              "credentials.NewTLS"))))))
     (build-system go-build-system)
     (arguments
      (list
@@ -510,22 +628,28 @@ events API service, used for event tracking and telemetry in Dolt.")
            go-cloud-google-com-go-iam
            go-cloud-google-com-go-storage
            go-github-com-aliyun-aliyun-oss-go-sdk
-           go-github-com-aws-aws-sdk-go
+           go-github-com-aws-aws-sdk-go-v2
+           go-github-com-aws-aws-sdk-go-v2-config
+           go-github-com-aws-aws-sdk-go-v2-feature-s3-manager
+           go-github-com-aws-aws-sdk-go-v2-service-s3
+           go-github-com-aws-aws-sdk-go-v2-service-sts
+           go-github-com-aws-smithy-go
            go-github-com-bcicen-jstream
-           go-github-com-boltdb-bolt
            go-github-com-cenkalti-backoff-v4
            go-github-com-denisbrodbeck-machineid
-           go-github-com-dolthub-dolt-go-gen-proto-dolt-services-eventsapi
+           go-github-com-dolthub-aws-sdk-go-ini-parser
+           go-github-com-dolthub-eventsapi-schema
            go-github-com-dolthub-flatbuffers
            go-github-com-dolthub-fslock
            go-github-com-dolthub-go-mysql-server
            go-github-com-dolthub-gozstd
-           go-github-com-dolthub-swiss
            go-github-com-dolthub-vitess
            go-github-com-dustin-go-humanize
+           go-github-com-edsrzf-mmap-go
+           go-github-com-esote-minmaxheap
            go-github-com-fatih-color
            go-github-com-go-sql-driver-mysql
-           go-github-com-go-kit-kit
+           go-github-com-gocraft-dbr-v2
            go-github-com-goccy-go-json
            go-github-com-golang-snappy
            go-github-com-google-btree
@@ -534,7 +658,6 @@ events API service, used for event tracking and telemetry in Dolt.")
            go-github-com-hashicorp-golang-lru
            go-github-com-hashicorp-golang-lru-v2
            go-github-com-hdrhistogram-hdrhistogram-go
-           go-github-com-jpillora-backoff
            go-github-com-juju-gnuflag
            go-github-com-kch42-buzhash
            go-github-com-kylelemons-godebug
@@ -562,8 +685,7 @@ events API service, used for event tracking and telemetry in Dolt.")
            go-google-golang-org-genproto
            go-google-golang-org-grpc
            go-google-golang-org-protobuf
-           go-gopkg-in-errgo-v2
-           go-gopkg-in-square-go-jose-v2
+           go-gopkg-in-go-jose-go-jose-v2
            go-gopkg-in-src-d-go-errors-v1
            go-gopkg-in-yaml-v3))
     (home-page "https://github.com/dolthub/dolt")
@@ -677,40 +799,43 @@ associations, hooks, preloading, transactions, and more.")
     (license license:expat)))
 
 (define-public go-github-com-dolthub-driver
-  (package
-    (name "go-github-com-dolthub-driver")
-    (version "0.2.0")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/dolthub/driver")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "1ikgxbfr02lxrygmzzzww81xz2r8dllrsc9q9rzz8z2y9c798h42"))))
-    (build-system go-build-system)
-    (arguments
-     (list
-      #:import-path "github.com/dolthub/driver"
-      ;; Library package - install source only
-      #:tests? #f
-      #:phases
-      #~(modify-phases %standard-phases
-          (delete 'build))))
-    (propagated-inputs
-     (list go-github-com-dolthub-dolt-go
-           go-github-com-dolthub-go-mysql-server
-           go-github-com-dolthub-vitess
-           go-github-com-go-sql-driver-mysql
-           go-gorm-io-driver-mysql
-           go-gorm-io-gorm))
-    (home-page "https://github.com/dolthub/driver")
-    (synopsis "Go database/sql driver for embedded Dolt databases")
-    (description
-     "This package provides a Go database/sql compatible driver for Dolt,
+  (let ((commit "dc59f6dbac235b8b2d1b463922fc444d5b10a479")
+        (revision "0"))
+    (package
+      (name "go-github-com-dolthub-driver")
+      (version (git-version "0.2.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/dolthub/driver")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "0iyf3vj1ii5rr8x5kdzzzhv2aqvqak3s8zjw4w9dvsqkzpmzi14k"))))
+      (build-system go-build-system)
+      (arguments
+       (list
+        #:import-path "github.com/dolthub/driver"
+        ;; Library package - install source only
+        #:tests? #f
+        #:phases
+        #~(modify-phases %standard-phases
+            (delete 'build))))
+      (propagated-inputs
+       (list go-github-com-cenkalti-backoff-v4
+             go-github-com-dolthub-dolt-go
+             go-github-com-dolthub-go-mysql-server
+             go-github-com-dolthub-vitess
+             go-github-com-go-sql-driver-mysql
+             go-gorm-io-driver-mysql
+             go-gorm-io-gorm))
+      (home-page "https://github.com/dolthub/driver")
+      (synopsis "Go database/sql driver for embedded Dolt databases")
+      (description
+       "This package provides a Go database/sql compatible driver for Dolt,
 enabling embedded version-controlled SQL databases in Go applications.")
-    (license license:asl2.0)))
+      (license license:asl2.0))))
 
 ;; Additional dependencies for dolt
 

@@ -7,6 +7,7 @@
     #:use-module ((gnu packages golang-xyz)
                    #:hide (go-github-com-charmbracelet-bubbles
                            go-github-com-charmbracelet-bubbletea))
+    #:use-module (gnu packages icu4c)
     #:use-module (gnu packages tmux)
     #:use-module (gnu packages version-control)
     #:use-module (gnu packages)
@@ -18,11 +19,11 @@
     #:use-module (r0man guix packages golang-xyz))
 
 (define-public beads-next
-  (let ((commit "c99bd00ca71a728b50736c8b5c23d3b05016bc11")
-        (revision "0"))
+  (let ((commit "2d517c60aa8b7734bd19b7718b34b06bb72e131e")
+        (revision "1"))
     (package
       (name "beads-next")
-      (version (git-version "0.48.0" revision commit))
+      (version (git-version "0.49.6" revision commit))
       (source
        (origin
          (method git-fetch)
@@ -31,12 +32,7 @@
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "1022xm0994bnhhawvxs4fy250qni910a0pygnh0rkwz3iwqd6x8p"))
-         (modules '((guix build utils)))
-         (snippet
-          ;; Remove sync.go which has duplicate constant declarations with config.go
-          ;; This is a bug in beads v0.48.0 that causes compilation to fail
-          '(delete-file "internal/config/sync.go"))))
+          (base32 "1dmnrdak68nn3dhnjrbjmhwjnandy65hhx7d7z1fbxlnrg1i30x4"))))
       (build-system go-build-system)
       (arguments
        (list
@@ -101,13 +97,14 @@
                 ;; Fix go-mysql-server encoding weight maps
                 (copy-symlink-targets
                  "src/github.com/dolthub/go-mysql-server/sql/encodings")
-                ;; Fix go-icu-regex WASM file
-                (let ((wasm-file "src/github.com/dolthub/go-icu-regex/icu/wasm/icu.wasm"))
-                  (when (and (file-exists? wasm-file)
-                             (symbolic-link? wasm-file))
-                    (let ((target (readlink wasm-file)))
-                      (delete-file wasm-file)
-                      (copy-file target wasm-file))))))
+                ;; Fix dolt AGENT.md embedded file
+                (let ((agent-md (string-append "src/github.com/dolthub/dolt"
+                                 "/go/libraries/doltcore/doltdb" "/AGENT.md")))
+                  (when (and (file-exists? agent-md)
+                             (symbolic-link? agent-md))
+                    (let ((target (readlink agent-md)))
+                      (delete-file agent-md)
+                      (copy-file target agent-md))))))
             (add-before 'build 'set-home
               (lambda _
                 (setenv "HOME" "/tmp")))
@@ -132,18 +129,19 @@
                     (lambda ()
                       (system* bd "completion" "fish")))))))))
       (native-inputs (list git
+                           icu4c
                            go-github-com-anthropics-anthropic-sdk-go
+                           go-github-com-cenkalti-backoff-v4
                            go-github-com-charmbracelet-glamour
                            go-github-com-charmbracelet-huh
                            go-github-com-charmbracelet-lipgloss
                            go-github-com-dolthub-driver
-                           go-github-com-fatih-color
+                           go-github-com-go-sql-driver-mysql
                            go-github-com-gofrs-flock
                            go-github-com-ncruces-go-sqlite3
                            go-github-com-olebedev-when
                            go-github-com-spf13-cobra
                            go-github-com-spf13-viper
-                           go-gopkg-in-natefinch-lumberjack-v2
                            go-gopkg-in-yaml-v3
                            go-rsc-io-script))
       (home-page "https://github.com/steveyegge/beads")
