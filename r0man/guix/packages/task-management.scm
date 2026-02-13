@@ -157,11 +157,11 @@ machines.")
       (license license:expat))))
 
 (define-public gastown-next
-  (let ((commit "9cd2696abe68ac0defc612ace5028d327d4f207d")
-        (revision "0"))
+  (let ((commit "1112c906746de71f174221fc2decdb809b02e8ea")
+        (revision "1"))
     (package
       (name "gastown-next")
-      (version (git-version "0.4.0" revision commit))
+      (version (git-version "0.5.0" revision commit))
       (source
        (origin
          (method git-fetch)
@@ -170,7 +170,7 @@ machines.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "0y40l2nmc71mf6i7hdhi9qhmy8cfxjic6kg5zkws4bmc0qyzj8rw"))))
+          (base32 "0yzndhvb2cbg4v4qvw2l67m74kq3wqj4fhcjpnbfz0dc0l1l3p8f"))))
       (build-system go-build-system)
       (arguments
        (list
