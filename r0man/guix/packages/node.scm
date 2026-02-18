@@ -58,7 +58,7 @@ Anthropic's Claude AI assistant.")
 (define-public node-zed-industries-claude-code-acp
   (package
     (name "node-zed-industries-claude-code-acp")
-    (version "0.13.1")
+    (version "0.16.2")
     (source
      (origin
        (method url-fetch)
@@ -66,7 +66,7 @@ Anthropic's Claude AI assistant.")
              "https://registry.npmjs.org/@zed-industries/claude-code-acp/"
              "-/claude-code-acp-" version ".tgz"))
        (sha256
-        (base32 "08ghq6dav74i5ilrvf1fpl3yylv4cb30cn69h5zkcnmisdn5k9m8"))))
+        (base32 "17m9rwmxijxi7g5vzy6dbpskpl3k01l1xnz4544qal26l2xv64s7"))))
     (build-system node-build-system)
     (arguments
      (list
@@ -88,7 +88,7 @@ Anthropic's Claude AI assistant.")
                 (symlink (string-append lib "/dist/index.js")
                          (string-append bin "/claude-code-acp")))))
           (delete 'validate-runpath))))
-    (home-page "https://github.com/zed-industries/claude-code-acp")
+    (home-page "https://github.com/zed-industries/claude-agent-acp")
     (synopsis "ACP adapter for Claude Code integration")
     (description
      "This package provides an ACP (Agent Client Protocol) adapter that
