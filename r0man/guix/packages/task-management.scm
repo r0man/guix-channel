@@ -161,11 +161,11 @@ machines.")
       (license license:expat))))
 
 (define-public gastown-next
-  (let ((commit "1112c906746de71f174221fc2decdb809b02e8ea")
+  (let ((commit "1610d7751b6ce50cd6af1e56dd96eadea91f20c3")
         (revision "1"))
     (package
       (name "gastown-next")
-      (version (git-version "0.5.0" revision commit))
+      (version (git-version "0.7.0" revision commit))
       (source
        (origin
          (method git-fetch)
@@ -174,7 +174,7 @@ machines.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "0yzndhvb2cbg4v4qvw2l67m74kq3wqj4fhcjpnbfz0dc0l1l3p8f"))))
+          (base32 "1x007msmrl26sadhrw88fld91q60vghy6ys1sjny2aqy7l67gk66"))))
       (build-system go-build-system)
       (arguments
        (list
@@ -253,6 +253,7 @@ machines.")
                            go-github-com-charmbracelet-bubbletea
                            go-github-com-charmbracelet-glamour
                            go-github-com-charmbracelet-lipgloss
+                           go-github-com-go-rod-rod
                            go-github-com-gofrs-flock
                            go-github-com-google-uuid
                            go-github-com-spf13-cobra
