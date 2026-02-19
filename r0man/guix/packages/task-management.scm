@@ -19,11 +19,11 @@
     #:use-module (r0man guix packages golang-xyz))
 
 (define-public beads-next
-  (let ((commit "2d517c60aa8b7734bd19b7718b34b06bb72e131e")
+  (let ((commit "7d27a34fce13980c61b39baf31518ef4b691632a")
         (revision "1"))
     (package
       (name "beads-next")
-      (version (git-version "0.49.6" revision commit))
+      (version (git-version "0.54.0" revision commit))
       (source
        (origin
          (method git-fetch)
@@ -32,7 +32,7 @@
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "1dmnrdak68nn3dhnjrbjmhwjnandy65hhx7d7z1fbxlnrg1i30x4"))))
+          (base32 "0hh96xad5ppm89igrqirlpf4wc6iyx44xx35pj297r8ybhgm4xvh"))))
       (build-system go-build-system)
       (arguments
        (list
@@ -131,17 +131,21 @@
       (native-inputs (list git
                            icu4c
                            go-github-com-anthropics-anthropic-sdk-go
+                           go-github-com-burntsushi-toml
                            go-github-com-cenkalti-backoff-v4
                            go-github-com-charmbracelet-glamour
                            go-github-com-charmbracelet-huh
                            go-github-com-charmbracelet-lipgloss
                            go-github-com-dolthub-driver
+                           go-github-com-fsnotify-fsnotify
                            go-github-com-go-sql-driver-mysql
-                           go-github-com-gofrs-flock
+                           go-github-com-muesli-termenv
                            go-github-com-ncruces-go-sqlite3
                            go-github-com-olebedev-when
                            go-github-com-spf13-cobra
                            go-github-com-spf13-viper
+                           go-golang-org-x-sys
+                           go-golang-org-x-term
                            go-gopkg-in-yaml-v3
                            go-rsc-io-script))
       (home-page "https://github.com/steveyegge/beads")
