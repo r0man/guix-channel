@@ -11,10 +11,26 @@
   #:use-module (guix download)
   #:use-module (guix gexp)
   #:use-module (guix packages)
-  #:use-module (guix utils))
+  #:use-module (guix utils)
+  #:use-module (ice-9 match))
 
-(define* (make-graalvm-ce version hash)
-  "Create a GraalVM Community Edition package for the given VERSION and HASH."
+(define (graalvm-arch)
+  "Return the GraalVM architecture string for the current system."
+  (match (%current-system)
+    ("x86_64-linux" "x64")
+    ("aarch64-linux" "aarch64")
+    (system (error "GraalVM CE: unsupported system" system))))
+
+(define (graalvm-ld-linux)
+  "Return the dynamic linker filename for the current system."
+  (match (%current-system)
+    ("x86_64-linux" "/lib/ld-linux-x86-64.so.2")
+    ("aarch64-linux" "/lib/ld-linux-aarch64.so.1")
+    (system (error "GraalVM CE: unsupported system" system))))
+
+(define* (make-graalvm-ce version hash-x86_64 hash-aarch64)
+  "Create a GraalVM Community Edition package for the given VERSION with
+architecture-specific HASH-X86_64 and HASH-AARCH64."
   (package
     (name "graalvm-ce")
     (version version)
@@ -24,8 +40,12 @@
        (uri (string-append
              "https://github.com/graalvm/graalvm-ce-builds/releases/download/"
              "jdk-" version "/graalvm-community-jdk-" version
-             "_linux-x64_bin.tar.gz"))
-       (sha256 (base32 hash))))
+             "_linux-" (graalvm-arch) "_bin.tar.gz"))
+       (sha256
+        (base32 (match (%current-system)
+                  ("x86_64-linux" hash-x86_64)
+                  ("aarch64-linux" hash-aarch64)
+                  (system (error "GraalVM CE: unsupported system" system)))))))
     (build-system copy-build-system)
     (arguments
      (list
@@ -49,8 +69,8 @@
                      (glibc (assoc-ref inputs "glibc"))
                      (gcc-lib (assoc-ref inputs "gcc"))
                      (zlib (assoc-ref inputs "zlib"))
-                     (ld-linux (string-append glibc
-                                              "/lib/ld-linux-x86-64.so.2"))
+                     (ld-linux (search-input-file
+                                inputs #$(graalvm-ld-linux)))
                      (rpath (string-join
                              (list (string-append out "/lib")
                                    (string-append out "/lib/server")
@@ -119,8 +139,8 @@
                      (linux-headers (assoc-ref inputs "linux-libre-headers"))
                      (zlib (assoc-ref inputs "zlib"))
                      (bash (search-input-file inputs "/bin/bash"))
-                     (ld-linux (string-append glibc
-                                              "/lib/ld-linux-x86-64.so.2"))
+                     (ld-linux (search-input-file
+                                inputs #$(graalvm-ld-linux)))
                      (native-image-bin
                       (string-append out "/lib/svm/bin/native-image"))
                      (native-image-wrapper
@@ -193,7 +213,7 @@
            glibc
            linux-libre-headers
            zlib))
-    (supported-systems '("x86_64-linux"))
+    (supported-systems '("x86_64-linux" "aarch64-linux"))
     (home-page "https://www.graalvm.org/")
     (synopsis "High-performance JDK with native-image ahead-of-time compiler")
     (description
@@ -205,13 +225,19 @@ Edition of GraalVM.")
     (license license:gpl2))) ;gpl2 only, with classpath exception
 
 (define-public graalvm-ce-21
-  (make-graalvm-ce "21.0.2" "0j5ffszcaqv3fq159hyb611jm8w1q4n1cywmbd7vi69smad0cj5h"))
+  (make-graalvm-ce "21.0.2"
+                   "0j5ffszcaqv3fq159hyb611jm8w1q4n1cywmbd7vi69smad0cj5h"
+                   "0yndazvc4kyr9widfn8ql5vd57m4m5inqz2wcpsarw38rs8ycjx3"))
 
 (define-public graalvm-ce-24
-  (make-graalvm-ce "24.0.2" "080774x1chpa0n8bpmw575g5myi63ikffwgcvq3r7nvdh9n88qkd"))
+  (make-graalvm-ce "24.0.2"
+                   "080774x1chpa0n8bpmw575g5myi63ikffwgcvq3r7nvdh9n88qkd"
+                   "1xfncszlnxmjxfj79b3z5isc8a3gjk0cn3i7b0yli4c7hld9akf5"))
 
 (define-public graalvm-ce-25
-  (make-graalvm-ce "25.0.2" "1w3ac0cl9d2ja98klyq5f1hp6j9ixx7q5jx0n2v06kfsiwf7kgp0"))
+  (make-graalvm-ce "25.0.2"
+                   "1w3ac0cl9d2ja98klyq5f1hp6j9ixx7q5jx0n2v06kfsiwf7kgp0"
+                   "0waa7395f53lrg2my43ywr8bj7aczwc8prap2wx4n2ix4aghsn5l"))
 
 ;; Default to the latest stable release (JDK 24)
 (define-public graalvm-ce graalvm-ce-25)
