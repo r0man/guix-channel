@@ -1,6 +1,7 @@
 (define-module (r0man guix packages golang-dolthub)
   #:use-module ((guix licenses) #:prefix license:)
   #:use-module (gnu packages compression)
+  #:use-module (gnu packages icu4c)
   #:use-module (gnu packages databases)
   #:use-module (gnu packages golang)
   #:use-module (gnu packages golang-build)
@@ -10,6 +11,7 @@
   #:use-module (gnu packages golang-maths)
   #:use-module (gnu packages golang-web)
   #:use-module (gnu packages golang-xyz)
+  #:use-module (gnu packages prometheus)
   #:use-module (gnu packages serialization)
   #:use-module (guix build-system go)
   #:use-module (guix gexp)
@@ -693,6 +695,464 @@ logarithmic-time removal of both minimum and maximum elements.")
     (description
      "Dolt is a SQL database with Git-like version control built in.  This
 package provides the Go library for embedding Dolt functionality.")
+    (license license:asl2.0)))
+
+(define-public go-github-com-abiosoft-readline
+  (package
+    (name "go-github-com-abiosoft-readline")
+    (version "0.0.0-20180607040430-155bce2042db")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/abiosoft/readline")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "104q8dazj8yf6b089jjr82fy9h1g80zyyzvp3g8b44a7d8ngjj6r"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/abiosoft/readline"
+      #:tests? #f))
+    (home-page "https://github.com/abiosoft/readline")
+    (synopsis "Pure Go implementation of GNU Readline")
+    (description
+     "This package provides a pure Go implementation of a GNU Readline-like
+library for building interactive command-line applications.")
+    (license license:expat)))
+
+(define-public go-github-com-andreyvit-diff
+  (package
+    (name "go-github-com-andreyvit-diff")
+    (version "0.0.0-20170406064948-c7f18ee00883")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/andreyvit/diff")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1s4qjkxig5yqahpzfl4xqh4kzi9mymdpkzq6kj3f4dr5dl3hlynr"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/andreyvit/diff"
+      #:tests? #f))
+    (propagated-inputs (list go-github-com-sergi-go-diff))
+    (home-page "https://github.com/andreyvit/diff")
+    (synopsis "Quick string diffing functions for Go")
+    (description
+     "This package provides string diffing functions based on
+go-diff, mainly for use in tests.")
+    (license license:expat)))
+
+(define-public go-github-com-dolthub-ishell
+  (package
+    (name "go-github-com-dolthub-ishell")
+    (version "0.0.0-20240701202509-2b217167d718")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/dolthub/ishell")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1h1j7rldaxlc7fi359il3p31v6ryfr8di51nd7yncnrfg4ra1vsd"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/dolthub/ishell"
+      #:tests? #f))
+    (propagated-inputs (list go-github-com-abiosoft-readline
+                             go-github-com-fatih-color
+                             go-github-com-flynn-archive-go-shlex))
+    (home-page "https://github.com/dolthub/ishell")
+    (synopsis "Interactive shell library for Go")
+    (description
+     "This package provides an interactive shell framework for building
+command-line applications with auto-completion and command history.")
+    (license license:expat)))
+
+(define-public go-github-com-google-shlex
+  (package
+    (name "go-github-com-google-shlex")
+    (version "0.0.0-20191202100458-e7afc7fbc510")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/google/shlex")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "14z8hqyik910wk2qwnzgz8mjsmiamxa0pj55ahbv0jx6j3dgvzfm"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/google/shlex"))
+    (home-page "https://github.com/google/shlex")
+    (synopsis "Shell-style string tokenizer for Go")
+    (description
+     "This package provides a simple lexer which splits input into tokens using
+shell-style rules for quoting and commenting.")
+    (license license:asl2.0)))
+
+(define-public go-github-com-google-go-github-v57
+  (package
+    (name "go-github-com-google-go-github-v57")
+    (version "57.0.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/google/go-github")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0wqmqrmc0j17smxpby6fisaxgz0fy27h63kpz93nqmw5h04ia8m6"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/google/go-github/v57"
+      #:tests? #f
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'build))))
+    (propagated-inputs (list go-github-com-google-go-querystring))
+    (home-page "https://github.com/google/go-github")
+    (synopsis "Go client library for accessing the GitHub API")
+    (description
+     "This package provides a Go client library for accessing the GitHub API v3.")
+    (license license:bsd-3)))
+
+(define-public go-github-com-skratchdot-open-golang
+  (package
+    (name "go-github-com-skratchdot-open-golang")
+    (version "0.0.0-20200116055534-eef842397966")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/skratchdot/open-golang")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0n6387csjn024db8wldadsiy8ljz7lk7szl6ls28fcbkax7rw86y"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/skratchdot/open-golang"
+      #:tests? #f
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'build))))
+    (home-page "https://github.com/skratchdot/open-golang")
+    (synopsis "Open URLs and files from Go using the OS default application")
+    (description
+     "This package provides a function to open URLs, files, and directories
+using the default application associated by the operating system.")
+    (license license:expat)))
+
+(define-public go-github-com-tealeg-xlsx
+  (package
+    (name "go-github-com-tealeg-xlsx")
+    (version "1.0.5")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/tealeg/xlsx")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1xkqk71sn10gaxl5r69ws52zi4ni3nfjkivpm9lsbk3xfqnzwv73"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/tealeg/xlsx"
+      #:tests? #f))
+    (home-page "https://github.com/tealeg/xlsx")
+    (synopsis "XLSX file reading and writing library for Go")
+    (description
+     "This package provides a library for reading and writing XLSX
+(Microsoft Excel) spreadsheet files in Go.")
+    (license license:bsd-3)))
+
+(define-public go-github-com-tidwall-gjson
+  (package
+    (name "go-github-com-tidwall-gjson")
+    (version "1.14.4")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/tidwall/gjson")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1rs8i87j62sgas55cvm8kzcgf40090dq38r6m6s03rzxs9hbcd6w"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/tidwall/gjson"
+      #:tests? #f))
+    (propagated-inputs (list go-github-com-tidwall-match
+                             go-github-com-tidwall-pretty))
+    (home-page "https://github.com/tidwall/gjson")
+    (synopsis "Fast JSON value retrieval for Go")
+    (description
+     "This package provides a fast way to get values from JSON documents
+using a simple path syntax.")
+    (license license:expat)))
+
+(define-public go-github-com-tidwall-sjson
+  (package
+    (name "go-github-com-tidwall-sjson")
+    (version "1.2.5")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/tidwall/sjson")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "16yaikpxiwqz00zxa70w17k2k52nr06svand88sv2br6b6i8v09r"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/tidwall/sjson"))
+    (propagated-inputs (list go-github-com-tidwall-gjson
+                             go-github-com-tidwall-pretty))
+    (home-page "https://github.com/tidwall/sjson")
+    (synopsis "Fast JSON value setting for Go")
+    (description
+     "This package provides a fast way to set values in JSON documents
+using a simple path syntax.")
+    (license license:expat)))
+
+(define-public go-github-com-shirou-gopsutil-v4/fixed
+  (package
+    (inherit go-github-com-shirou-gopsutil-v4)
+    (arguments
+     (list
+      #:import-path "github.com/shirou/gopsutil/v4"
+      #:tests? #f))))
+
+(define-public go-github-com-yosida95-uritemplate-v3
+  (package
+    (name "go-github-com-yosida95-uritemplate-v3")
+    (version "3.0.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/yosida95/uritemplate")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0csrdr64hjhwxlkcbb8y7bz1ccnyzl9c87fva00gr078nw52qxff"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/yosida95/uritemplate/v3"
+      #:tests? #f))
+    (home-page "https://github.com/yosida95/uritemplate")
+    (synopsis "URI template expansion library for Go")
+    (description
+     "This package provides URI template expansion following RFC 6570.")
+    (license license:bsd-3)))
+
+(define-public go-github-com-mark3labs-mcp-go
+  (package
+    (name "go-github-com-mark3labs-mcp-go")
+    (version "0.34.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/mark3labs/mcp-go")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0slx7bmpa72hp28fykw81ia32691bf9k60949xm680s1a16j257h"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/mark3labs/mcp-go"
+      #:tests? #f
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'build))))
+    (propagated-inputs (list go-github-com-google-uuid
+                             go-github-com-spf13-cast
+                             go-github-com-yosida95-uritemplate-v3))
+    (home-page "https://github.com/mark3labs/mcp-go")
+    (synopsis "Model Context Protocol SDK for Go")
+    (description
+     "This package provides a Go implementation of the Model Context Protocol (MCP),
+enabling AI assistants to interact with external tools and data sources.")
+    (license license:expat)))
+
+(define-public go-github-com-dolthub-dolt-mcp
+  (package
+    (name "go-github-com-dolthub-dolt-mcp")
+    (version "0.2.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/dolthub/dolt-mcp")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "014wvsjmqp8hk008mh467sabr8wvymlgd0izwjvrha2mjjkqw9z2"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/dolthub/dolt-mcp"
+      #:tests? #f
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'build))))
+    (propagated-inputs (list go-github-com-mark3labs-mcp-go))
+    (home-page "https://github.com/dolthub/dolt-mcp")
+    (synopsis "Model Context Protocol server for Dolt databases")
+    (description
+     "This package provides a Model Context Protocol (MCP) server that enables
+AI assistants to interact with Dolt version-controlled SQL databases.")
+    (license license:asl2.0)))
+
+(define-public dolt
+  (package
+    (inherit go-github-com-dolthub-dolt-go)
+    (name "dolt")
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:install-source? #f
+      #:import-path "github.com/dolthub/dolt/go/cmd/dolt"
+      #:unpack-path "github.com/dolthub/dolt"
+      #:tests? #f
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'build 'set-home
+            (lambda _ (setenv "HOME" "/tmp")))
+          (add-after 'unpack 'fix-embed-symlinks
+            (lambda _
+              (use-modules (ice-9 ftw))
+              (let ((encodings-dir (string-append
+                                    "src/github.com/dolthub/go-mysql-server"
+                                    "/sql/encodings")))
+                (when (file-exists? encodings-dir)
+                  (for-each (lambda (file)
+                              (let ((path (string-append
+                                           encodings-dir "/" file)))
+                                (when (and (symbolic-link? path)
+                                           (string-suffix? ".bin" file))
+                                  (let ((target (readlink path)))
+                                    (delete-file path)
+                                    (copy-file target path)))))
+                            (scandir encodings-dir
+                                     (lambda (f)
+                                       (not (member f '("." "..")))))))))))))
+    (native-inputs
+     (list ;; All propagated-inputs from go-github-com-dolthub-dolt-go
+           go-cloud-google-com-go
+           go-cloud-google-com-go-iam
+           go-cloud-google-com-go-storage
+           go-github-com-aliyun-aliyun-oss-go-sdk
+           go-github-com-aws-aws-sdk-go-v2
+           go-github-com-aws-aws-sdk-go-v2-config
+           go-github-com-aws-aws-sdk-go-v2-feature-s3-manager
+           go-github-com-aws-aws-sdk-go-v2-service-s3
+           go-github-com-aws-aws-sdk-go-v2-service-sts
+           go-github-com-aws-smithy-go
+           go-github-com-bcicen-jstream
+           go-github-com-cenkalti-backoff-v4
+           go-github-com-denisbrodbeck-machineid
+           go-github-com-dolthub-aws-sdk-go-ini-parser
+           go-github-com-dolthub-eventsapi-schema
+           go-github-com-dolthub-flatbuffers
+           go-github-com-dolthub-fslock
+           go-github-com-dolthub-go-mysql-server
+           go-github-com-dolthub-gozstd
+           go-github-com-dolthub-vitess
+           go-github-com-dustin-go-humanize
+           go-github-com-edsrzf-mmap-go
+           go-github-com-esote-minmaxheap
+           go-github-com-fatih-color
+           go-github-com-go-sql-driver-mysql
+           go-github-com-gocraft-dbr-v2
+           go-github-com-goccy-go-json
+           go-github-com-golang-snappy
+           go-github-com-google-btree
+           go-github-com-google-uuid
+           go-github-com-googleapis-gax-go-v2
+           go-github-com-hashicorp-golang-lru
+           go-github-com-hashicorp-golang-lru-v2
+           go-github-com-hdrhistogram-hdrhistogram-go
+           go-github-com-juju-gnuflag
+           go-github-com-kch42-buzhash
+           go-github-com-kylelemons-godebug
+           go-github-com-mohae-uvarint
+           go-github-com-oracle-oci-go-sdk-v65
+           go-github-com-pkg-errors
+           go-github-com-pmezard-go-difflib
+           go-github-com-sergi-go-diff
+           go-github-com-shopspring-decimal
+           go-github-com-silvasur-buzhash
+           go-github-com-sirupsen-logrus
+           go-github-com-spf13-cobra
+           go-github-com-vbauerster-mpb-v8
+           go-github-com-xitongsys-parquet-go
+           go-github-com-xitongsys-parquet-go-source
+           go-github-com-zeebo-xxh3
+           go-go-uber-org-zap
+           go-golang-org-x-crypto
+           go-golang-org-x-net
+           go-golang-org-x-oauth2
+           go-golang-org-x-sync
+           go-golang-org-x-sys
+           go-golang-org-x-text
+           go-google-golang-org-api
+           go-google-golang-org-genproto
+           go-google-golang-org-grpc
+           go-google-golang-org-protobuf
+           go-gopkg-in-go-jose-go-jose-v2
+           go-gopkg-in-src-d-go-errors-v1
+           go-gopkg-in-yaml-v3
+           ;; CLI-specific dependencies
+           go-github-com-abiosoft-readline
+           go-github-com-andreyvit-diff
+           go-github-com-dolthub-dolt-mcp
+           go-github-com-dolthub-ishell
+           go-github-com-flynn-archive-go-shlex
+           go-github-com-google-go-github-v57
+           go-github-com-google-shlex
+           go-github-com-pkg-profile
+           go-github-com-prometheus-client-golang
+           go-github-com-shirou-gopsutil-v4/fixed
+           go-github-com-skratchdot-open-golang
+           go-github-com-tealeg-xlsx
+           go-github-com-tidwall-gjson
+           go-github-com-tidwall-sjson
+           go-go-opentelemetry-io-otel
+           go-go-opentelemetry-io-otel-exporters-jaeger
+           go-go-opentelemetry-io-otel-sdk
+           go-go-opentelemetry-io-otel-trace
+           go-gopkg-in-yaml-v2
+           ;; CGO dependencies
+           icu4c))
+    (propagated-inputs '())
+    (synopsis "SQL database with Git-like version control")
+    (description
+     "Dolt is a SQL database that supports Git-like version control features
+such as clone, branch, merge, push, and pull for data and schema.  It provides
+a CLI for managing versioned databases with full MySQL compatibility.")
     (license license:asl2.0)))
 
 (define-public go-github-com-jinzhu-inflection

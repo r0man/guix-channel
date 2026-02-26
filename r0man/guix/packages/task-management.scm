@@ -271,7 +271,7 @@ machines.")
                     go-golang-org-x-sys
                     go-golang-org-x-term
                     go-golang-org-x-text))
-    (inputs (list beads-next tmux))
+    (propagated-inputs (list beads-next dolt tmux))
     (home-page "https://github.com/steveyegge/gastown")
     (synopsis "Multi-agent orchestrator for Claude Code")
     (description
