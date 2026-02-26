@@ -172,6 +172,89 @@ credentials sources.")
 telemetry to be written to an output destination as JSON.")
     (license license:asl2.0)))
 
+(define-public go-go-opentelemetry-io-otel-exporters-otlp-otlplog-otlploghttp
+  (package
+    (name "go-go-opentelemetry-io-otel-exporters-otlp-otlplog-otlploghttp")
+    (version "0.16.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/open-telemetry/opentelemetry-go")
+             (commit (go-version->git-ref version
+                      #:subdir "exporters/otlp/otlplog/otlploghttp"))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0ag8103mf4j03lspi5rxk161iscbw1wkdk6ri9f746jia1w4qji8"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:tests? #f
+      #:import-path
+      "go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp"
+      #:unpack-path "go.opentelemetry.io/otel"))
+    (home-page "https://go.opentelemetry.io/otel")
+    (synopsis "OTLP HTTP Log Exporter")
+    (description
+     "Package otlploghttp provides an OTLP log exporter using HTTP with
+protobuf payloads.")
+    (license license:asl2.0)))
+
+(define-public go-go-opentelemetry-io-otel-log
+  (package
+    (name "go-go-opentelemetry-io-otel-log")
+    (version "0.16.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/open-telemetry/opentelemetry-go")
+             (commit (go-version->git-ref version
+                                          #:subdir "log"))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0ag8103mf4j03lspi5rxk161iscbw1wkdk6ri9f746jia1w4qji8"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:tests? #f
+      #:import-path "go.opentelemetry.io/otel/log"
+      #:unpack-path "go.opentelemetry.io/otel"))
+    (home-page "https://go.opentelemetry.io/otel")
+    (synopsis "OpenTelemetry Logs API")
+    (description
+     "This package provides the OpenTelemetry Logs API for Go, intended to
+be used by bridges between existing logging libraries and OpenTelemetry.")
+    (license license:asl2.0)))
+
+(define-public go-go-opentelemetry-io-otel-sdk-log
+  (package
+    (name "go-go-opentelemetry-io-otel-sdk-log")
+    (version "0.16.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/open-telemetry/opentelemetry-go")
+             (commit (go-version->git-ref version
+                                          #:subdir "sdk/log"))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0ag8103mf4j03lspi5rxk161iscbw1wkdk6ri9f746jia1w4qji8"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:tests? #f
+      #:import-path "go.opentelemetry.io/otel/sdk/log"
+      #:unpack-path "go.opentelemetry.io/otel"))
+    (home-page "https://go.opentelemetry.io/otel")
+    (synopsis "OpenTelemetry Log SDK")
+    (description "Package log provides the OpenTelemetry Logs SDK for Go.")
+    (license license:asl2.0)))
+
 (define-public go-go-opentelemetry-io-otel-exporters-otlp-otlpmetric-otlpmetrichttp
   (package
     (name

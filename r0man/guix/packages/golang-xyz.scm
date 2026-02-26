@@ -789,7 +789,7 @@ cache keys, detecting changes, or implementing set operations.")
 (define-public go-github-com-steveyegge-beads
   (package
     (name "go-github-com-steveyegge-beads")
-    (version "0.22.0")
+    (version "0.56.1")
     (source
      (origin
        (method git-fetch)
@@ -798,7 +798,7 @@ cache keys, detecting changes, or implementing set operations.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "00mvpsap1f89fyqk3kzhq8n0wrim6446vqnx30i99g02bbnfzycz"))))
+        (base32 "0jbbayz0xlk5kaadyaxww2jqkcsdxsav5anka9qirkwja0lsd7w6"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -808,23 +808,23 @@ cache keys, detecting changes, or implementing set operations.")
       #~(modify-phases %standard-phases
           ;; No binaries to build, just install source
           (delete 'build)
-          (replace 'check
-            (lambda* (#:key tests? import-path #:allow-other-keys)
-              (when tests?
-                (with-directory-excursion (string-append "src/" import-path)
-                  ;; Only test packages that don't require sqlite/wasm setup
-                  (invoke "go" "test" "-v"
-                          "github.com/steveyegge/beads/internal/config"
-                          "github.com/steveyegge/beads/internal/utils"))))))))
-    (propagated-inputs
-     (list go-github-com-anthropics-anthropic-sdk-go
-           go-github-com-fatih-color
-           go-github-com-ncruces-go-sqlite3
-           go-github-com-spf13-cobra
-           go-github-com-spf13-viper
-           go-gopkg-in-natefinch-lumberjack-v2
-           go-gopkg-in-yaml-v3
-           go-rsc-io-script))
+          (delete 'check))))
+    (propagated-inputs (list go-github-com-anthropics-anthropic-sdk-go
+                             go-github-com-burntsushi-toml
+                             go-github-com-cenkalti-backoff-v4
+                             go-github-com-charmbracelet-glamour
+                             go-github-com-charmbracelet-lipgloss
+                             go-github-com-fsnotify-fsnotify
+                             go-github-com-go-sql-driver-mysql
+                             go-github-com-muesli-termenv
+                             go-github-com-ncruces-go-sqlite3
+                             go-github-com-olebedev-when
+                             go-github-com-spf13-cobra
+                             go-github-com-spf13-viper
+                             go-golang-org-x-sys
+                             go-golang-org-x-term
+                             go-gopkg-in-yaml-v3
+                             go-rsc-io-script))
     (home-page "https://github.com/steveyegge/beads")
     (synopsis "Go library for graph-based issue tracking")
     (description
