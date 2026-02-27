@@ -338,16 +338,16 @@ in go-mysql-server and Dolt.")
 (define-public go-github-com-dolthub-vitess
   (package
     (name "go-github-com-dolthub-vitess")
-    (version "0.0.0-20260128180459-bd171d35a7e2")
+    (version "0.0.0-20260225173707-20566e4abe9e")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
              (url "https://github.com/dolthub/vitess")
-             (commit "bd171d35a7e2b6c9aed0e943e082bc5cfc8de861")))
+             (commit "20566e4abe9e8d2d5056376d68da5ab9c6a2fd0e")))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1fibza3y33bhv468fzvipmd4v755s6vsvhhhndabrw02wsvrj364"))))
+        (base32 "15nfidxyraypgyvgifg2l752jsfvcz9rjsmrrnxhkpzjqag9s5dm"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -373,16 +373,16 @@ and other projects requiring MySQL SQL parsing capabilities.")
 (define-public go-github-com-dolthub-go-mysql-server
   (package
     (name "go-github-com-dolthub-go-mysql-server")
-    (version "0.20.1-0.20260128201837-5b7ec92cc6e9")
+    (version "0.20.1-0.20260225221122-405dcc690f07")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
              (url "https://github.com/dolthub/go-mysql-server")
-             (commit "5b7ec92cc6e9a9f0d1798fce74178a240cdb28d0")))
+             (commit "405dcc690f073fb84691084ed3d1bb3afc6b32de")))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0p3fv77vqaswpfrq6wam7fd9vd8k3md3130irmjaxj7ma8n66lly"))))
+        (base32 "05viviv17yaf661rmyv7jv90sg2g8ii8zkzajdx6jhphmy6rc9ba"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -472,8 +472,8 @@ events API service, used for event tracking and telemetry in Dolt.")
     (license license:asl2.0)))
 
 (define-public go-github-com-dolthub-eventsapi-schema
-  (let ((commit "eadfd39051ca67f6555efbc79af066929fefd295")
-        (revision "0"))
+  (let ((commit "a7a3c84c84a14ae8696de51eb1cccef977b7c453")
+        (revision "1"))
     (package
       (name "go-github-com-dolthub-eventsapi-schema")
       (version (git-version "0.0.0" revision commit))
@@ -485,7 +485,7 @@ events API service, used for event tracking and telemetry in Dolt.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "1f3za7nyjw15sf0a9m77ysnbgy5vgmka3rfj06pisapd9pdv29b3"))))
+          (base32 "1x5dgqpb000d1713vkg5a73dbfh6prd9isadwfq336cxp4rpan57"))))
       (build-system go-build-system)
       (arguments
        (list
@@ -588,16 +588,16 @@ logarithmic-time removal of both minimum and maximum elements.")
 (define-public go-github-com-dolthub-dolt-go
   (package
     (name "go-github-com-dolthub-dolt-go")
-    (version "0.40.5-0.20260129204643-460dc5864c05")
+    (version "1.82.6")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
              (url "https://github.com/dolthub/dolt")
-             (commit "460dc5864c05a376b4b714609eb78192999ab43b")))
+             (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "031nbqcbccpbpzy505c6m924zw9w7b34nnsr1bhxqnqj4bvrl2x3"))
+        (base32 "09pq82qqa26d6q6krvmcb64hw68i6im0x2f3lxn4xlgkh8rgp3wh"))
        (modules '((guix build utils)))
        (snippet
         ;; Replace google.golang.org/grpc/experimental/credentials
@@ -629,6 +629,9 @@ logarithmic-time removal of both minimum and maximum elements.")
      (list go-cloud-google-com-go
            go-cloud-google-com-go-iam
            go-cloud-google-com-go-storage
+           go-github-com-azure-azure-sdk-for-go-sdk-azcore
+           go-github-com-azure-azure-sdk-for-go-sdk-azidentity
+           go-github-com-azure-azure-sdk-for-go-sdk-storage-azblob
            go-github-com-aliyun-aliyun-oss-go-sdk
            go-github-com-aws-aws-sdk-go-v2
            go-github-com-aws-aws-sdk-go-v2-config
@@ -1000,7 +1003,7 @@ enabling AI assistants to interact with external tools and data sources.")
 (define-public go-github-com-dolthub-dolt-mcp
   (package
     (name "go-github-com-dolthub-dolt-mcp")
-    (version "0.2.2")
+    (version "0.3.4")
     (source
      (origin
        (method git-fetch)
@@ -1009,7 +1012,7 @@ enabling AI assistants to interact with external tools and data sources.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "014wvsjmqp8hk008mh467sabr8wvymlgd0izwjvrha2mjjkqw9z2"))))
+        (base32 "1fkwzbiyfdwmm66fswnhhsdzkwigkn1dpa1crblm4qngj7ch6rfw"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -1033,6 +1036,7 @@ AI assistants to interact with Dolt version-controlled SQL databases.")
     (build-system go-build-system)
     (arguments
      (list
+      #:go go-1.25
       #:install-source? #f
       #:import-path "github.com/dolthub/dolt/go/cmd/dolt"
       #:unpack-path "github.com/dolthub/dolt"
@@ -1064,6 +1068,9 @@ AI assistants to interact with Dolt version-controlled SQL databases.")
            go-cloud-google-com-go
            go-cloud-google-com-go-iam
            go-cloud-google-com-go-storage
+           go-github-com-azure-azure-sdk-for-go-sdk-azcore
+           go-github-com-azure-azure-sdk-for-go-sdk-azidentity
+           go-github-com-azure-azure-sdk-for-go-sdk-storage-azblob
            go-github-com-aliyun-aliyun-oss-go-sdk
            go-github-com-aws-aws-sdk-go-v2
            go-github-com-aws-aws-sdk-go-v2-config
