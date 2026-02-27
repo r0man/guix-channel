@@ -170,6 +170,12 @@ machines.")
       #:install-source? #f
       #:import-path "github.com/steveyegge/gastown/cmd/gt"
       #:unpack-path "github.com/steveyegge/gastown"
+      #:build-flags
+      #~(list (string-append
+               "-ldflags="
+               "-X github.com/steveyegge/gastown/internal/cmd.BuiltProperly=1"
+               " -X github.com/steveyegge/gastown/internal/cmd.Build=v"
+               #$(package-version this-package)))
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'remove-replace-directive
