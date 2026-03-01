@@ -789,7 +789,7 @@ cache keys, detecting changes, or implementing set operations.")
 (define-public go-github-com-steveyegge-beads
   (package
     (name "go-github-com-steveyegge-beads")
-    (version "0.56.1")
+    (version "0.57.0")
     (source
      (origin
        (method git-fetch)
@@ -798,7 +798,7 @@ cache keys, detecting changes, or implementing set operations.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0jbbayz0xlk5kaadyaxww2jqkcsdxsav5anka9qirkwja0lsd7w6"))))
+        (base32 "0z8hikq5aywxxj2kz4n79f6mgyf7cw9wsmn9i4gd7d2llylywc06"))))
     (build-system go-build-system)
     (arguments
      (list

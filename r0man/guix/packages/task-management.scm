@@ -22,7 +22,7 @@
 (define-public beads-next
   (package
     (name "beads-next")
-    (version "0.56.1")
+    (version "0.57.0")
     (source
      (origin
        (method git-fetch)
@@ -31,7 +31,7 @@
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0jbbayz0xlk5kaadyaxww2jqkcsdxsav5anka9qirkwja0lsd7w6"))))
+        (base32 "0z8hikq5aywxxj2kz4n79f6mgyf7cw9wsmn9i4gd7d2llylywc06"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -43,16 +43,12 @@
           (replace 'check
             (lambda* (#:key tests? import-path #:allow-other-keys)
               (when tests?
-                ;; Run only unit tests, skipping CLI integration tests
-                ;; that fail in the sandboxed build environment.
-                (with-directory-excursion (string-append "src/" import-path)
-                  (invoke "go"
-                          "test"
-                          "-v"
-                          "-run"
-                          (string-append "^Test(Parse|VersionCommand"
-                                         "|Truncate|GitRevParse)")
-                          ".")))))
+                ;; Run only the setup tests which don't depend on
+                ;; testcontainers-go (Docker).  The other test packages
+                ;; import internal/testutil which pulls in testcontainers-go
+                ;; for Dolt container management, unavailable in the sandbox.
+                (invoke "go" "test" "-v"
+                        "github.com/steveyegge/beads/cmd/bd/setup"))))
           (add-after 'unpack 'fix-embedded-symlinks
             (lambda _
               (use-modules (ice-9 ftw))
@@ -152,11 +148,11 @@ machines.")
     (license license:expat)))
 
 (define-public gastown-next
-  (let ((commit "0845edd9a056cf1fcef8f2caf9ebe0465468487a")
-        (revision "236"))
+  (let ((commit "db17f2703bbfc86a21077282fab428d7137c650a")
+        (revision "478"))
     (package
       (name "gastown-next")
-      (version (git-version "0.8.0" revision commit))
+      (version (git-version "0.9.0" revision commit))
       (source
        (origin
          (method git-fetch)
@@ -165,7 +161,7 @@ machines.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "0dhfyyiqgmjyf5l9396iksnf4bbinvh1kc2hn2d9jm12gy3xn649"))))
+          (base32 "0il29jhaq1fqwgipb395s8pbm760l43jm9djnhmcrqnglhkrz4mn"))))
       (build-system go-build-system)
       (arguments
        (list
@@ -269,7 +265,8 @@ machines.")
                       go-github-com-cenkalti-backoff-v5
                       go-golang-org-x-sys
                       go-golang-org-x-term
-                      go-golang-org-x-text))
+                      go-golang-org-x-text
+                      go-gopkg-in-natefinch-lumberjack-v2))
       (propagated-inputs (list beads-next dolt tmux))
       (home-page "https://github.com/steveyegge/gastown")
       (synopsis "Multi-agent orchestrator for Claude Code")
