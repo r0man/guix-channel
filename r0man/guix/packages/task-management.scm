@@ -135,11 +135,11 @@ machines.")
     (license license:expat)))
 
 (define-public gastown-next
-  (let ((commit "6d0eeb1f523ed9dff4282377d93ba12aa1af75c7")
-        (revision "5529"))
+  (let ((commit "04e7ed7c15c5aa1927eb249480d1caef04bc1294")
+        (revision "5647"))
     (package
       (name "gastown-next")
-      (version (git-version "0.9.0" revision commit))
+      (version (git-version "0.10.0" revision commit))
       (source
        (origin
          (method git-fetch)
@@ -148,7 +148,7 @@ machines.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "1v3pddq6gnccn5rmkz1ha077nzd621cjg85bix8igsv4xyg3m92k"))))
+          (base32 "12zss6brs4kn78jrxp38ppngz1gj4zp4ym0cyg20x9jc64kbzrm7"))))
       (build-system go-build-system)
       (arguments
        (list
@@ -162,14 +162,7 @@ machines.")
                  #$(package-version this-package)))
         #:phases
         #~(modify-phases %standard-phases
-            (add-after 'unpack 'remove-replace-directive
-              (lambda* (#:key unpack-path #:allow-other-keys)
-                ;; Remove the replace directive so Go uses the dolthub/dolt
-                ;; source provided as an input instead of zfogg's fork.
-                (substitute* (string-append "src/" unpack-path "/go.mod")
-                  (("replace github.com/dolthub/dolt/go =>.*")
-                   ""))))
-            (add-after 'remove-replace-directive 'remove-beads-directory
+            (add-after 'unpack 'remove-beads-directory
               (lambda* (#:key import-path #:allow-other-keys)
                 ;; Remove .beads directory so integration tests skip gracefully.
                 ;; The directory contains only JSONL without an initialized
