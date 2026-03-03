@@ -22,7 +22,7 @@
 (define-public beads-next
   (package
     (name "beads-next")
-    (version "0.57.0")
+    (version "0.58.0")
     (source
      (origin
        (method git-fetch)
@@ -31,7 +31,7 @@
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0z8hikq5aywxxj2kz4n79f6mgyf7cw9wsmn9i4gd7d2llylywc06"))))
+        (base32 "1kqjc60a1gl50bsq5jzp0yykwnmiv7zl189ds1ylxb8yhya1w6sk"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -66,18 +66,6 @@
                                      (lambda (f)
                                        (not (member f
                                                     '("." ".."))))))))
-              ;; Fix sqlite3 WASM files.
-              (let ((sqlite-dir "src/github.com/ncruces/go-sqlite3"))
-                (for-each (lambda (wasm-file)
-                            (when (and (file-exists? wasm-file)
-                                       (symbolic-link? wasm-file))
-                              (let ((target (readlink wasm-file)))
-                                (delete-file wasm-file)
-                                (copy-file target wasm-file))))
-                          (list (string-append sqlite-dir
-                                               "/embed/sqlite3.wasm")
-                                (string-append sqlite-dir "/util/sql3util"
-                                               "/wasm/sql3parse_table.wasm"))))
               ;; Fix chroma lexer and style embedded files.
               (copy-symlink-targets
                "src/github.com/alecthomas/chroma/v2/lexers/embedded")
@@ -118,7 +106,6 @@
                     go-github-com-fsnotify-fsnotify
                     go-github-com-go-sql-driver-mysql
                     go-github-com-muesli-termenv
-                    go-github-com-ncruces-go-sqlite3
                     go-github-com-olebedev-when
                     go-github-com-spf13-cobra
                     go-github-com-spf13-viper
