@@ -22,7 +22,7 @@
 (define-public beads-next
   (package
     (name "beads-next")
-    (version "0.58.0")
+    (version "0.59.0")
     (source
      (origin
        (method git-fetch)
@@ -31,7 +31,7 @@
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1kqjc60a1gl50bsq5jzp0yykwnmiv7zl189ds1ylxb8yhya1w6sk"))))
+        (base32 "0af8blhhwswss3h9ibdalv9m4hgkdrca4v3m30yd9w7xcd2v88r3"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -103,12 +103,14 @@
                     go-github-com-charmbracelet-glamour
                     go-github-com-charmbracelet-huh
                     go-github-com-charmbracelet-lipgloss
+                    go-github-com-dolthub-driver
                     go-github-com-fsnotify-fsnotify
                     go-github-com-go-sql-driver-mysql
                     go-github-com-muesli-termenv
                     go-github-com-olebedev-when
                     go-github-com-spf13-cobra
                     go-github-com-spf13-viper
+                    go-github-com-stretchr-testify
                     go-go-opentelemetry-io-otel
                     go-go-opentelemetry-io-otel-exporters-otlp-otlpmetric-otlpmetrichttp
                     go-go-opentelemetry-io-otel-exporters-stdout-stdoutmetric
@@ -116,6 +118,7 @@
                     go-go-opentelemetry-io-otel-sdk
                     go-go-opentelemetry-io-otel-sdk-metric
                     go-go-opentelemetry-io-proto-otlp
+                    go-golang-org-x-sync
                     go-golang-org-x-sys
                     go-golang-org-x-term
                     go-google-golang-org-grpc
