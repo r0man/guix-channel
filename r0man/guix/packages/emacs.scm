@@ -1873,7 +1873,7 @@ running over SSH or inside terminal multiplexers like tmux or GNU Screen.")
 (define-public emacs-shell-maker
   (package
     (name "emacs-shell-maker")
-    (version "0.84.8")
+    (version "0.86.1")
     (source
      (origin
        (method git-fetch)
@@ -1882,7 +1882,7 @@ running over SSH or inside terminal multiplexers like tmux or GNU Screen.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1knswylikwipg8aqb7dip2jm1l8q3sxj8q0af31ipn92v6wh9bks"))))
+        (base32 "1i51fqj1fh6239yxdngv8crfziv7zd0hjn9qiflqzpyjh6ahhiay"))))
     (build-system emacs-build-system)
     (home-page "https://github.com/xenodium/shell-maker")
     (synopsis "Emacs package for creating interactive command shells")
@@ -1896,7 +1896,7 @@ command history, auto-completion, and customizable prompts.")
 (define-public emacs-acp
   (package
     (name "emacs-acp")
-    (version "0.8.2")
+    (version "0.11.1")
     (source
      (origin
        (method git-fetch)
@@ -1905,7 +1905,7 @@ command history, auto-completion, and customizable prompts.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0znm5qihx2qy3hgw0idg8j7bnhz8k3yaadff3y6696qckdh0qlnr"))))
+        (base32 "1l1m5iwn15xp8h7q18fzmi0grr6cgyiy16dpkp1w8fsbd7n439pb"))))
     (build-system emacs-build-system)
     (home-page "https://github.com/xenodium/acp.el")
     (synopsis "Emacs client library for the Agent Client Protocol")
@@ -1919,7 +1919,7 @@ through a unified protocol.")
 (define-public emacs-agent-shell
   (package
     (name "emacs-agent-shell")
-    (version "0.28.1")
+    (version "0.44.1")
     (source
      (origin
        (method git-fetch)
@@ -1928,7 +1928,7 @@ through a unified protocol.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1c17qi31p9i9llggyqgv01in7w2ngk2czpj4lnn1bzdh61n94kwx"))))
+        (base32 "0hswa6w3mkgfm0qyk35gprgnmf9f7yj0bh9gmizk49d22dsy1n0r"))))
     (build-system emacs-build-system)
     (propagated-inputs (list emacs-shell-maker emacs-acp))
     (home-page "https://github.com/xenodium/agent-shell")
