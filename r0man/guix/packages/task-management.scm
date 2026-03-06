@@ -138,11 +138,11 @@ machines.")
     (license license:expat)))
 
 (define-public gastown-next
-  (let ((commit "04e7ed7c15c5aa1927eb249480d1caef04bc1294")
-        (revision "5647"))
+  (let ((commit "bf260dc7b14c5c58e33f2433f2555e7fae2ab503")
+        (revision "5839"))
     (package
       (name "gastown-next")
-      (version (git-version "0.10.0" revision commit))
+      (version (git-version "0.11.0" revision commit))
       (source
        (origin
          (method git-fetch)
@@ -151,7 +151,7 @@ machines.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "12zss6brs4kn78jrxp38ppngz1gj4zp4ym0cyg20x9jc64kbzrm7"))))
+          (base32 "11gmr0brvdr9mgq7sbxlxwb4y3j0nq9hlq662mq9fn89dmsbyxpa"))))
       (build-system go-build-system)
       (arguments
        (list
@@ -249,7 +249,9 @@ machines.")
                       go-golang-org-x-sys
                       go-golang-org-x-term
                       go-golang-org-x-text
-                      go-gopkg-in-natefinch-lumberjack-v2))
+                      go-golang-org-x-time
+                      go-gopkg-in-natefinch-lumberjack-v2
+                      go-gopkg-in-yaml-v3))
       (propagated-inputs (list beads-next dolt tmux))
       (home-page "https://github.com/steveyegge/gastown")
       (synopsis "Multi-agent orchestrator for Claude Code")
