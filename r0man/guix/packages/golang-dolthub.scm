@@ -338,16 +338,16 @@ in go-mysql-server and Dolt.")
 (define-public go-github-com-dolthub-vitess
   (package
     (name "go-github-com-dolthub-vitess")
-    (version "0.0.0-20260225173707-20566e4abe9e")
+    (version "0.0.0-20260304224106-95dd8eda10b0")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
              (url "https://github.com/dolthub/vitess")
-             (commit "20566e4abe9e8d2d5056376d68da5ab9c6a2fd0e")))
+             (commit "95dd8eda10b09b2454b58c1c6564e3259f99dc07")))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "15nfidxyraypgyvgifg2l752jsfvcz9rjsmrrnxhkpzjqag9s5dm"))))
+        (base32 "1c0zdwhirxz8c7w8lrza0313l86ygv0x07zq0l8q4vpnbj4nq77b"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -373,16 +373,16 @@ and other projects requiring MySQL SQL parsing capabilities.")
 (define-public go-github-com-dolthub-go-mysql-server
   (package
     (name "go-github-com-dolthub-go-mysql-server")
-    (version "0.20.1-0.20260225221122-405dcc690f07")
+    (version "0.20.1-0.20260306002943-3e8a45211974")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
              (url "https://github.com/dolthub/go-mysql-server")
-             (commit "405dcc690f073fb84691084ed3d1bb3afc6b32de")))
+             (commit "3e8a45211974ec2c54e59b2a23b30a1bd488b76c")))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "05viviv17yaf661rmyv7jv90sg2g8ii8zkzajdx6jhphmy6rc9ba"))))
+        (base32 "1gkx877r6y9ikdfx2r75yhcc1xj7kw5957vq7bbkp370ifxbq91p"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -588,7 +588,7 @@ logarithmic-time removal of both minimum and maximum elements.")
 (define-public go-github-com-dolthub-dolt-go
   (package
     (name "go-github-com-dolthub-dolt-go")
-    (version "1.82.6")
+    (version "1.83.3")
     (source
      (origin
        (method git-fetch)
@@ -597,7 +597,7 @@ logarithmic-time removal of both minimum and maximum elements.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "09pq82qqa26d6q6krvmcb64hw68i6im0x2f3lxn4xlgkh8rgp3wh"))
+        (base32 "0ywr88d834fq80jhiq7vadz62rzyb4vsyrj4w722qigq31jr4byv"))
        (modules '((guix build utils)))
        (snippet
         ;; Replace google.golang.org/grpc/experimental/credentials
