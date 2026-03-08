@@ -2013,3 +2013,29 @@ and default namespace in the modeline
 The package follows a batteries-included philosophy, coming pre-configured
 with useful integrations while remaining highly customizable.")
     (license license:asl2.0)))
+
+(define-public emacs-podman
+  (let ((commit "93f19860badedb0ad1519358fda441940ef688e7")
+        (revision "1"))
+    (package
+      (name "emacs-podman")
+      (version (git-version "0.1" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/akirak/podman.el")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1vr7m1jikr0j9hy6qlmvcd3xckqw33v0cqmd1p3gdng7q1xkr2h1"))))
+      (build-system emacs-build-system)
+      (propagated-inputs (list emacs-tablist emacs-transient emacs-ts))
+      (home-page "https://github.com/akirak/podman.el")
+      (synopsis "Manage Podman pods from Emacs")
+      (description
+       "This package provides an Emacs interface for managing Podman pods.
+It displays pods in a tabular interface via the @code{podman-pod-list} command
+and allows performing operations on pods interactively.  It complements
+@code{docker.el} by providing Podman-specific pod management features.")
+      (license license:gpl3+))))
