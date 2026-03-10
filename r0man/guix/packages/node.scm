@@ -55,18 +55,18 @@ Anthropic's Claude AI assistant.")
               "https://github.com/anthropics/claude-code/blob/main/LICENSE.md"
               "See LICENSE.md in the repository."))))
 
-(define-public node-zed-industries-claude-code-acp
+(define-public node-zed-industries-claude-agent-acp
   (package
-    (name "node-zed-industries-claude-code-acp")
-    (version "0.16.2")
+    (name "node-zed-industries-claude-agent-acp")
+    (version "0.21.0")
     (source
      (origin
        (method url-fetch)
        (uri (string-append
-             "https://registry.npmjs.org/@zed-industries/claude-code-acp/"
-             "-/claude-code-acp-" version ".tgz"))
+             "https://registry.npmjs.org/@zed-industries/claude-agent-acp/"
+             "-/claude-agent-acp-" version ".tgz"))
        (sha256
-        (base32 "17m9rwmxijxi7g5vzy6dbpskpl3k01l1xnz4544qal26l2xv64s7"))))
+        (base32 "17z5dwiqh4pg8hb41ac16cgrsxc5pfpmv9scrqlc6fg34cfw8331"))))
     (build-system node-build-system)
     (arguments
      (list
@@ -79,14 +79,14 @@ Anthropic's Claude AI assistant.")
             (lambda _
               (let* ((lib (string-append #$output
                                          "/lib/node_modules"
-                                         "/@zed-industries/claude-code-acp"))
+                                         "/@zed-industries/claude-agent-acp"))
                      (bin (string-append #$output "/bin")))
                 (mkdir-p lib)
                 (mkdir-p bin)
                 (copy-recursively "dist" (string-append lib "/dist"))
                 (copy-file "package.json" (string-append lib "/package.json"))
                 (symlink (string-append lib "/dist/index.js")
-                         (string-append bin "/claude-code-acp")))))
+                         (string-append bin "/claude-agent-acp")))))
           (delete 'validate-runpath))))
     (home-page "https://github.com/zed-industries/claude-agent-acp")
     (synopsis "ACP adapter for Claude Code integration")
