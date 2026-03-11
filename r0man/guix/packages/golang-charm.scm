@@ -80,7 +80,7 @@ bytes, and runes in Go.")
                                           #:subdir "ansi"))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1xkimvzvafr9d8ar7m3kbqwj11bhac36v894jnhkgwp38bvk69wz"))))
+        (base32 "1jlc7i41gv8gp4p452kv3f5gabpcix1mbbjfslpzj1k8lynb3nfc"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -113,7 +113,7 @@ specs for terminal applications.")
                                           #:subdir "term"))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0sriiy8njbnwgn0ydnp3adq70ch489xi5v662c6h3zq1f6b981zy"))))
+        (base32 "0gah6pnr4l7ap99haiqmn33csh4zqsls176nih2pn6hxm6089fij"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -141,7 +141,7 @@ specs for terminal applications.")
                                           #:subdir "windows"))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "01iba6qjgpxw2bik8331s71320vs0zr4x3fnpzkf9vhr91qkm6nv"))))
+        (base32 "0cvpyks5pnfsb7ifm2bdd1jaw50q39bdf7vj4lnhjyw1l62xn5v0"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -197,7 +197,7 @@ applications.")
                                           #:subdir "cellbuf"))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0r23aa9lfbkgz5x021m209s2c1mvp9pmp77fhxh8mlmza7ssi088"))))
+        (base32 "17f37m2zzhxcm422h143khvhfmh2k1jc6mqhrz6xqmhibqvgwh3a"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -400,7 +400,7 @@ including text inputs, spinners, paginated lists, and more.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "06099w8w02wgd1r56qp7z2bmj5wh4981pql6bfi7wcn422rbxkb3"))))
+        (base32 "02sw0v7h2j3ch74mbz68wafzlxfq4jx2qvjvw5vhgqsy72yymbry"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -429,7 +429,7 @@ compatible terminals with customizable stylesheets.")
     (version "2.0.3")
     (source
      (origin
-       (method git-fetch/lfs)
+       (method git-fetch)
        (uri (git-reference
              (url "https://github.com/charmbracelet/huh")
              (commit (string-append "v" version))))
