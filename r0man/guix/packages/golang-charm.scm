@@ -73,14 +73,14 @@ bytes, and runes in Go.")
     (version "0.11.6")
     (source
      (origin
-       (method git-fetch)
+       (method git-fetch/lfs)
        (uri (git-reference
              (url "https://github.com/charmbracelet/x")
              (commit (go-version->git-ref version
                                           #:subdir "ansi"))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1jlc7i41gv8gp4p452kv3f5gabpcix1mbbjfslpzj1k8lynb3nfc"))))
+        (base32 "1xkimvzvafr9d8ar7m3kbqwj11bhac36v894jnhkgwp38bvk69wz"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -106,14 +106,14 @@ specs for terminal applications.")
     (version "0.2.2")
     (source
      (origin
-       (method git-fetch)
+       (method git-fetch/lfs)
        (uri (git-reference
              (url "https://github.com/charmbracelet/x")
              (commit (go-version->git-ref version
                                           #:subdir "term"))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0gah6pnr4l7ap99haiqmn33csh4zqsls176nih2pn6hxm6089fij"))))
+        (base32 "0sriiy8njbnwgn0ydnp3adq70ch489xi5v662c6h3zq1f6b981zy"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -134,7 +134,7 @@ specs for terminal applications.")
     (version "0.2.2")
     (source
      (origin
-       (method git-fetch)
+       (method git-fetch/lfs)
        (uri (git-reference
              (url "https://github.com/charmbracelet/x")
              (commit (go-version->git-ref version
@@ -190,7 +190,7 @@ applications.")
     (version "0.0.15")
     (source
      (origin
-       (method git-fetch)
+       (method git-fetch/lfs)
        (uri (git-reference
              (url "https://github.com/charmbracelet/x")
              (commit (go-version->git-ref version
@@ -259,7 +259,7 @@ libraries.")
     (version "0.1.0")
     (source
      (origin
-       (method git-fetch)
+       (method git-fetch/lfs)
        (uri (git-reference
              (url "https://github.com/charmbracelet/x")
              (commit (go-version->git-ref version
@@ -394,7 +394,7 @@ including text inputs, spinners, paginated lists, and more.")
     (version "2.0.0")
     (source
      (origin
-       (method git-fetch)
+       (method git-fetch/lfs)
        (uri (git-reference
              (url "https://github.com/charmbracelet/glamour")
              (commit (string-append "v" version))))
