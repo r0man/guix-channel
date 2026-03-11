@@ -6,7 +6,12 @@
     #:use-module (gnu packages golang-web)
     #:use-module ((gnu packages golang-xyz)
                    #:hide (go-github-com-charmbracelet-bubbles
-                           go-github-com-charmbracelet-bubbletea))
+                           go-github-com-charmbracelet-bubbletea
+                           go-github-com-charmbracelet-colorprofile
+                           go-github-com-charmbracelet-x-ansi
+                           go-github-com-charmbracelet-x-cellbuf
+                           go-github-com-charmbracelet-x-term
+                           go-github-com-charmbracelet-x-windows))
     #:use-module (gnu packages icu4c)
     #:use-module (gnu packages tmux)
     #:use-module (gnu packages version-control)
@@ -15,13 +20,14 @@
     #:use-module (guix gexp)
     #:use-module (guix git-download)
     #:use-module (guix packages)
+    #:use-module (r0man guix packages golang-charm)
     #:use-module (r0man guix packages golang-dolthub)
     #:use-module (r0man guix packages golang-web)
     #:use-module (r0man guix packages golang-xyz))
 
 (define-public beads-next
-  (let ((commit "b01931a6f5f413b2ed015bad41668511617f4f57")
-        (revision "86"))
+  (let ((commit "69573b88101ef67a0b8f61f03743de1815a43045")
+        (revision "121"))
     (package
       (name "beads-next")
       (version (git-version "0.59.0" revision commit))
@@ -33,7 +39,7 @@
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "0k4r3r1w80k59s6qwjwf3yfvxvl1v70s466xj6dq3c0z31vwgl1c"))))
+          (base32 "1ayi722xixv8sk6v6s00kqqlb8pw7l5pnvylq42vssnxs4p3nn4k"))))
       (build-system go-build-system)
       (arguments
        (list
@@ -98,12 +104,22 @@
                       (system* bd "completion" "fish")))))))))
       (native-inputs (list git
                       icu4c
+                      ;; Updated charmbracelet/x packages must appear before
+                      ;; packages that propagate older versions, so they win
+                      ;; collision resolution in setup-go-environment.
+                      go-github-com-charmbracelet-colorprofile
+                      go-github-com-charmbracelet-ultraviolet
+                      go-github-com-charmbracelet-x-ansi
+                      go-github-com-charmbracelet-x-cellbuf
+                      go-github-com-charmbracelet-x-term
+                      go-github-com-charmbracelet-x-windows
                       go-github-com-anthropics-anthropic-sdk-go
                       go-github-com-burntsushi-toml
                       go-github-com-cenkalti-backoff-v4
                       go-github-com-cenkalti-backoff-v5
-                      go-github-com-charmbracelet-glamour
-                      go-github-com-charmbracelet-huh
+                      go-charm-land-glamour-v2
+                      go-charm-land-huh-v2
+                      go-charm-land-lipgloss-v2
                       go-github-com-charmbracelet-lipgloss
                       go-github-com-dolthub-driver
                       go-github-com-fsnotify-fsnotify
