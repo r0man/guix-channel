@@ -3,7 +3,9 @@
     #:use-module (gnu packages golang)
     #:use-module (gnu packages golang-build)
     #:use-module (gnu packages golang-check)
-    #:use-module (gnu packages golang-web)
+    #:use-module ((gnu packages golang-web)
+                   #:hide (go-go-opentelemetry-io-otel-log
+                           go-go-opentelemetry-io-otel-sdk-log))
     #:use-module ((gnu packages golang-xyz)
                    #:hide (go-github-com-charmbracelet-bubbles
                            go-github-com-charmbracelet-bubbletea
