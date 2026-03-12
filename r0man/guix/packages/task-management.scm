@@ -26,11 +26,11 @@
     #:use-module (r0man guix packages golang-xyz))
 
 (define-public beads-next
-  (let ((commit "69573b88101ef67a0b8f61f03743de1815a43045")
-        (revision "121"))
+  (let ((commit "bb455959d0daa14bf8b4bbc35a1b12c22a926343")
+        (revision "155"))
     (package
       (name "beads-next")
-      (version (git-version "0.59.0" revision commit))
+      (version (git-version "0.60.0" revision commit))
       (source
        (origin
          (method git-fetch)
@@ -39,7 +39,7 @@
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "1ayi722xixv8sk6v6s00kqqlb8pw7l5pnvylq42vssnxs4p3nn4k"))))
+          (base32 "0v8bd5rb0gyyyvjk3ypgki6pqcc0azsxvp2pm5d13d70i4xjvyw1"))))
       (build-system go-build-system)
       (arguments
        (list
@@ -156,11 +156,11 @@ machines.")
       (license license:expat))))
 
 (define-public gastown-next
-  (let ((commit "c44fd7e50ebf9d28a458121c5090a7bec3f9fea2")
-        (revision "6194"))
+  (let ((commit "3bfb3b71f7a22bd774b1ac81ba599259dfc95af0")
+        (revision "6289"))
     (package
       (name "gastown-next")
-      (version (git-version "0.11.0" revision commit))
+      (version (git-version "0.12.0" revision commit))
       (source
        (origin
          (method git-fetch)
@@ -169,7 +169,7 @@ machines.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "0ilpzj0f41r1g4zcjvkdmp3331xaabl1jc1mblcm2fx51p3a39id"))))
+          (base32 "0d3ss0n4i5bcan0dmbzinp60cr6zkwv5w9dj9y55s60mlnrfp2va"))))
       (build-system go-build-system)
       (arguments
        (list
