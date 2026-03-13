@@ -80,7 +80,7 @@ bytes, and runes in Go.")
                                           #:subdir "ansi"))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1xkimvzvafr9d8ar7m3kbqwj11bhac36v894jnhkgwp38bvk69wz"))))
+        (base32 "1jlc7i41gv8gp4p452kv3f5gabpcix1mbbjfslpzj1k8lynb3nfc"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -113,7 +113,7 @@ specs for terminal applications.")
                                           #:subdir "term"))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0sriiy8njbnwgn0ydnp3adq70ch489xi5v662c6h3zq1f6b981zy"))))
+        (base32 "0gah6pnr4l7ap99haiqmn33csh4zqsls176nih2pn6hxm6089fij"))))
     (build-system go-build-system)
     (arguments
      (list
