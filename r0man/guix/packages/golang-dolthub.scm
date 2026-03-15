@@ -2,7 +2,6 @@
   #:use-module ((guix licenses) #:prefix license:)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages icu4c)
-  #:use-module (gnu packages databases)
   #:use-module (gnu packages golang)
   #:use-module (gnu packages golang-build)
   #:use-module (gnu packages golang-check)
@@ -39,6 +38,7 @@
      (list
       #:import-path "cloud.google.com/go/iam"
       #:unpack-path "cloud.google.com/go"
+      ;; Tests require Google Cloud credentials and network access.
       #:tests? #f
       #:phases
       #~(modify-phases %standard-phases
@@ -50,6 +50,7 @@
 and Access Management (IAM).  It enables managing permissions and access
 control for Google Cloud resources.")
     (license license:asl2.0)))
+
 
 (define-public go-cloud-google-com-go
   (package
@@ -73,6 +74,7 @@ control for Google Cloud resources.")
     (arguments
      (list
       #:import-path "cloud.google.com/go"
+      ;; Tests require Google Cloud credentials and network access.
       #:tests? #f
       #:phases
       #~(modify-phases %standard-phases
@@ -85,6 +87,7 @@ control for Google Cloud resources.")
 Platform services.  It includes internal utilities and common types used by
 other Google Cloud Go packages.")
     (license license:asl2.0)))
+
 
 (define-public go-google-golang-org-genproto
   (package
@@ -103,6 +106,7 @@ other Google Cloud Go packages.")
     (arguments
      (list
       #:import-path "google.golang.org/genproto"
+      ;; Source-only generated protobuf definitions; no tests.
       #:tests? #f
       #:phases
       #~(modify-phases %standard-phases
@@ -114,6 +118,7 @@ other Google Cloud Go packages.")
 buffer types used by Google APIs, including googleapis/type packages for
 date, expr, and other common types.")
     (license license:asl2.0)))
+
 
 (define-public go-gopkg-in-src-d-go-errors-v1
   (package
@@ -143,6 +148,7 @@ with built-in stack traces, formatting error messages with parameters, and
 wrapping existing errors while maintaining error type information.")
     (license license:asl2.0)))
 
+
 (define-public go-github-com-dolthub-maphash
   (package
     (name "go-github-com-dolthub-maphash")
@@ -167,6 +173,7 @@ wrapping existing errors while maintaining error type information.")
      "This package allows hashing any comparable type using Go's fast runtime
 hash.  It uses AES instructions when available for optimal performance.")
     (license license:asl2.0)))
+
 
 (define-public go-github-com-dolthub-fslock
   (let ((commit "ef20baba23181a40c4ae76dfb303c99d3188e1c9")
@@ -196,6 +203,7 @@ works on Windows and Unix platforms.  It uses LockFileEx on Windows and flock
 on Unix systems.")
       (license license:lgpl3))))
 
+
 (define-public go-github-com-dolthub-jsonpath
   (package
     (name "go-github-com-dolthub-jsonpath")
@@ -208,13 +216,18 @@ on Unix systems.")
              (commit "19675ab05c71df43bda05c9f24e73942a5bb9483")))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "04xy8j80h4gpb6i2xci06j823aqjq7ym274l4v983v03zhykqdi7"))))
+        (base32 "04xy8j80h4gpb6i2xci06j823aqjq7ym274l4v983v03zhykqdi7"))
+       (modules '((guix build utils)))
+       (snippet
+        ;; Fix non-constant format string in test (Go 1.24+ vet error).
+        '(substitute* "jsonpath_test.go"
+           (("t\\.Logf\\(args_v\\)")
+            "t.Logf(\"%s\", args_v)")))))
     (build-system go-build-system)
     (arguments
      (list
-      #:import-path "github.com/dolthub/jsonpath"
-      ;; Tests fail with Go 1.24+ due to non-constant format string
-      #:tests? #f))
+      #:import-path "github.com/dolthub/jsonpath"))
+    (native-inputs (list go-github-com-stretchr-testify))
     (propagated-inputs (list go-gopkg-in-src-d-go-errors-v1))
     (home-page "https://github.com/dolthub/jsonpath")
     (synopsis "JSONPath implementation for Go")
@@ -222,6 +235,7 @@ on Unix systems.")
      "This package provides a JSONPath implementation for Go, allowing queries
 on JSON data structures using JSONPath expressions.")
     (license license:expat)))
+
 
 (define-public go-github-com-dolthub-flatbuffers
   (package
@@ -250,6 +264,7 @@ parsing/unpacking while maintaining forwards/backwards compatibility.  This is
 DoltHub's fork with Go-specific modifications.")
     (license license:asl2.0)))
 
+
 (define-public go-github-com-dolthub-swiss
   (package
     (name "go-github-com-dolthub-swiss")
@@ -276,6 +291,7 @@ DoltHub's fork with Go-specific modifications.")
 family.  It uses AES instructions for fast-hashing and performs key lookups
 in parallel using SSE instructions.")
     (license license:asl2.0)))
+
 
 (define-public go-github-com-dolthub-gozstd
   (package
@@ -304,6 +320,7 @@ library.  It builds zstd as part of the CGO build with optimization flags for
 maximum performance.")
     (license license:expat)))
 
+
 (define-public go-github-com-dolthub-go-icu-regex
   (package
     (name "go-github-com-dolthub-go-icu-regex")
@@ -320,12 +337,9 @@ maximum performance.")
     (build-system go-build-system)
     (arguments
      (list
-      #:import-path "github.com/dolthub/go-icu-regex"
-      ;; Library package; skip build (CGO requires ICU4C at compile time)
-      #:tests? #f
-      #:phases
-      #~(modify-phases %standard-phases
-          (delete 'build))))
+      #:import-path "github.com/dolthub/go-icu-regex"))
+    (inputs (list icu4c))
+    (native-inputs (list go-github-com-stretchr-testify))
     (propagated-inputs (list go-gopkg-in-src-d-go-errors-v1))
     (home-page "https://github.com/dolthub/go-icu-regex")
     (synopsis "ICU regex bindings for Go via CGO")
@@ -334,6 +348,7 @@ maximum performance.")
 CGO.  It supports MySQL-compatible regular expression functionality for use
 in go-mysql-server and Dolt.")
     (license license:asl2.0)))
+
 
 (define-public go-github-com-dolthub-vitess
   (package
@@ -353,7 +368,7 @@ in go-mysql-server and Dolt.")
      (list
       #:import-path "github.com/dolthub/vitess/go"
       #:unpack-path "github.com/dolthub/vitess"
-      ;; This is a library package with no main, just install source
+      ;; Tests require a running MySQL database instance.
       #:tests? #f
       #:phases
       #~(modify-phases %standard-phases
@@ -369,6 +384,7 @@ in go-mysql-server and Dolt.")
 parser.  It extracts the SQL parsing components for use in go-mysql-server
 and other projects requiring MySQL SQL parsing capabilities.")
     (license license:asl2.0)))
+
 
 (define-public go-github-com-dolthub-go-mysql-server
   (package
@@ -387,7 +403,7 @@ and other projects requiring MySQL SQL parsing capabilities.")
     (arguments
      (list
       #:import-path "github.com/dolthub/go-mysql-server"
-      ;; This is a library package
+      ;; Tests require a running MySQL database instance.
       #:tests? #f
       #:phases
       #~(modify-phases %standard-phases
@@ -439,6 +455,7 @@ library or embedded database.  It supports standard SQL queries and is
 designed for use in Dolt, a version-controlled database.")
     (license license:asl2.0)))
 
+
 (define-public go-github-com-dolthub-dolt-go-gen-proto-dolt-services-eventsapi
   (package
     (name "go-github-com-dolthub-dolt-go-gen-proto-dolt-services-eventsapi")
@@ -457,11 +474,9 @@ designed for use in Dolt, a version-controlled database.")
      (list
       #:import-path "github.com/dolthub/dolt/go/gen/proto/dolt/services/eventsapi"
       #:unpack-path "github.com/dolthub/dolt"
-      ;; Only install the eventsapi proto package
       #:phases
       #~(modify-phases %standard-phases
-          (delete 'build)
-          (delete 'check))))
+          (delete 'build))))
     (propagated-inputs (list go-google-golang-org-grpc
                              go-google-golang-org-protobuf))
     (home-page "https://github.com/dolthub/dolt")
@@ -470,6 +485,7 @@ designed for use in Dolt, a version-controlled database.")
      "This package provides generated Protocol Buffer definitions for the Dolt
 events API service, used for event tracking and telemetry in Dolt.")
     (license license:asl2.0)))
+
 
 (define-public go-github-com-dolthub-eventsapi-schema
   (let ((commit "a7a3c84c84a14ae8696de51eb1cccef977b7c453")
@@ -490,7 +506,6 @@ events API service, used for event tracking and telemetry in Dolt.")
       (arguments
        (list
         #:import-path "github.com/dolthub/eventsapi_schema"
-        #:tests? #f
         #:phases
         #~(modify-phases %standard-phases
             (delete 'build))))
@@ -502,6 +517,7 @@ events API service, used for event tracking and telemetry in Dolt.")
        "This package provides generated Protocol Buffer definitions for the Dolt
 events API service, used for event tracking and telemetry in Dolt.")
       (license license:asl2.0))))
+
 
 (define-public go-github-com-dolthub-aws-sdk-go-ini-parser
   (let ((commit "2821c37f6c12dd269368057faa32c9d3c5a21692")
@@ -521,17 +537,14 @@ events API service, used for event tracking and telemetry in Dolt.")
       (build-system go-build-system)
       (arguments
        (list
-        #:import-path "github.com/dolthub/aws-sdk-go-ini-parser"
-        #:tests? #f
-        #:phases
-        #~(modify-phases %standard-phases
-            (delete 'build))))
+        #:import-path "github.com/dolthub/aws-sdk-go-ini-parser"))
       (home-page "https://github.com/dolthub/aws-sdk-go-ini-parser")
       (synopsis "INI file parser extracted from AWS SDK for Go")
       (description
        "This package provides an INI file parser extracted from the AWS SDK for
 Go, used by Dolt for reading AWS configuration files.")
       (license license:asl2.0))))
+
 
 (define-public go-github-com-gocraft-dbr-v2
   (package
@@ -550,16 +563,15 @@ Go, used by Dolt for reading AWS configuration files.")
     (arguments
      (list
       #:import-path "github.com/gocraft/dbr/v2"
-      #:tests? #f
-      #:phases
-      #~(modify-phases %standard-phases
-          (delete 'build))))
+      ;; Tests require a running database.
+      #:tests? #f))
     (home-page "https://github.com/gocraft/dbr")
     (synopsis "Additions to Go's database/sql for SQL generation")
     (description
      "This package provides additions to Go's database/sql for super fast
 performance and convenience, including a fluent SQL builder.")
     (license license:expat)))
+
 
 (define-public go-github-com-esote-minmaxheap
   (package
@@ -584,6 +596,7 @@ performance and convenience, including a fluent SQL builder.")
      "This package provides a min-max heap implementation for Go, enabling
 logarithmic-time removal of both minimum and maximum elements.")
     (license license:cc0)))
+
 
 (define-public go-github-com-dolthub-dolt-go
   (package
@@ -620,7 +633,7 @@ logarithmic-time removal of both minimum and maximum elements.")
      (list
       #:import-path "github.com/dolthub/dolt/go"
       #:unpack-path "github.com/dolthub/dolt"
-      ;; Library package with extensive dependencies
+      ;; Tests require a running database and network access.
       #:tests? #f
       #:phases
       #~(modify-phases %standard-phases
@@ -700,6 +713,7 @@ logarithmic-time removal of both minimum and maximum elements.")
 package provides the Go library for embedding Dolt functionality.")
     (license license:asl2.0)))
 
+
 (define-public go-github-com-abiosoft-readline
   (package
     (name "go-github-com-abiosoft-readline")
@@ -717,38 +731,13 @@ package provides the Go library for embedding Dolt functionality.")
     (arguments
      (list
       #:import-path "github.com/abiosoft/readline"
+      ;; Package predates Go modules; tests fail with Go 1.24+.
       #:tests? #f))
     (home-page "https://github.com/abiosoft/readline")
     (synopsis "Pure Go implementation of GNU Readline")
     (description
      "This package provides a pure Go implementation of a GNU Readline-like
 library for building interactive command-line applications.")
-    (license license:expat)))
-
-(define-public go-github-com-andreyvit-diff
-  (package
-    (name "go-github-com-andreyvit-diff")
-    (version "0.0.0-20170406064948-c7f18ee00883")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/andreyvit/diff")
-             (commit (go-version->git-ref version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "1s4qjkxig5yqahpzfl4xqh4kzi9mymdpkzq6kj3f4dr5dl3hlynr"))))
-    (build-system go-build-system)
-    (arguments
-     (list
-      #:import-path "github.com/andreyvit/diff"
-      #:tests? #f))
-    (propagated-inputs (list go-github-com-sergi-go-diff))
-    (home-page "https://github.com/andreyvit/diff")
-    (synopsis "Quick string diffing functions for Go")
-    (description
-     "This package provides string diffing functions based on
-go-diff, mainly for use in tests.")
     (license license:expat)))
 
 (define-public go-github-com-dolthub-ishell
@@ -768,6 +757,8 @@ go-diff, mainly for use in tests.")
     (arguments
      (list
       #:import-path "github.com/dolthub/ishell"
+      ;; Tests fail due to Go module resolution issues in the build
+      ;; environment.
       #:tests? #f))
     (propagated-inputs (list go-github-com-abiosoft-readline
                              go-github-com-fatih-color
@@ -778,30 +769,6 @@ go-diff, mainly for use in tests.")
      "This package provides an interactive shell framework for building
 command-line applications with auto-completion and command history.")
     (license license:expat)))
-
-(define-public go-github-com-google-shlex
-  (package
-    (name "go-github-com-google-shlex")
-    (version "0.0.0-20191202100458-e7afc7fbc510")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/google/shlex")
-             (commit (go-version->git-ref version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "14z8hqyik910wk2qwnzgz8mjsmiamxa0pj55ahbv0jx6j3dgvzfm"))))
-    (build-system go-build-system)
-    (arguments
-     (list
-      #:import-path "github.com/google/shlex"))
-    (home-page "https://github.com/google/shlex")
-    (synopsis "Shell-style string tokenizer for Go")
-    (description
-     "This package provides a simple lexer which splits input into tokens using
-shell-style rules for quoting and commenting.")
-    (license license:asl2.0)))
 
 (define-public go-github-com-google-go-github-v57
   (package
@@ -820,6 +787,7 @@ shell-style rules for quoting and commenting.")
     (arguments
      (list
       #:import-path "github.com/google/go-github/v57"
+      ;; Tests require network access and GitHub API credentials.
       #:tests? #f
       #:phases
       #~(modify-phases %standard-phases
@@ -831,33 +799,17 @@ shell-style rules for quoting and commenting.")
      "This package provides a Go client library for accessing the GitHub API v3.")
     (license license:bsd-3)))
 
-(define-public go-github-com-skratchdot-open-golang
+
+(define-public go-github-com-shirou-gopsutil-v4/fixed
   (package
-    (name "go-github-com-skratchdot-open-golang")
-    (version "0.0.0-20200116055534-eef842397966")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/skratchdot/open-golang")
-             (commit (go-version->git-ref version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "0n6387csjn024db8wldadsiy8ljz7lk7szl6ls28fcbkax7rw86y"))))
-    (build-system go-build-system)
+    (inherit go-github-com-shirou-gopsutil-v4)
     (arguments
      (list
-      #:import-path "github.com/skratchdot/open-golang"
-      #:tests? #f
-      #:phases
-      #~(modify-phases %standard-phases
-          (delete 'build))))
-    (home-page "https://github.com/skratchdot/open-golang")
-    (synopsis "Open URLs and files from Go using the OS default application")
-    (description
-     "This package provides a function to open URLs, files, and directories
-using the default application associated by the operating system.")
-    (license license:expat)))
+      #:import-path "github.com/shirou/gopsutil/v4"
+      ;; Tests require /proc and /sys access unavailable in the build
+      ;; environment.
+      #:tests? #f))))
+
 
 (define-public go-github-com-tealeg-xlsx
   (package
@@ -876,97 +828,14 @@ using the default application associated by the operating system.")
     (arguments
      (list
       #:import-path "github.com/tealeg/xlsx"
+      ;; Tests fail due to Go module resolution issues in the build
+      ;; environment.
       #:tests? #f))
     (home-page "https://github.com/tealeg/xlsx")
     (synopsis "XLSX file reading and writing library for Go")
     (description
      "This package provides a library for reading and writing XLSX
 (Microsoft Excel) spreadsheet files in Go.")
-    (license license:bsd-3)))
-
-(define-public go-github-com-tidwall-gjson
-  (package
-    (name "go-github-com-tidwall-gjson")
-    (version "1.14.4")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/tidwall/gjson")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "1rs8i87j62sgas55cvm8kzcgf40090dq38r6m6s03rzxs9hbcd6w"))))
-    (build-system go-build-system)
-    (arguments
-     (list
-      #:import-path "github.com/tidwall/gjson"
-      #:tests? #f))
-    (propagated-inputs (list go-github-com-tidwall-match
-                             go-github-com-tidwall-pretty))
-    (home-page "https://github.com/tidwall/gjson")
-    (synopsis "Fast JSON value retrieval for Go")
-    (description
-     "This package provides a fast way to get values from JSON documents
-using a simple path syntax.")
-    (license license:expat)))
-
-(define-public go-github-com-tidwall-sjson
-  (package
-    (name "go-github-com-tidwall-sjson")
-    (version "1.2.5")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/tidwall/sjson")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "16yaikpxiwqz00zxa70w17k2k52nr06svand88sv2br6b6i8v09r"))))
-    (build-system go-build-system)
-    (arguments
-     (list
-      #:import-path "github.com/tidwall/sjson"))
-    (propagated-inputs (list go-github-com-tidwall-gjson
-                             go-github-com-tidwall-pretty))
-    (home-page "https://github.com/tidwall/sjson")
-    (synopsis "Fast JSON value setting for Go")
-    (description
-     "This package provides a fast way to set values in JSON documents
-using a simple path syntax.")
-    (license license:expat)))
-
-(define-public go-github-com-shirou-gopsutil-v4/fixed
-  (package
-    (inherit go-github-com-shirou-gopsutil-v4)
-    (arguments
-     (list
-      #:import-path "github.com/shirou/gopsutil/v4"
-      #:tests? #f))))
-
-(define-public go-github-com-yosida95-uritemplate-v3
-  (package
-    (name "go-github-com-yosida95-uritemplate-v3")
-    (version "3.0.2")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/yosida95/uritemplate")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "0csrdr64hjhwxlkcbb8y7bz1ccnyzl9c87fva00gr078nw52qxff"))))
-    (build-system go-build-system)
-    (arguments
-     (list
-      #:import-path "github.com/yosida95/uritemplate/v3"
-      #:tests? #f))
-    (home-page "https://github.com/yosida95/uritemplate")
-    (synopsis "URI template expansion library for Go")
-    (description
-     "This package provides URI template expansion following RFC 6570.")
     (license license:bsd-3)))
 
 (define-public go-github-com-mark3labs-mcp-go
@@ -986,10 +855,13 @@ using a simple path syntax.")
     (arguments
      (list
       #:import-path "github.com/mark3labs/mcp-go"
+      ;; Tests fail due to Go module resolution issues in the build
+      ;; environment.
       #:tests? #f
       #:phases
       #~(modify-phases %standard-phases
           (delete 'build))))
+    (native-inputs (list go-github-com-stretchr-testify))
     (propagated-inputs (list go-github-com-google-uuid
                              go-github-com-spf13-cast
                              go-github-com-yosida95-uritemplate-v3))
@@ -999,6 +871,7 @@ using a simple path syntax.")
      "This package provides a Go implementation of the Model Context Protocol (MCP),
 enabling AI assistants to interact with external tools and data sources.")
     (license license:expat)))
+
 
 (define-public go-github-com-dolthub-dolt-mcp
   (package
@@ -1017,6 +890,8 @@ enabling AI assistants to interact with external tools and data sources.")
     (arguments
      (list
       #:import-path "github.com/dolthub/dolt-mcp"
+      ;; Tests fail due to Go module resolution issues in the build
+      ;; environment.
       #:tests? #f
       #:phases
       #~(modify-phases %standard-phases
@@ -1028,6 +903,7 @@ enabling AI assistants to interact with external tools and data sources.")
      "This package provides a Model Context Protocol (MCP) server that enables
 AI assistants to interact with Dolt version-controlled SQL databases.")
     (license license:asl2.0)))
+
 
 (define-public dolt
   (package
@@ -1162,81 +1038,6 @@ such as clone, branch, merge, push, and pull for data and schema.  It provides
 a CLI for managing versioned databases with full MySQL compatibility.")
     (license license:asl2.0)))
 
-(define-public go-github-com-jinzhu-inflection
-  (package
-    (name "go-github-com-jinzhu-inflection")
-    (version "1.0.0")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/jinzhu/inflection")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "165i20d11s03771gi43skl66salxj36212r25fbs0cgr4qgfj7fy"))))
-    (build-system go-build-system)
-    (arguments
-     (list
-      #:import-path "github.com/jinzhu/inflection"))
-    (home-page "https://github.com/jinzhu/inflection")
-    (synopsis "English word pluralization library for Go")
-    (description
-     "This package provides utilities for pluralizing and singularizing
-English words, commonly used in ORM frameworks.")
-    (license license:expat)))
-
-(define-public go-github-com-jinzhu-now
-  (package
-    (name "go-github-com-jinzhu-now")
-    (version "1.1.5")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/jinzhu/now")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "10ywpaxs6d3y8gqlzx6rh3yw4ya83bnx0hrs0k0wq5bxbjhfmlil"))))
-    (build-system go-build-system)
-    (arguments
-     (list
-      #:import-path "github.com/jinzhu/now"))
-    (home-page "https://github.com/jinzhu/now")
-    (synopsis "Time toolkit for Go")
-    (description
-     "This package provides a time toolkit with utilities for parsing times,
-calculating time ranges, and working with time boundaries.")
-    (license license:expat)))
-
-(define-public go-gorm-io-gorm
-  (package
-    (name "go-gorm-io-gorm")
-    (version "1.25.10")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/go-gorm/gorm")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "1klhggxqxgksm5x1wja2r1nb6wphxyx15b7vjqrmlgznqb2skf68"))))
-    (build-system go-build-system)
-    (arguments
-     (list
-      #:import-path "gorm.io/gorm"
-      ;; Tests require database
-      #:tests? #f))
-    (propagated-inputs (list go-github-com-jinzhu-inflection
-                             go-github-com-jinzhu-now))
-    (home-page "https://gorm.io")
-    (synopsis "Object-Relational Mapping library for Go")
-    (description
-     "GORM is a full-featured ORM library for Go with support for
-associations, hooks, preloading, transactions, and more.")
-    (license license:expat)))
 
 (define-public go-gorm-io-driver-mysql
   (package
@@ -1255,7 +1056,7 @@ associations, hooks, preloading, transactions, and more.")
     (arguments
      (list
       #:import-path "gorm.io/driver/mysql"
-      ;; Tests require database
+      ;; Tests require a running MySQL database.
       #:tests? #f))
     (propagated-inputs (list go-github-com-go-sql-driver-mysql
                              go-gorm-io-gorm))
@@ -1264,6 +1065,7 @@ associations, hooks, preloading, transactions, and more.")
     (description
      "This package provides a MySQL database driver for the GORM ORM library.")
     (license license:expat)))
+
 
 (define-public go-github-com-dolthub-driver
   (let ((commit "dc59f6dbac235b8b2d1b463922fc444d5b10a479")
@@ -1284,7 +1086,7 @@ associations, hooks, preloading, transactions, and more.")
       (arguments
        (list
         #:import-path "github.com/dolthub/driver"
-        ;; Library package - install source only
+        ;; Tests require a running Dolt database.
         #:tests? #f
         #:phases
         #~(modify-phases %standard-phases
@@ -1305,6 +1107,7 @@ enabling embedded version-controlled SQL databases in Go applications.")
       (license license:asl2.0))))
 
 ;; Additional dependencies for dolt
+
 
 (define-public go-github-com-silvasur-buzhash
   (let ((commit "9bdec3dec7c611fa97beadc374d75bdf02cd880e")
@@ -1332,6 +1135,7 @@ enabling embedded version-controlled SQL databases in Go applications.")
 useful for content-defined chunking algorithms.")
       (license license:expat))))
 
+
 (define-public go-github-com-kch42-buzhash
   (let ((commit "9bdec3dec7c611fa97beadc374d75bdf02cd880e")
         (revision "0"))
@@ -1356,6 +1160,7 @@ useful for content-defined chunking algorithms.")
       (description
        "This package provides a rolling hash (buzhash) implementation for Go.")
       (license license:expat))))
+
 
 (define-public go-github-com-mohae-uvarint
   (let ((commit "c3f9e62bf2b0473a75b4e9cb7bea907f2cb307b4")
@@ -1383,6 +1188,7 @@ useful for content-defined chunking algorithms.")
 utilities for Go.")
       (license license:expat))))
 
+
 (define-public go-github-com-juju-gnuflag
   (package
     (name "go-github-com-juju-gnuflag")
@@ -1406,6 +1212,7 @@ utilities for Go.")
      "This package provides GNU-style command-line flag parsing for Go,
 supporting long options with double dashes.")
     (license license:bsd-3)))
+
 
 (define-public go-github-com-bcicen-jstream
   (package
@@ -1431,36 +1238,6 @@ supporting long options with double dashes.")
 processing large JSON documents without loading them entirely into memory.")
     (license license:expat)))
 
-(define-public go-github-com-sergi-go-diff
-  (package
-    (name "go-github-com-sergi-go-diff")
-    (version "1.3.1")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/sergi/go-diff")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "0c7lsa3kjxbrx66r93d0pvx1408b80ignpi39fzka1qc0ylshw32"))))
-    (build-system go-build-system)
-    (arguments
-     (list
-      #:import-path "github.com/sergi/go-diff/diffmatchpatch"
-      #:unpack-path "github.com/sergi/go-diff"
-      ;; Library package
-      #:tests? #f
-      #:phases
-      #~(modify-phases %standard-phases
-          (delete 'build))))
-    (home-page "https://github.com/sergi/go-diff")
-    (synopsis "Diff, match and patch library for Go")
-    (description
-     "This package provides diff, match and patch algorithms for Go,
-based on Google's diff-match-patch library.")
-    (license license:expat)))
-
 (define-public go-gopkg-in-errgo-v2
   (package
     (name "go-gopkg-in-errgo-v2")
@@ -1479,16 +1256,16 @@ based on Google's diff-match-patch library.")
      (list
       #:import-path "gopkg.in/errgo.v2/errors"
       #:unpack-path "gopkg.in/errgo.v2"
-      #:tests? #f
-      #:phases
-      #~(modify-phases %standard-phases
-          (delete 'build))))
+      ;; Tests fail due to Go module resolution issues in the build
+      ;; environment.
+      #:tests? #f))
     (home-page "https://github.com/go-errgo/errgo")
     (synopsis "Error handling utilities for Go")
     (description
      "This package provides error handling utilities for Go with support
 for error wrapping and location tracking.")
     (license license:bsd-3)))
+
 
 (define-public go-gopkg-in-square-go-jose-v2
   (package
@@ -1508,6 +1285,7 @@ for error wrapping and location tracking.")
      (list
       #:import-path "gopkg.in/square/go-jose.v2"
       #:unpack-path "gopkg.in/square/go-jose.v2"
+      ;; Package predates Go modules; tests fail with Go 1.24+.
       #:tests? #f))
     (propagated-inputs (list go-golang-org-x-crypto))
     (home-page "https://github.com/go-jose/go-jose")
@@ -1516,84 +1294,6 @@ for error wrapping and location tracking.")
      "This package provides a JOSE (JSON Object Signing and Encryption)
 implementation for Go, supporting JWS, JWE, and JWT standards.")
     (license license:asl2.0)))
-
-(define-public go-github-com-hashicorp-golang-lru-v2
-  (package
-    (name "go-github-com-hashicorp-golang-lru-v2")
-    (version "2.0.7")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/hashicorp/golang-lru")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "0lb2ylv2bz6lsqhn6c2hsafjjcx0hsdbah6arhb778g3xbkpgvf3"))))
-    (build-system go-build-system)
-    (arguments
-     (list
-      #:import-path "github.com/hashicorp/golang-lru/v2"))
-    (home-page "https://github.com/hashicorp/golang-lru")
-    (synopsis "LRU cache implementation for Go (v2)")
-    (description
-     "This package provides a thread-safe LRU cache implementation for Go
-with support for various eviction policies.")
-    (license license:mpl2.0)))
-
-(define-public go-github-com-acarl005-stripansi
-  (let ((commit "5a71ef0e047df0427e87a79f27009029921f1f9b")
-        (revision "0"))
-    (package
-      (name "go-github-com-acarl005-stripansi")
-      (version (git-version "0.0.0" revision commit))
-      (source
-       (origin
-         (method git-fetch)
-         (uri (git-reference
-               (url "https://github.com/acarl005/stripansi")
-               (commit commit)))
-         (file-name (git-file-name name version))
-         (sha256
-          (base32 "02sxiishdixm791jqbkmhdcvc712l0fb8rqmibxzgc61h0qs6rs3"))))
-      (build-system go-build-system)
-      (arguments
-       (list
-        #:import-path "github.com/acarl005/stripansi"))
-      (home-page "https://github.com/acarl005/stripansi")
-      (synopsis "Strip ANSI escape codes from strings in Go")
-      (description
-       "This package provides a simple function to strip ANSI escape codes
-from strings in Go.")
-      (license license:expat))))
-
-(define-public go-github-com-vbauerster-mpb-v8
-  (package
-    (name "go-github-com-vbauerster-mpb-v8")
-    (version "8.9.3")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/vbauerster/mpb")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "0v6mj37hmw2cw8p6fzb1y90wj23f7fsl334yzydf1lx1n6n8jn8c"))))
-    (build-system go-build-system)
-    (arguments
-     (list
-      #:import-path "github.com/vbauerster/mpb/v8"))
-    (propagated-inputs (list go-github-com-acarl005-stripansi
-                             go-github-com-mattn-go-runewidth
-                             go-github-com-vividcortex-ewma
-                             go-golang-org-x-sys))
-    (home-page "https://github.com/vbauerster/mpb")
-    (synopsis "Multi-progress bar for Go CLI applications")
-    (description
-     "This package provides a multi-progress bar library for Go terminal
-applications, with support for spinners, decorators, and various bar styles.")
-    (license license:unlicense)))
 
 (define-public go-github-com-apache-thrift
   (package
@@ -1612,14 +1312,14 @@ applications, with support for spinners, decorators, and various bar styles.")
     (arguments
      (list
       #:import-path "github.com/apache/thrift/lib/go/thrift"
-      #:unpack-path "github.com/apache/thrift"
-      #:tests? #f))
+      #:unpack-path "github.com/apache/thrift"))
     (home-page "https://github.com/apache/thrift")
     (synopsis "Apache Thrift Go library")
     (description
      "This package provides the Go library for Apache Thrift, an RPC framework
 for scalable cross-language services development.")
     (license license:asl2.0)))
+
 
 (define-public go-github-com-apache-arrow-go-arrow
   (let ((commit "651201b0f516")
@@ -1641,10 +1341,8 @@ for scalable cross-language services development.")
        (list
         #:import-path "github.com/apache/arrow/go/arrow"
         #:unpack-path "github.com/apache/arrow"
-        #:tests? #f
-        #:phases
-        #~(modify-phases %standard-phases
-            (delete 'build))))
+        ;; Math tests fail on aarch64 due to architecture-specific SIMD code.
+        #:tests? #f))
       (propagated-inputs (list go-github-com-google-flatbuffers
                                go-golang-org-x-xerrors))
       (home-page "https://arrow.apache.org/")
@@ -1653,6 +1351,7 @@ for scalable cross-language services development.")
        "This package provides the Go implementation of Apache Arrow, a
 cross-language development platform for in-memory data.")
       (license license:asl2.0))))
+
 
 (define-public go-github-com-xitongsys-parquet-go
   (package
@@ -1671,7 +1370,7 @@ cross-language development platform for in-memory data.")
     (arguments
      (list
       #:import-path "github.com/xitongsys/parquet-go"
-      ;; Tests require parquet-go-source
+      ;; Tests require parquet-go-source which creates a circular dependency.
       #:tests? #f
       #:phases
       #~(modify-phases %standard-phases
@@ -1687,6 +1386,7 @@ cross-language development platform for in-memory data.")
      "This package provides a native Go implementation of Apache Parquet
 format for reading and writing Parquet files.")
     (license license:asl2.0)))
+
 
 (define-public go-github-com-xitongsys-parquet-go-source
   (let ((commit "b732d2ac9c9b72cef06d154fcbfe7dafa0ffd21c")
@@ -1707,6 +1407,7 @@ format for reading and writing Parquet files.")
       (arguments
        (list
         #:import-path "github.com/xitongsys/parquet-go-source"
+        ;; Tests require cloud storage credentials (S3, GCS, HDFS).
         #:tests? #f
         #:phases
         #~(modify-phases %standard-phases
@@ -1719,6 +1420,7 @@ format for reading and writing Parquet files.")
 reading and writing Parquet files from various sources including local
 filesystem, HDFS, S3, and GCS.")
       (license license:asl2.0))))
+
 
 (define-public go-github-com-go-kit-kit
   (package
@@ -1737,6 +1439,7 @@ filesystem, HDFS, S3, and GCS.")
     (arguments
      (list
       #:import-path "github.com/go-kit/kit"
+      ;; Tests require additional infrastructure (consul, etcd, etc.).
       #:tests? #f
       #:phases
       #~(modify-phases %standard-phases
@@ -1748,6 +1451,7 @@ filesystem, HDFS, S3, and GCS.")
      "Go kit is a collection of Go (golang) packages for building
 microservices, including logging, metrics, tracing, and transport layers.")
     (license license:expat)))
+
 
 (define-public go-cloud-google-com-go-storage
   (package
@@ -1767,6 +1471,7 @@ microservices, including logging, metrics, tracing, and transport layers.")
      (list
       #:import-path "cloud.google.com/go/storage"
       #:unpack-path "cloud.google.com/go"
+      ;; Tests require Google Cloud credentials and network access.
       #:tests? #f
       #:phases
       #~(modify-phases %standard-phases
