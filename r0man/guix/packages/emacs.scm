@@ -1873,7 +1873,7 @@ running over SSH or inside terminal multiplexers like tmux or GNU Screen.")
 (define-public emacs-shell-maker
   (package
     (name "emacs-shell-maker")
-    (version "0.87.1")
+    (version "0.89.1")
     (source
      (origin
        (method git-fetch)
@@ -1882,7 +1882,7 @@ running over SSH or inside terminal multiplexers like tmux or GNU Screen.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1pg6j6n6241akpvdg761ppf14fhd66r44ig4hzsvxbna1vvys4s5"))))
+        (base32 "0ll83i261yrhc71gwpr524yc8ib1vlwhm878d2pdaq833b69afky"))))
     (build-system emacs-build-system)
     (home-page "https://github.com/xenodium/shell-maker")
     (synopsis "Emacs package for creating interactive command shells")
