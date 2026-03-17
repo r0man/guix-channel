@@ -563,7 +563,8 @@ Go, used by Dolt for reading AWS configuration files.")
     (arguments
      (list
       #:import-path "github.com/gocraft/dbr/v2"
-      ;; Tests require a running database.
+      ;; Tests require github.com/denisenkom/go-mssqldb which is not
+      ;; packaged.
       #:tests? #f))
     (home-page "https://github.com/gocraft/dbr")
     (synopsis "Additions to Go's database/sql for SQL generation")
@@ -731,7 +732,7 @@ package provides the Go library for embedding Dolt functionality.")
     (arguments
      (list
       #:import-path "github.com/abiosoft/readline"
-      ;; Package predates Go modules; tests fail with Go 1.24+.
+      ;; Tests require github.com/chzyer/test which is not packaged.
       #:tests? #f))
     (home-page "https://github.com/abiosoft/readline")
     (synopsis "Pure Go implementation of GNU Readline")
@@ -756,10 +757,8 @@ library for building interactive command-line applications.")
     (build-system go-build-system)
     (arguments
      (list
-      #:import-path "github.com/dolthub/ishell"
-      ;; Tests fail due to Go module resolution issues in the build
-      ;; environment.
-      #:tests? #f))
+      #:import-path "github.com/dolthub/ishell"))
+    (native-inputs (list go-github-com-stretchr-testify))
     (propagated-inputs (list go-github-com-abiosoft-readline
                              go-github-com-fatih-color
                              go-github-com-flynn-archive-go-shlex))
@@ -787,11 +786,15 @@ command-line applications with auto-completion and command history.")
     (arguments
      (list
       #:import-path "github.com/google/go-github/v57"
-      ;; Tests require network access and GitHub API credentials.
-      #:tests? #f
+      ;; The examples/ directory has extra dependencies.  The upload test
+      ;; requires network access.
+      #:test-subdirs #~'("github")
+      #:test-flags
+      #~(list "-skip" "TestRepositoriesService_UploadReleaseAsset")
       #:phases
       #~(modify-phases %standard-phases
           (delete 'build))))
+    (native-inputs (list go-github-com-google-go-cmp))
     (propagated-inputs (list go-github-com-google-go-querystring))
     (home-page "https://github.com/google/go-github")
     (synopsis "Go client library for accessing the GitHub API")
@@ -823,14 +826,25 @@ command-line applications with auto-completion and command history.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1xkqk71sn10gaxl5r69ws52zi4ni3nfjkivpm9lsbk3xfqnzwv73"))))
+        (base32 "1xkqk71sn10gaxl5r69ws52zi4ni3nfjkivpm9lsbk3xfqnzwv73"))
+       (modules '((guix build utils)))
+       (snippet
+        '(begin
+           ;; Fix non-constant format string (Go 1.24+ vet error).
+           (substitute* "data_validation_test.go"
+             (("fmt\\.Printf\\(err\\.Error\\(\\)\\)")
+              "fmt.Printf(\"%s\", err.Error())"))
+           ;; Fix int-to-string conversions (Go 1.24+ vet error).
+           (substitute* "lib.go"
+             (("string\\(part \\+ 65\\)")
+              "string(rune(part + 65))")
+             (("string\\(part \\+ 64\\)")
+              "string(rune(part + 64))"))))))
     (build-system go-build-system)
     (arguments
      (list
-      #:import-path "github.com/tealeg/xlsx"
-      ;; Tests fail due to Go module resolution issues in the build
-      ;; environment.
-      #:tests? #f))
+      #:import-path "github.com/tealeg/xlsx"))
+    (native-inputs (list go-gopkg-in-check-v1))
     (home-page "https://github.com/tealeg/xlsx")
     (synopsis "XLSX file reading and writing library for Go")
     (description
@@ -855,9 +869,8 @@ command-line applications with auto-completion and command history.")
     (arguments
      (list
       #:import-path "github.com/mark3labs/mcp-go"
-      ;; Tests fail due to Go module resolution issues in the build
-      ;; environment.
-      #:tests? #f
+      ;; TestSSEServer requires a running HTTP server.
+      #:test-flags #~(list "-skip" "TestSSEServer")
       #:phases
       #~(modify-phases %standard-phases
           (delete 'build))))
@@ -890,8 +903,8 @@ enabling AI assistants to interact with external tools and data sources.")
     (arguments
      (list
       #:import-path "github.com/dolthub/dolt-mcp"
-      ;; Tests fail due to Go module resolution issues in the build
-      ;; environment.
+      ;; Integration tests require a running Dolt database and many
+      ;; additional dependencies not declared as propagated-inputs.
       #:tests? #f
       #:phases
       #~(modify-phases %standard-phases
@@ -1055,9 +1068,7 @@ a CLI for managing versioned databases with full MySQL compatibility.")
     (build-system go-build-system)
     (arguments
      (list
-      #:import-path "gorm.io/driver/mysql"
-      ;; Tests require a running MySQL database.
-      #:tests? #f))
+      #:import-path "gorm.io/driver/mysql"))
     (propagated-inputs (list go-github-com-go-sql-driver-mysql
                              go-gorm-io-gorm))
     (home-page "https://gorm.io")
@@ -1255,10 +1266,8 @@ processing large JSON documents without loading them entirely into memory.")
     (arguments
      (list
       #:import-path "gopkg.in/errgo.v2/errors"
-      #:unpack-path "gopkg.in/errgo.v2"
-      ;; Tests fail due to Go module resolution issues in the build
-      ;; environment.
-      #:tests? #f))
+      #:unpack-path "gopkg.in/errgo.v2"))
+    (native-inputs (list go-gopkg-in-check-v1))
     (home-page "https://github.com/go-errgo/errgo")
     (synopsis "Error handling utilities for Go")
     (description
@@ -1279,14 +1288,29 @@ for error wrapping and location tracking.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1b1nhqxfmhzwrfk7pkvp2w3z3d0pf5ir00vizmy2d4xdbnldn70r"))))
+        (base32 "1b1nhqxfmhzwrfk7pkvp2w3z3d0pf5ir00vizmy2d4xdbnldn70r"))
+       (modules '((guix build utils)))
+       (snippet
+        '(begin
+           ;; Fix non-constant format strings (Go 1.24+ vet error).
+           (substitute* "doc_test.go"
+             (("fmt\\.Printf\\(string\\(decrypted\\)\\)")
+              "fmt.Printf(\"%s\", decrypted)")
+             (("fmt\\.Printf\\(string\\(output\\)\\)")
+              "fmt.Printf(\"%s\", output)"))
+           ;; Remove utility programs that require unpackaged kingpin.v2.
+           (delete-file-recursively "jose-util")
+           (delete-file-recursively "jwk-keygen")))))
     (build-system go-build-system)
     (arguments
      (list
       #:import-path "gopkg.in/square/go-jose.v2"
       #:unpack-path "gopkg.in/square/go-jose.v2"
-      ;; Package predates Go modules; tests fail with Go 1.24+.
-      #:tests? #f))
+      ;; TestSignerWithBrokenRand fails due to non-deterministic random
+      ;; behavior in the build environment.
+      #:test-flags #~(list "-skip" "TestSignerWithBrokenRand")))
+    (native-inputs (list go-github-com-google-go-cmp
+                         go-github-com-stretchr-testify))
     (propagated-inputs (list go-golang-org-x-crypto))
     (home-page "https://github.com/go-jose/go-jose")
     (synopsis "JOSE (JSON Object Signing and Encryption) library for Go")
@@ -1341,8 +1365,19 @@ for scalable cross-language services development.")
        (list
         #:import-path "github.com/apache/arrow/go/arrow"
         #:unpack-path "github.com/apache/arrow"
-        ;; Math tests fail on aarch64 due to architecture-specific SIMD code.
-        #:tests? #f))
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-after 'unpack 'remove-arch-specific-tests
+              (lambda _
+                ;; The cpu and math packages contain architecture-specific
+                ;; SIMD assembly that fails on aarch64.
+                (let ((arrow-dir (string-append
+                                  "src/github.com/apache/arrow/go/arrow")))
+                  (delete-file-recursively
+                   (string-append arrow-dir "/internal/cpu"))
+                  (delete-file-recursively
+                   (string-append arrow-dir "/math"))))))))
+      (native-inputs (list go-github-com-stretchr-testify))
       (propagated-inputs (list go-github-com-google-flatbuffers
                                go-golang-org-x-xerrors))
       (home-page "https://arrow.apache.org/")
