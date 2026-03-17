@@ -158,8 +158,8 @@ machines.")
       (license license:expat))))
 
 (define-public gastown-next
-  (let ((commit "67cffe50fa6f45cb68146c92cf86b36fe0812f9f")
-        (revision "6215"))
+  (let ((commit "54339a3e966af13b069fc15449d20be7fff9a6af")
+        (revision "6550"))
     (package
       (name "gastown-next")
       (version (git-version "0.12.0" revision commit))
@@ -171,7 +171,7 @@ machines.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "0r86qn45g0hy2pp4d8gjl3x106qan1m5b8506s0ii27gj6dhxhxf"))))
+          (base32 "1pk3p37ys9421skk787hj9dz04vcm7cwrkmwm0b211whjb5sdi4y"))))
       (build-system go-build-system)
       (arguments
        (list
@@ -249,6 +249,7 @@ machines.")
                       go-github-com-charmbracelet-lipgloss
                       go-github-com-dolthub-dolt-go
                       go-github-com-dolthub-driver
+                      go-github-com-fsnotify-fsnotify
                       go-github-com-go-rod-rod
                       go-github-com-go-sql-driver-mysql
                       go-github-com-gofrs-flock
