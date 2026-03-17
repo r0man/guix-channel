@@ -1896,7 +1896,7 @@ command history, auto-completion, and customizable prompts.")
 (define-public emacs-acp
   (package
     (name "emacs-acp")
-    (version "0.11.1")
+    (version "0.11.2")
     (source
      (origin
        (method git-fetch)
@@ -1905,7 +1905,7 @@ command history, auto-completion, and customizable prompts.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1l1m5iwn15xp8h7q18fzmi0grr6cgyiy16dpkp1w8fsbd7n439pb"))))
+        (base32 "1l3zjsfzwz6iy6lk4pq0385ycppwk5cdxk0is1kllysx084kfw9z"))))
     (build-system emacs-build-system)
     (home-page "https://github.com/xenodium/acp.el")
     (synopsis "Emacs client library for the Agent Client Protocol")
