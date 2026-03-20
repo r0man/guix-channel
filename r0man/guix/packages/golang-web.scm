@@ -285,3 +285,79 @@ be used by bridges between existing logging libraries and OpenTelemetry.")
 protobuf payloads.")
     (license license:asl2.0)))
 
+(define-public go-github-com-anthropics-anthropic-sdk-go
+  (let ((base (@ (gnu packages golang-web)
+                 go-github-com-anthropics-anthropic-sdk-go)))
+    (package
+      (inherit base)
+      (version "1.27.1")
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/anthropics/anthropic-sdk-go")
+               (commit (string-append "v" version))))
+         (file-name (git-file-name "go-github-com-anthropics-anthropic-sdk-go"
+                     version))
+         (sha256
+          (base32 "1018kspphasckf32xjl8a8rr6gzxzh1xdllkb81m4ybi30kf026d"))))
+      (arguments
+       (substitute-keyword-arguments (package-arguments base)
+         ((#:tests? _ #t)
+          #f)))
+      (propagated-inputs (modify-inputs (package-propagated-inputs base)
+                           (append go-golang-org-x-sync))))))
+
+(define-public go-github-com-johanneskaufmann-dom
+  (package
+    (name "go-github-com-johanneskaufmann-dom")
+    (version "0.2.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/JohannesKaufmann/dom")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "00dmh5hz6cdjcm09j8qql85sfgmw315wzh2bjhgq06bkrb94dcmy"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/JohannesKaufmann/dom"))
+    (propagated-inputs (list go-golang-org-x-net))
+    (home-page "https://github.com/JohannesKaufmann/dom")
+    (synopsis "DOM utility functions for Go")
+    (description "Package dom provides utility functions for working with
+@code{golang.org/x/net/html} nodes.")
+    (license license:expat)))
+
+(define-public go-github-com-johanneskaufmann-html-to-markdown-v2
+  (package
+    (name "go-github-com-johanneskaufmann-html-to-markdown-v2")
+    (version "2.5.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/JohannesKaufmann/html-to-markdown")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1047pgjadyf4fb4qk5wn9zfn088kibfrfr26l0wm83pd50vcjdy5"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:tests? #f
+      #:import-path "github.com/JohannesKaufmann/html-to-markdown/v2"))
+    (propagated-inputs (list go-github-com-johanneskaufmann-dom
+                             go-github-com-andybalholm-cascadia
+                             go-github-com-yuin-goldmark go-golang-org-x-net))
+    (home-page "https://github.com/JohannesKaufmann/html-to-markdown")
+    (synopsis "Convert HTML to Markdown in Go")
+    (description
+     "Package htmltomarkdown converts HTML to Markdown.  It supports
+customization through rules and plugins.")
+    (license license:expat)))
+

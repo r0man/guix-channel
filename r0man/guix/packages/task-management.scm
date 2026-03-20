@@ -4,7 +4,8 @@
     #:use-module (gnu packages golang-build)
     #:use-module (gnu packages golang-check)
     #:use-module ((gnu packages golang-web)
-                   #:hide (go-go-opentelemetry-io-otel-log
+                   #:hide (go-github-com-anthropics-anthropic-sdk-go
+                           go-go-opentelemetry-io-otel-log
                            go-go-opentelemetry-io-otel-sdk-log))
     #:use-module ((gnu packages golang-xyz)
                    #:hide (go-github-com-charmbracelet-bubbles
@@ -28,8 +29,8 @@
     #:use-module (r0man guix packages golang-xyz))
 
 (define-public beads-next
-  (let ((commit "84553149af1c0768094eb534bac383c9f14358a4")
-        (revision "30"))
+  (let ((commit "5156a8c4bfe76d197c25c985e1a44bb6b7968af1")
+        (revision "126"))
     (package
       (name "beads-next")
       (version (git-version "0.61.0" revision commit))
@@ -41,7 +42,7 @@
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "1lwxc10wk5v6jczpwb2j4fg0grf7g89h938sx02zmrvr06gbyibs"))))
+          (base32 "0s76138lz2sdncjh1jl5m67xp541k9a0z079g0jf6wzdsc437k7f"))))
       (build-system go-build-system)
       (arguments
        (list
@@ -143,6 +144,8 @@
                       go-golang-org-x-term
                       go-google-golang-org-grpc
                       go-google-golang-org-protobuf
+                      go-github-com-johanneskaufmann-dom
+                      go-github-com-johanneskaufmann-html-to-markdown-v2
                       go-gopkg-in-yaml-v3
                       go-rsc-io-script))
       (home-page "https://github.com/steveyegge/beads")
