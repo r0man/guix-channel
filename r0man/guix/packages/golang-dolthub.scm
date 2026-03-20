@@ -353,16 +353,16 @@ in go-mysql-server and Dolt.")
 (define-public go-github-com-dolthub-vitess
   (package
     (name "go-github-com-dolthub-vitess")
-    (version "0.0.0-20260304224106-95dd8eda10b0")
+    (version "0.0.0-20260309181228-a99af9c518ab")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
              (url "https://github.com/dolthub/vitess")
-             (commit "95dd8eda10b09b2454b58c1c6564e3259f99dc07")))
+             (commit "a99af9c518abbc25bd6b3ec4eea89ee2b1f1920d")))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1c0zdwhirxz8c7w8lrza0313l86ygv0x07zq0l8q4vpnbj4nq77b"))))
+        (base32 "0izyyy5iwd24xbqg4symnnkrzlss6qkzycihgwgj8s2qk0dabrn4"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -389,16 +389,16 @@ and other projects requiring MySQL SQL parsing capabilities.")
 (define-public go-github-com-dolthub-go-mysql-server
   (package
     (name "go-github-com-dolthub-go-mysql-server")
-    (version "0.20.1-0.20260306002943-3e8a45211974")
+    (version "0.20.1-0.20260316223625-fdcf3f20a2bc")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
              (url "https://github.com/dolthub/go-mysql-server")
-             (commit "3e8a45211974ec2c54e59b2a23b30a1bd488b76c")))
+             (commit "fdcf3f20a2bcaf307a0f8e0d4a7a982590f5e290")))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1gkx877r6y9ikdfx2r75yhcc1xj7kw5957vq7bbkp370ifxbq91p"))))
+        (base32 "1ax9x397kfji11qga502lcr1ka4vg12km4yymhgdgxn1kps24gp2"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -488,8 +488,8 @@ events API service, used for event tracking and telemetry in Dolt.")
 
 
 (define-public go-github-com-dolthub-eventsapi-schema
-  (let ((commit "a7a3c84c84a14ae8696de51eb1cccef977b7c453")
-        (revision "1"))
+  (let ((commit "37a9265ade69a4f9f071797c8e53a8b3c296f197")
+        (revision "2"))
     (package
       (name "go-github-com-dolthub-eventsapi-schema")
       (version (git-version "0.0.0" revision commit))
@@ -501,7 +501,7 @@ events API service, used for event tracking and telemetry in Dolt.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "1x5dgqpb000d1713vkg5a73dbfh6prd9isadwfq336cxp4rpan57"))))
+          (base32 "1fp35h5lpcl430vav9nhknsd1jn4jc9fphmg8r7yspm1lv3wgkw9"))))
       (build-system go-build-system)
       (arguments
        (list
@@ -602,7 +602,7 @@ logarithmic-time removal of both minimum and maximum elements.")
 (define-public go-github-com-dolthub-dolt-go
   (package
     (name "go-github-com-dolthub-dolt-go")
-    (version "1.83.4")
+    (version "1.83.8")
     (source
      (origin
        (method git-fetch)
@@ -611,7 +611,7 @@ logarithmic-time removal of both minimum and maximum elements.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0va7xigp08c2chj6821canx93sji7whv5a57znpa4flkbs9iqjab"))
+        (base32 "19xvszns1b3cnsy7i6x11nalgsixa3064szvh4l08yb7nlxj4hx9"))
        (modules '((guix build utils)))
        (snippet
         ;; Replace google.golang.org/grpc/experimental/credentials
@@ -692,6 +692,7 @@ logarithmic-time removal of both minimum and maximum elements.")
            go-github-com-vbauerster-mpb-v8
            go-github-com-xitongsys-parquet-go
            go-github-com-xitongsys-parquet-go-source
+           go-github-com-xtaci-smux
            go-github-com-zeebo-xxh3
            go-go-uber-org-zap
            go-golang-org-x-crypto
@@ -1006,6 +1007,7 @@ AI assistants to interact with Dolt version-controlled SQL databases.")
            go-github-com-vbauerster-mpb-v8
            go-github-com-xitongsys-parquet-go
            go-github-com-xitongsys-parquet-go-source
+           go-github-com-xtaci-smux
            go-github-com-zeebo-xxh3
            go-go-uber-org-zap
            go-golang-org-x-crypto
@@ -1036,6 +1038,7 @@ AI assistants to interact with Dolt version-controlled SQL databases.")
            go-github-com-tealeg-xlsx
            go-github-com-tidwall-gjson
            go-github-com-tidwall-sjson
+           go-github-com-xtaci-smux
            go-go-opentelemetry-io-otel
            go-go-opentelemetry-io-otel-exporters-jaeger
            go-go-opentelemetry-io-otel-sdk
