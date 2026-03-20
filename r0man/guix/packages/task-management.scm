@@ -160,12 +160,61 @@ JSONL files stored in git for distributed synchronization across
 machines.")
       (license license:expat))))
 
+(define-public go-github-com-steveyegge-beads
+  (package
+    (name "go-github-com-steveyegge-beads")
+    (version "0.61.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/steveyegge/beads")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1bfay0xv4lvmhxlf178kbrf9hjcd6nd03bia6gjk0skzlap0apfx"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:install-source? #t
+      #:import-path "github.com/steveyegge/beads"
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; No binaries to build, just install source
+          (delete 'build)
+          (delete 'check))))
+    (propagated-inputs (list go-github-com-anthropics-anthropic-sdk-go
+                             go-github-com-burntsushi-toml
+                             go-github-com-cenkalti-backoff-v4
+                             go-github-com-charmbracelet-colorprofile
+                             go-charm-land-glamour-v2
+                             go-charm-land-huh-v2
+                             go-github-com-charmbracelet-lipgloss
+                             go-github-com-dolthub-driver
+                             go-github-com-fsnotify-fsnotify
+                             go-github-com-go-sql-driver-mysql
+                             go-github-com-muesli-termenv
+                             go-github-com-olebedev-when
+                             go-github-com-spf13-cobra
+                             go-github-com-spf13-viper
+                             go-golang-org-x-sys
+                             go-golang-org-x-term
+                             go-gopkg-in-yaml-v3
+                             go-rsc-io-script))
+    (home-page "https://github.com/steveyegge/beads")
+    (synopsis "Go library for graph-based issue tracking")
+    (description
+     "This package provides the Go library for Beads, a graph-based issue
+tracker for AI coding agents.  It includes the core types, storage interfaces,
+and utility functions needed to interact with Beads databases.")
+    (license license:expat)))
+
 (define-public gastown-next
-  (let ((commit "54339a3e966af13b069fc15449d20be7fff9a6af")
-        (revision "6550"))
+  (let ((commit "ffa1e6a83b4338f7cd59a072d16aa26bacaf5c82")
+        (revision "6538"))
     (package
       (name "gastown-next")
-      (version (git-version "0.12.0" revision commit))
+      (version (git-version "0.12.1" revision commit))
       (source
        (origin
          (method git-fetch)
@@ -174,7 +223,7 @@ machines.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "1pk3p37ys9421skk787hj9dz04vcm7cwrkmwm0b211whjb5sdi4y"))))
+          (base32 "02qqf8lafnczbr87n32mjdqigjpz44k1ywb3jkaxz8hbiy00zifc"))))
       (build-system go-build-system)
       (arguments
        (list
@@ -245,6 +294,14 @@ machines.")
                     (lambda ()
                       (system* gt "completion" "fish")))))))))
       (native-inputs (list git
+                      ;; Updated charmbracelet/x packages must appear before
+                      ;; packages that propagate older versions, so they win
+                      ;; collision resolution in setup-go-environment.
+                      go-github-com-charmbracelet-colorprofile
+                      go-github-com-charmbracelet-x-ansi
+                      go-github-com-charmbracelet-x-cellbuf
+                      go-github-com-charmbracelet-x-term
+                      go-github-com-charmbracelet-x-windows
                       go-github-com-burntsushi-toml
                       go-github-com-charmbracelet-bubbles
                       go-github-com-charmbracelet-bubbletea
