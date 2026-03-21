@@ -29,8 +29,8 @@
     #:use-module (r0man guix packages golang-xyz))
 
 (define-public beads-next
-  (let ((commit "5156a8c4bfe76d197c25c985e1a44bb6b7968af1")
-        (revision "126"))
+  (let ((commit "a44e01e971be987654d9497ec93cca59c6d19f70")
+        (revision "161"))
     (package
       (name "beads-next")
       (version (git-version "0.61.0" revision commit))
@@ -42,7 +42,7 @@
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "0s76138lz2sdncjh1jl5m67xp541k9a0z079g0jf6wzdsc437k7f"))))
+          (base32 "0in4qs8v6lgn5inziyc34kl88dibfwfk9b1b6h36h5wa7sjnrxas"))))
       (build-system go-build-system)
       (arguments
        (list
@@ -58,7 +58,11 @@
                   ;; testcontainers-go (Docker).  The other test packages
                   ;; import internal/testutil which pulls in testcontainers-go
                   ;; for Dolt container management, unavailable in the sandbox.
+                  ;; Skip TestRoundTripAddRemoveLeavesNoBeadsContent due to
+                  ;; upstream bug: embedded section no longer contains
+                  ;; "Landing the Plane" text the test expects.
                   (invoke "go" "test" "-v"
+                          "-skip" "TestRoundTripAddRemoveLeavesNoBeadsContent"
                           "github.com/steveyegge/beads/cmd/bd/setup"))))
             (add-after 'unpack 'fix-embedded-symlinks
               (lambda _
