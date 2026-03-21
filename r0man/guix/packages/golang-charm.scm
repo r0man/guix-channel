@@ -429,7 +429,7 @@ compatible terminals with customizable stylesheets.")
     (version "2.0.3")
     (source
      (origin
-       (method git-fetch)
+       (method git-fetch/lfs)
        (uri (git-reference
              (url "https://github.com/charmbracelet/huh")
              (commit (string-append "v" version))))
