@@ -143,10 +143,169 @@ utilities.")
 credentials sources.")
     (license license:asl2.0)))
 
+;; Override core OpenTelemetry packages from (gnu packages golang-web) to
+;; version 1.42.0, needed by beads-next and gastown-next.  All subpackages
+;; come from the same opentelemetry-go monorepo at the same commit.
+
+(define otel-source/1.42
+  (origin
+    (method git-fetch)
+    (uri (git-reference
+          (url "https://github.com/open-telemetry/opentelemetry-go")
+          ;; Any v1.42.0 subpackage tag resolves to the same commit.
+          (commit "sdk/metric/v1.42.0")))
+    (file-name "opentelemetry-go-1.42.0-checkout")
+    (sha256
+     (base32 "1mxj3gv04lh0lss2fk4c5n23m55qm4zy1caa3fqxmnjhy0yjm6rf"))))
+
+(define-public go-go-opentelemetry-io-otel
+  (package
+    (name "go-go-opentelemetry-io-otel")
+    (version "1.42.0")
+    (source otel-source/1.42)
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:tests? #f
+      #:import-path "go.opentelemetry.io/otel"
+      #:unpack-path "go.opentelemetry.io/otel"))
+    (home-page "https://go.opentelemetry.io/otel")
+    (synopsis "OpenTelemetry API for Go")
+    (description
+     "This package provides the OpenTelemetry API for Go, including context
+propagation, tracing, and metrics interfaces.")
+    (license license:asl2.0)))
+
+(define-public go-go-opentelemetry-io-otel-trace
+  (package
+    (name "go-go-opentelemetry-io-otel-trace")
+    (version "1.42.0")
+    (source otel-source/1.42)
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:tests? #f
+      #:import-path "go.opentelemetry.io/otel/trace"
+      #:unpack-path "go.opentelemetry.io/otel"))
+    (home-page "https://go.opentelemetry.io/otel")
+    (synopsis "OpenTelemetry Trace API for Go")
+    (description
+     "This package provides the OpenTelemetry Trace API for Go.")
+    (license license:asl2.0)))
+
+(define-public go-go-opentelemetry-io-otel-metric
+  (package
+    (name "go-go-opentelemetry-io-otel-metric")
+    (version "1.42.0")
+    (source otel-source/1.42)
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:tests? #f
+      #:import-path "go.opentelemetry.io/otel/metric"
+      #:unpack-path "go.opentelemetry.io/otel"))
+    (home-page "https://go.opentelemetry.io/otel")
+    (synopsis "OpenTelemetry Metrics API for Go")
+    (description
+     "This package provides the OpenTelemetry Metrics API for Go.")
+    (license license:asl2.0)))
+
+(define-public go-go-opentelemetry-io-otel-sdk
+  (package
+    (name "go-go-opentelemetry-io-otel-sdk")
+    (version "1.42.0")
+    (source otel-source/1.42)
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:tests? #f
+      #:import-path "go.opentelemetry.io/otel/sdk"
+      #:unpack-path "go.opentelemetry.io/otel"))
+    (home-page "https://go.opentelemetry.io/otel")
+    (synopsis "OpenTelemetry SDK for Go")
+    (description
+     "This package provides the OpenTelemetry SDK for Go.")
+    (license license:asl2.0)))
+
+(define-public go-go-opentelemetry-io-otel-sdk-metric
+  (package
+    (name "go-go-opentelemetry-io-otel-sdk-metric")
+    (version "1.42.0")
+    (source otel-source/1.42)
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:tests? #f
+      #:import-path "go.opentelemetry.io/otel/sdk/metric"
+      #:unpack-path "go.opentelemetry.io/otel"))
+    (home-page "https://go.opentelemetry.io/otel")
+    (synopsis "OpenTelemetry Metrics SDK for Go")
+    (description
+     "This package provides the OpenTelemetry Metrics SDK for Go.")
+    (license license:asl2.0)))
+
+(define-public go-go-opentelemetry-io-otel-exporters-stdout-stdouttrace
+  (package
+    (name "go-go-opentelemetry-io-otel-exporters-stdout-stdouttrace")
+    (version "1.42.0")
+    (source otel-source/1.42)
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:tests? #f
+      #:import-path "go.opentelemetry.io/otel/exporters/stdout/stdouttrace"
+      #:unpack-path "go.opentelemetry.io/otel"))
+    (home-page "https://go.opentelemetry.io/otel")
+    (synopsis "STDOUT Trace Exporter")
+    (description
+     "Package stdouttrace contains an OpenTelemetry exporter for tracing
+telemetry to be written to an output destination as JSON.")
+    (license license:asl2.0)))
+
+(define-public go-go-opentelemetry-io-proto-otlp
+  (package
+    (name "go-go-opentelemetry-io-proto-otlp")
+    (version "1.9.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/open-telemetry/opentelemetry-proto-go")
+             (commit (string-append "otlp/v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1hv5sqsp6r539nwbhyapwnqcpx1wipxlsgpp2w9di6zva0irvjb0"))
+       (modules '((guix build utils)))
+       (snippet
+        ;; Remove gRPC gateway generated files that pull in
+        ;; grpc-ecosystem/grpc-gateway/v2 as a build dependency.
+        ;; Only the core protobuf types are needed by consumers.
+        '(begin
+           (for-each delete-file
+                     (find-files "." "\\.pb\\.gw\\.go$"))))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:tests? #f
+      #:import-path "go.opentelemetry.io/proto/otlp"
+      #:unpack-path "go.opentelemetry.io/proto"))
+    (home-page "https://go.opentelemetry.io/proto/otlp")
+    (synopsis "OpenTelemetry Protocol Go bindings")
+    (description
+     "This package provides Go bindings for the OpenTelemetry Protocol (OTLP).")
+    (license license:asl2.0)))
+
 (define-public go-go-opentelemetry-io-otel-exporters-stdout-stdoutmetric
   (package
     (name "go-go-opentelemetry-io-otel-exporters-stdout-stdoutmetric")
-    (version "1.38.0")
+    (version "1.42.0")
     (source
      (origin
        (method git-fetch)
@@ -157,7 +316,7 @@ credentials sources.")
                                           "exporters/stdout/stdoutmetric"))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0h0di598nnj7223zh4ijs2blgp49mnww8rcm7iq0f2ic2l49czg5"))))
+        (base32 "1mxj3gv04lh0lss2fk4c5n23m55qm4zy1caa3fqxmnjhy0yjm6rf"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -175,7 +334,7 @@ telemetry to be written to an output destination as JSON.")
 (define-public go-go-opentelemetry-io-otel-exporters-otlp-otlplog-otlploghttp
   (package
     (name "go-go-opentelemetry-io-otel-exporters-otlp-otlplog-otlploghttp")
-    (version "0.16.0")
+    (version "0.18.0")
     (source
      (origin
        (method git-fetch)
@@ -185,7 +344,7 @@ telemetry to be written to an output destination as JSON.")
                       #:subdir "exporters/otlp/otlplog/otlploghttp"))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0ag8103mf4j03lspi5rxk161iscbw1wkdk6ri9f746jia1w4qji8"))))
+        (base32 "1mxj3gv04lh0lss2fk4c5n23m55qm4zy1caa3fqxmnjhy0yjm6rf"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -204,7 +363,7 @@ protobuf payloads.")
 (define-public go-go-opentelemetry-io-otel-log
   (package
     (name "go-go-opentelemetry-io-otel-log")
-    (version "0.16.0")
+    (version "0.18.0")
     (source
      (origin
        (method git-fetch)
@@ -214,7 +373,7 @@ protobuf payloads.")
                                           #:subdir "log"))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0ag8103mf4j03lspi5rxk161iscbw1wkdk6ri9f746jia1w4qji8"))))
+        (base32 "1mxj3gv04lh0lss2fk4c5n23m55qm4zy1caa3fqxmnjhy0yjm6rf"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -232,7 +391,7 @@ be used by bridges between existing logging libraries and OpenTelemetry.")
 (define-public go-go-opentelemetry-io-otel-sdk-log
   (package
     (name "go-go-opentelemetry-io-otel-sdk-log")
-    (version "0.16.0")
+    (version "0.18.0")
     (source
      (origin
        (method git-fetch)
@@ -242,7 +401,7 @@ be used by bridges between existing logging libraries and OpenTelemetry.")
                                           #:subdir "sdk/log"))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0ag8103mf4j03lspi5rxk161iscbw1wkdk6ri9f746jia1w4qji8"))))
+        (base32 "1mxj3gv04lh0lss2fk4c5n23m55qm4zy1caa3fqxmnjhy0yjm6rf"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -259,7 +418,7 @@ be used by bridges between existing logging libraries and OpenTelemetry.")
   (package
     (name
      "go-go-opentelemetry-io-otel-exporters-otlp-otlpmetric-otlpmetrichttp")
-    (version "1.38.0")
+    (version "1.42.0")
     (source
      (origin
        (method git-fetch)
@@ -269,7 +428,7 @@ be used by bridges between existing logging libraries and OpenTelemetry.")
                       #:subdir "exporters/otlp/otlpmetric/otlpmetrichttp"))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0h0di598nnj7223zh4ijs2blgp49mnww8rcm7iq0f2ic2l49czg5"))))
+        (base32 "1mxj3gv04lh0lss2fk4c5n23m55qm4zy1caa3fqxmnjhy0yjm6rf"))))
     (build-system go-build-system)
     (arguments
      (list

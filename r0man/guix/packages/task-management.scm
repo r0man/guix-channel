@@ -5,8 +5,15 @@
     #:use-module (gnu packages golang-check)
     #:use-module ((gnu packages golang-web)
                    #:hide (go-github-com-anthropics-anthropic-sdk-go
+                           go-go-opentelemetry-io-otel
+                           go-go-opentelemetry-io-otel-exporters-stdout-stdouttrace
                            go-go-opentelemetry-io-otel-log
-                           go-go-opentelemetry-io-otel-sdk-log))
+                           go-go-opentelemetry-io-otel-metric
+                           go-go-opentelemetry-io-otel-sdk
+                           go-go-opentelemetry-io-otel-sdk-log
+                           go-go-opentelemetry-io-otel-sdk-metric
+                           go-go-opentelemetry-io-otel-trace
+                           go-go-opentelemetry-io-proto-otlp))
     #:use-module ((gnu packages golang-xyz)
                    #:hide (go-github-com-charmbracelet-bubbles
                            go-github-com-charmbracelet-bubbletea
@@ -46,6 +53,7 @@
       (build-system go-build-system)
       (arguments
        (list
+        #:go go-1.25
         #:install-source? #f
         #:import-path "github.com/steveyegge/beads/cmd/bd"
         #:unpack-path "github.com/steveyegge/beads"

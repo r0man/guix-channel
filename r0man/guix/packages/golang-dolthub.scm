@@ -1082,43 +1082,41 @@ a CLI for managing versioned databases with full MySQL compatibility.")
 
 
 (define-public go-github-com-dolthub-driver
-  (let ((commit "dc59f6dbac235b8b2d1b463922fc444d5b10a479")
-        (revision "0"))
-    (package
-      (name "go-github-com-dolthub-driver")
-      (version (git-version "0.2.0" revision commit))
-      (source
-       (origin
-         (method git-fetch)
-         (uri (git-reference
-               (url "https://github.com/dolthub/driver")
-               (commit commit)))
-         (file-name (git-file-name name version))
-         (sha256
-          (base32 "0iyf3vj1ii5rr8x5kdzzzhv2aqvqak3s8zjw4w9dvsqkzpmzi14k"))))
-      (build-system go-build-system)
-      (arguments
-       (list
-        #:import-path "github.com/dolthub/driver"
-        ;; Tests require a running Dolt database.
-        #:tests? #f
-        #:phases
-        #~(modify-phases %standard-phases
-            (delete 'build))))
-      (propagated-inputs
-       (list go-github-com-cenkalti-backoff-v4
-             go-github-com-dolthub-dolt-go
-             go-github-com-dolthub-go-mysql-server
-             go-github-com-dolthub-vitess
-             go-github-com-go-sql-driver-mysql
-             go-gorm-io-driver-mysql
-             go-gorm-io-gorm))
-      (home-page "https://github.com/dolthub/driver")
-      (synopsis "Go database/sql driver for embedded Dolt databases")
-      (description
-       "This package provides a Go database/sql compatible driver for Dolt,
+  (package
+    (name "go-github-com-dolthub-driver")
+    (version "1.83.8")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/dolthub/driver")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1ayb1ah6kb7y0j2f2bpi4j409ggcjxs5z8f7vnyaaghy48784pkd"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/dolthub/driver"
+      ;; Tests require a running Dolt database.
+      #:tests? #f
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'build))))
+    (propagated-inputs
+     (list go-github-com-cenkalti-backoff-v4
+           go-github-com-dolthub-dolt-go
+           go-github-com-dolthub-go-mysql-server
+           go-github-com-dolthub-vitess
+           go-github-com-go-sql-driver-mysql
+           go-gorm-io-driver-mysql
+           go-gorm-io-gorm))
+    (home-page "https://github.com/dolthub/driver")
+    (synopsis "Go database/sql driver for embedded Dolt databases")
+    (description
+     "This package provides a Go database/sql compatible driver for Dolt,
 enabling embedded version-controlled SQL databases in Go applications.")
-      (license license:asl2.0))))
+    (license license:asl2.0)))
 
 ;; Additional dependencies for dolt
 
