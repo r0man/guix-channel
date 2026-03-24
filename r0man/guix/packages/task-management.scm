@@ -36,8 +36,8 @@
     #:use-module (r0man guix packages golang-xyz))
 
 (define-public beads-next
-  (let ((commit "c59b27969b7373d6be2e8d5cab028ff03e866919")
-        (revision "36"))
+  (let ((commit "1f278ae02907055be6735732567f70afe11f18a0")
+        (revision "39"))
     (package
       (name "beads-next")
       (version (git-version "0.62.0" revision commit))
@@ -49,7 +49,7 @@
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "19dqk0682jpwf4l3y6yajy7z9nb34sidbvfdp89mv86671j1vnip"))))
+          (base32 "1kbnpzjbrhvfcfcqpzb6brg27v3zrslnvbg9skfqprcbjp4vy4s3"))))
       (build-system go-build-system)
       (arguments
        (list
@@ -169,57 +169,59 @@ machines.")
       (license license:expat))))
 
 (define-public go-github-com-steveyegge-beads
-  (package
-    (name "go-github-com-steveyegge-beads")
-    (version "0.62.0")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/steveyegge/beads")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "196qcmvp78v8xk9zr297b58m84hpgvhgzyaxvdac3sndqs55vah2"))))
-    (build-system go-build-system)
-    (arguments
-     (list
-      #:install-source? #t
-      #:import-path "github.com/steveyegge/beads"
-      #:phases
-      #~(modify-phases %standard-phases
-          ;; No binaries to build, just install source
-          (delete 'build)
-          (delete 'check))))
-    (propagated-inputs (list go-github-com-anthropics-anthropic-sdk-go
-                             go-github-com-burntsushi-toml
-                             go-github-com-cenkalti-backoff-v4
-                             go-github-com-charmbracelet-colorprofile
-                             go-charm-land-glamour-v2
-                             go-charm-land-huh-v2
-                             go-github-com-charmbracelet-lipgloss
-                             go-github-com-dolthub-driver
-                             go-github-com-fsnotify-fsnotify
-                             go-github-com-go-sql-driver-mysql
-                             go-github-com-muesli-termenv
-                             go-github-com-olebedev-when
-                             go-github-com-spf13-cobra
-                             go-github-com-spf13-viper
-                             go-golang-org-x-sys
-                             go-golang-org-x-term
-                             go-gopkg-in-yaml-v3
-                             go-rsc-io-script))
-    (home-page "https://github.com/steveyegge/beads")
-    (synopsis "Go library for graph-based issue tracking")
-    (description
-     "This package provides the Go library for Beads, a graph-based issue
+  (let ((commit "1f278ae02907055be6735732567f70afe11f18a0")
+        (revision "39"))
+    (package
+      (name "go-github-com-steveyegge-beads")
+      (version (git-version "0.62.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/steveyegge/beads")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1kbnpzjbrhvfcfcqpzb6brg27v3zrslnvbg9skfqprcbjp4vy4s3"))))
+      (build-system go-build-system)
+      (arguments
+       (list
+        #:install-source? #t
+        #:import-path "github.com/steveyegge/beads"
+        #:phases
+        #~(modify-phases %standard-phases
+            ;; No binaries to build, just install source
+            (delete 'build)
+            (delete 'check))))
+      (propagated-inputs (list go-github-com-anthropics-anthropic-sdk-go
+                               go-github-com-burntsushi-toml
+                               go-github-com-cenkalti-backoff-v4
+                               go-github-com-charmbracelet-colorprofile
+                               go-charm-land-glamour-v2
+                               go-charm-land-huh-v2
+                               go-github-com-charmbracelet-lipgloss
+                               go-github-com-dolthub-driver
+                               go-github-com-fsnotify-fsnotify
+                               go-github-com-go-sql-driver-mysql
+                               go-github-com-muesli-termenv
+                               go-github-com-olebedev-when
+                               go-github-com-spf13-cobra
+                               go-github-com-spf13-viper
+                               go-golang-org-x-sys
+                               go-golang-org-x-term
+                               go-gopkg-in-yaml-v3
+                               go-rsc-io-script))
+      (home-page "https://github.com/steveyegge/beads")
+      (synopsis "Go library for graph-based issue tracking")
+      (description
+       "This package provides the Go library for Beads, a graph-based issue
 tracker for AI coding agents.  It includes the core types, storage interfaces,
 and utility functions needed to interact with Beads databases.")
-    (license license:expat)))
+      (license license:expat))))
 
 (define-public gastown-next
-  (let ((commit "fe11b9e542c1a9febcc75dc34d66d7ce2aac60a5")
-        (revision "6657"))
+  (let ((commit "85816bc0203ad175605dc7553beb2ae6c0adb8ea")
+        (revision "6659"))
     (package
       (name "gastown-next")
       (version (git-version "0.12.1" revision commit))
@@ -231,7 +233,7 @@ and utility functions needed to interact with Beads databases.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "189g4pkim93ifw6c9krny2cxryjhjf8viwsv9sfbgklv2gihflj2"))))
+          (base32 "1dil8hjym89ly3in8dkgr5nq33z0n77p743ih2qw05zr6hdd6vw0"))))
       (build-system go-build-system)
       (arguments
        (list
