@@ -36,11 +36,11 @@
     #:use-module (r0man guix packages golang-xyz))
 
 (define-public beads-next
-  (let ((commit "a44e01e971be987654d9497ec93cca59c6d19f70")
-        (revision "161"))
+  (let ((commit "c59b27969b7373d6be2e8d5cab028ff03e866919")
+        (revision "36"))
     (package
       (name "beads-next")
-      (version (git-version "0.61.0" revision commit))
+      (version (git-version "0.62.0" revision commit))
       (source
        (origin
          (method git-fetch)
@@ -49,7 +49,7 @@
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "0in4qs8v6lgn5inziyc34kl88dibfwfk9b1b6h36h5wa7sjnrxas"))))
+          (base32 "19dqk0682jpwf4l3y6yajy7z9nb34sidbvfdp89mv86671j1vnip"))))
       (build-system go-build-system)
       (arguments
        (list
@@ -66,11 +66,7 @@
                   ;; testcontainers-go (Docker).  The other test packages
                   ;; import internal/testutil which pulls in testcontainers-go
                   ;; for Dolt container management, unavailable in the sandbox.
-                  ;; Skip TestRoundTripAddRemoveLeavesNoBeadsContent due to
-                  ;; upstream bug: embedded section no longer contains
-                  ;; "Landing the Plane" text the test expects.
                   (invoke "go" "test" "-v"
-                          "-skip" "TestRoundTripAddRemoveLeavesNoBeadsContent"
                           "github.com/steveyegge/beads/cmd/bd/setup"))))
             (add-after 'unpack 'fix-embedded-symlinks
               (lambda _
@@ -175,7 +171,7 @@ machines.")
 (define-public go-github-com-steveyegge-beads
   (package
     (name "go-github-com-steveyegge-beads")
-    (version "0.61.0")
+    (version "0.62.0")
     (source
      (origin
        (method git-fetch)
@@ -184,7 +180,7 @@ machines.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1bfay0xv4lvmhxlf178kbrf9hjcd6nd03bia6gjk0skzlap0apfx"))))
+        (base32 "196qcmvp78v8xk9zr297b58m84hpgvhgzyaxvdac3sndqs55vah2"))))
     (build-system go-build-system)
     (arguments
      (list

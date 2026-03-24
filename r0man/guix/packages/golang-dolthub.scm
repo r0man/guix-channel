@@ -1084,7 +1084,7 @@ a CLI for managing versioned databases with full MySQL compatibility.")
 (define-public go-github-com-dolthub-driver
   (package
     (name "go-github-com-dolthub-driver")
-    (version "1.83.8")
+    (version "1.84.0")
     (source
      (origin
        (method git-fetch)
@@ -1093,7 +1093,7 @@ a CLI for managing versioned databases with full MySQL compatibility.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1ayb1ah6kb7y0j2f2bpi4j409ggcjxs5z8f7vnyaaghy48784pkd"))))
+        (base32 "1cip15h0im37avpxd2h9rqrdri0dn9dsjjs11hzm1dz2fi72l2f7"))))
     (build-system go-build-system)
     (arguments
      (list
