@@ -2039,3 +2039,37 @@ It displays pods in a tabular interface via the @code{podman-pod-list} command
 and allows performing operations on pods interactively.  It complements
 @code{docker.el} by providing Podman-specific pod management features.")
       (license license:gpl3+))))
+
+(define-public emacs-madolt
+  (let ((commit "d5002d3be4b334c43d55daa5654eaeed14109aff")
+        (revision "1"))
+    (package
+      (name "emacs-madolt")
+      (version (git-version "0.1" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/aspiers/madolt")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "0clhgx858jzcx571l8708zw7bs44ks0672pfl2r37l8zzc3ifplx"))))
+      (build-system emacs-build-system)
+      (arguments
+       (list
+        #:tests? #f))
+      (propagated-inputs (list emacs-compat
+                               emacs-magit
+                               emacs-transient
+                               emacs-with-editor))
+      (home-page "https://github.com/aspiers/madolt")
+      (synopsis "Magit-like interface for Dolt databases")
+      (description
+       "Madolt provides a magit-like Emacs interface for Dolt, the
+version-controlled SQL database.  It offers a section-based, keyboard-driven UI
+for Dolt's Git-like version control operations on SQL databases.  Features
+include viewing status, staging tables, committing changes, diffing at the row
+and cell level, branching, merging, rebasing, cherry-picking, stashing, blame,
+conflict resolution, remote operations, and running arbitrary SQL queries.")
+      (license license:gpl3+))))
