@@ -36,8 +36,8 @@
     #:use-module (r0man guix packages golang-xyz))
 
 (define-public beads-next
-  (let ((commit "2a9b8af4c5f1f31750219b2f2274beeed435218b")
-        (revision "133"))
+  (let ((commit "fb8ff3b46d088d9d18a6824027485d5924d19f3f")
+        (revision "144"))
     (package
       (name "beads-next")
       (version (git-version "0.62.0" revision commit))
@@ -49,7 +49,7 @@
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "116f3qbxc31xac7qbd7i65qyn3nk25vrhp9nn929sq91jzm1m1nx"))))
+          (base32 "0d90b42d6w2lilfiingsw6857x6czfc7v1p165zcaf01w0ygsh9d"))))
       (build-system go-build-system)
       (arguments
        (list
@@ -89,7 +89,16 @@
                 (copy-symlink-targets
                  "src/github.com/alecthomas/chroma/v2/lexers/embedded")
                 (copy-symlink-targets
-                 "src/github.com/alecthomas/chroma/v2/styles")))
+                 "src/github.com/alecthomas/chroma/v2/styles")
+                ;; Fix dolt embedded files (AGENT.md, weight maps).
+                (copy-symlink-targets
+                 (string-append
+                  "src/github.com/dolthub/dolt/go"
+                  "/libraries/doltcore/doltdb"))
+                (copy-symlink-targets
+                 (string-append
+                  "src/github.com/dolthub/go-mysql-server"
+                  "/sql/encodings"))))
             (add-before 'build 'set-home
               (lambda _
                 (setenv "HOME" "/tmp")))
@@ -133,6 +142,17 @@
                       go-charm-land-lipgloss-v2
                       go-github-com-charmbracelet-lipgloss
                       go-github-com-dolthub-driver
+                      ;; Transitive dolt CLI dependencies needed for
+                      ;; compilation of the full dolt source tree.
+                      go-github-com-abiosoft-readline
+                      go-github-com-andreyvit-diff
+                      go-github-com-dolthub-ishell
+                      go-github-com-flynn-archive-go-shlex
+                      go-github-com-google-go-github-v57
+                      go-github-com-google-shlex
+                      go-github-com-pkg-profile
+                      go-github-com-skratchdot-open-golang
+                      go-github-com-tealeg-xlsx
                       go-github-com-fsnotify-fsnotify
                       go-github-com-go-sql-driver-mysql
                       go-github-com-muesli-termenv
@@ -169,8 +189,8 @@ machines.")
       (license license:expat))))
 
 (define-public go-github-com-steveyegge-beads
-  (let ((commit "2a9b8af4c5f1f31750219b2f2274beeed435218b")
-        (revision "133"))
+  (let ((commit "fb8ff3b46d088d9d18a6824027485d5924d19f3f")
+        (revision "144"))
     (package
       (name "go-github-com-steveyegge-beads")
       (version (git-version "0.62.0" revision commit))
@@ -182,7 +202,7 @@ machines.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "116f3qbxc31xac7qbd7i65qyn3nk25vrhp9nn929sq91jzm1m1nx"))))
+          (base32 "0d90b42d6w2lilfiingsw6857x6czfc7v1p165zcaf01w0ygsh9d"))))
       (build-system go-build-system)
       (arguments
        (list
