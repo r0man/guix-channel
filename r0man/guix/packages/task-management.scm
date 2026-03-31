@@ -36,11 +36,11 @@
     #:use-module (r0man guix packages golang-xyz))
 
 (define-public beads-next
-  (let ((commit "fb8ff3b46d088d9d18a6824027485d5924d19f3f")
-        (revision "144"))
+  (let ((commit "884cc1171e3eb3ee44c1762973dfb8da6b56cdcc")
+        (revision "0"))
     (package
       (name "beads-next")
-      (version (git-version "0.62.0" revision commit))
+      (version (git-version "0.63.3" revision commit))
       (source
        (origin
          (method git-fetch)
@@ -49,7 +49,7 @@
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "0d90b42d6w2lilfiingsw6857x6czfc7v1p165zcaf01w0ygsh9d"))))
+          (base32 "1yw360rr8p47aah000cg3mwjjxhdfv9dvmcbq35w6b8p6i42q1yl"))))
       (build-system go-build-system)
       (arguments
        (list
@@ -189,11 +189,11 @@ machines.")
       (license license:expat))))
 
 (define-public go-github-com-steveyegge-beads
-  (let ((commit "fb8ff3b46d088d9d18a6824027485d5924d19f3f")
-        (revision "144"))
+  (let ((commit "884cc1171e3eb3ee44c1762973dfb8da6b56cdcc")
+        (revision "0"))
     (package
       (name "go-github-com-steveyegge-beads")
-      (version (git-version "0.62.0" revision commit))
+      (version (git-version "0.63.3" revision commit))
       (source
        (origin
          (method git-fetch)
@@ -202,7 +202,7 @@ machines.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "0d90b42d6w2lilfiingsw6857x6czfc7v1p165zcaf01w0ygsh9d"))))
+          (base32 "1yw360rr8p47aah000cg3mwjjxhdfv9dvmcbq35w6b8p6i42q1yl"))))
       (build-system go-build-system)
       (arguments
        (list
