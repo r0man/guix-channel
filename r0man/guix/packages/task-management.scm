@@ -240,11 +240,11 @@ and utility functions needed to interact with Beads databases.")
       (license license:expat))))
 
 (define-public gastown-next
-  (let ((commit "42f9d568fc1fcc8fc64c991936c16c71fc7bec7f")
-        (revision "6805"))
+  (let ((commit "37d34c865cef3808cca6328aa96f6e80646b73ca")
+        (revision "6806"))
     (package
       (name "gastown-next")
-      (version (git-version "0.12.1" revision commit))
+      (version (git-version "0.13.0" revision commit))
       (source
        (origin
          (method git-fetch)
@@ -253,7 +253,7 @@ and utility functions needed to interact with Beads databases.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "19xndz9zy7ncqynh38gx9zw6yff7zhlny6m2siv039zlxx1pynch"))))
+          (base32 "0xsqasgw5ifpgrdzpp856cq7hwwipnw8j5qyx3qsnpflfvs7gwza"))))
       (build-system go-build-system)
       (arguments
        (list
