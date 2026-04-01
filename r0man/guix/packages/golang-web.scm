@@ -520,3 +520,32 @@ protobuf payloads.")
 customization through rules and plugins.")
     (license license:expat)))
 
+(define-public go-github-com-invopop-jsonschema
+  (package
+    (name "go-github-com-invopop-jsonschema")
+    (version "0.13.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/invopop/jsonschema")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0my5j2fycl0xf3vn02xzy6fr7dkf8nkn62f8y5i2xish69007vhm"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:tests? #f
+      #:import-path "github.com/invopop/jsonschema"))
+    (propagated-inputs (list go-github-com-wk8-go-ordered-map-v2
+                             go-github-com-bahlo-generic-list-go
+                             go-github-com-buger-jsonparser
+                             go-github-com-mailru-easyjson))
+    (home-page "https://github.com/invopop/jsonschema")
+    (synopsis "Generate JSON Schemas from Go types")
+    (description
+     "This package generates JSON Schema documents from Go types using
+reflection.  It supports struct tags for customizing the output schema.")
+    (license license:expat)))
+

@@ -3,6 +3,7 @@
     #:use-module (gnu packages golang)
     #:use-module (gnu packages golang-build)
     #:use-module (gnu packages golang-check)
+    #:use-module (gnu packages golang-crypto)
     #:use-module ((gnu packages golang-web)
                    #:hide (go-github-com-anthropics-anthropic-sdk-go
                            go-go-opentelemetry-io-otel
@@ -375,3 +376,82 @@ into roles (Polecats for workers, Witness for monitoring, Refinery for
 code review, Mayor for cross-project coordination) within containerized
 project spaces called Rigs.")
       (license license:expat))))
+
+(define-public gascity-next
+  (package
+    (name "gascity-next")
+    (version "0.13.4")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/gastownhall/gascity")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0rmrlvpmi3l7mfjnrb24a0ksimg3lln8l5knfrdhcx43pk2a3n4c"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:go go-1.26
+      #:install-source? #f
+      #:import-path "github.com/gastownhall/gascity/cmd/gc"
+      #:unpack-path "github.com/gastownhall/gascity"
+      #:build-flags
+      #~(list (string-append "-ldflags="
+               "-s -w"
+               " -X main.version=v" #$(package-version this-package)))
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'check)
+          (add-before 'build 'set-home
+            (lambda _
+              (setenv "HOME" "/tmp")))
+          (replace 'build
+            (lambda* (#:key build-flags import-path unpack-path
+                      #:allow-other-keys)
+              (let ((module-dir (string-append "src/" unpack-path)))
+                (with-directory-excursion module-dir
+                  (apply invoke "go" "install"
+                         "-trimpath"
+                         `(,@build-flags ,import-path)))))))))
+    (native-inputs (list go-github-com-burntsushi-toml
+                    go-github-com-cespare-xxhash-v2
+                    go-github-com-fsnotify-fsnotify
+                    go-github-com-go-logr-stdr
+                    go-github-com-invopop-jsonschema
+                    go-github-com-rogpeppe-go-internal
+                    go-github-com-santhosh-tekuri-jsonschema-v6
+                    go-github-com-spf13-cobra
+                    go-go-opentelemetry-io-auto-sdk
+                    go-go-opentelemetry-io-otel
+                    go-go-opentelemetry-io-otel-exporters-otlp-otlplog-otlploghttp
+                    go-go-opentelemetry-io-otel-exporters-otlp-otlpmetric-otlpmetrichttp
+                    go-go-opentelemetry-io-otel-log
+                    go-go-opentelemetry-io-otel-metric
+                    go-go-opentelemetry-io-otel-sdk
+                    go-go-opentelemetry-io-otel-sdk-log
+                    go-go-opentelemetry-io-otel-sdk-metric
+                    go-go-opentelemetry-io-proto-otlp
+                    go-github-com-cenkalti-backoff-v5
+                    go-golang-org-x-sync
+                    go-golang-org-x-sys
+                    go-golang-org-x-term
+                    go-golang-org-x-text
+                    go-golang-org-x-time
+                    go-google-golang-org-grpc
+                    go-gopkg-in-yaml-v3
+                    go-k8s-io-api
+                    go-k8s-io-apimachinery
+                    go-k8s-io-client-go
+                    go-pgregory-net-rapid))
+    (propagated-inputs (list beads-next tmux))
+    (home-page "https://github.com/gastownhall/gascity")
+    (synopsis "Orchestration SDK for multi-agent workflows")
+    (description
+     "@command{gc} (Gas City) is an orchestration-builder SDK for multi-agent
+coding workflows.  It extracts the reusable infrastructure from Gastown into
+a configurable toolkit with runtime providers, work routing, formulas, orders,
+health patrol, and a declarative city configuration.  It supports multiple
+runtime backends including tmux, subprocess, exec, ACP, and Kubernetes.")
+    (license license:expat)))
