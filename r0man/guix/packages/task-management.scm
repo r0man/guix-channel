@@ -24,7 +24,10 @@
                            go-github-com-charmbracelet-x-term
                            go-github-com-charmbracelet-x-windows))
     #:use-module (gnu packages icu4c)
+    #:use-module (gnu packages linux)
+    #:use-module (gnu packages lsof)
     #:use-module (gnu packages tmux)
+    #:use-module (gnu packages web)
     #:use-module (gnu packages version-control)
     #:use-module (gnu packages)
     #:use-module (guix build-system go)
@@ -37,8 +40,8 @@
     #:use-module (r0man guix packages golang-xyz))
 
 (define-public beads-next
-  (let ((commit "884cc1171e3eb3ee44c1762973dfb8da6b56cdcc")
-        (revision "0"))
+  (let ((commit "ca1ae15d025e2d4b6c63bcaf007dc02253985ff0")
+        (revision "71"))
     (package
       (name "beads-next")
       (version (git-version "0.63.3" revision commit))
@@ -46,11 +49,11 @@
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/steveyegge/beads")
+               (url "https://github.com/gastownhall/beads")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "1yw360rr8p47aah000cg3mwjjxhdfv9dvmcbq35w6b8p6i42q1yl"))))
+          (base32 "0wih23c1n91055g9hk9waf2nx9h22ri2fb4bh8n1dnlypl53wgi3"))))
       (build-system go-build-system)
       (arguments
        (list
@@ -177,7 +180,7 @@
                       go-github-com-johanneskaufmann-html-to-markdown-v2
                       go-gopkg-in-yaml-v3
                       go-rsc-io-script))
-      (home-page "https://github.com/steveyegge/beads")
+      (home-page "https://github.com/gastownhall/beads")
       (synopsis "Graph-based issue tracker for AI coding agents")
       (description
        "@command{bd} (Beads) is a lightweight memory system for coding
@@ -190,8 +193,8 @@ machines.")
       (license license:expat))))
 
 (define-public go-github-com-steveyegge-beads
-  (let ((commit "884cc1171e3eb3ee44c1762973dfb8da6b56cdcc")
-        (revision "0"))
+  (let ((commit "ca1ae15d025e2d4b6c63bcaf007dc02253985ff0")
+        (revision "71"))
     (package
       (name "go-github-com-steveyegge-beads")
       (version (git-version "0.63.3" revision commit))
@@ -199,11 +202,11 @@ machines.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/steveyegge/beads")
+               (url "https://github.com/gastownhall/beads")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "1yw360rr8p47aah000cg3mwjjxhdfv9dvmcbq35w6b8p6i42q1yl"))))
+          (base32 "0wih23c1n91055g9hk9waf2nx9h22ri2fb4bh8n1dnlypl53wgi3"))))
       (build-system go-build-system)
       (arguments
        (list
@@ -232,7 +235,7 @@ machines.")
                                go-golang-org-x-term
                                go-gopkg-in-yaml-v3
                                go-rsc-io-script))
-      (home-page "https://github.com/steveyegge/beads")
+      (home-page "https://github.com/gastownhall/beads")
       (synopsis "Go library for graph-based issue tracking")
       (description
        "This package provides the Go library for Beads, a graph-based issue
@@ -241,8 +244,8 @@ and utility functions needed to interact with Beads databases.")
       (license license:expat))))
 
 (define-public gastown-next
-  (let ((commit "37d34c865cef3808cca6328aa96f6e80646b73ca")
-        (revision "6806"))
+  (let ((commit "4894b0d306c9906ac535616c664b2cd504c262bf")
+        (revision "6845"))
     (package
       (name "gastown-next")
       (version (git-version "0.13.0" revision commit))
@@ -250,11 +253,11 @@ and utility functions needed to interact with Beads databases.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/steveyegge/gastown")
+               (url "https://github.com/gastownhall/gastown")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "0xsqasgw5ifpgrdzpp856cq7hwwipnw8j5qyx3qsnpflfvs7gwza"))))
+          (base32 "079rs63d414zbjd5h6fv3b8jpxw1ba1pipavf6sy26n60gvmh7w7"))))
       (build-system go-build-system)
       (arguments
        (list
@@ -365,7 +368,7 @@ and utility functions needed to interact with Beads databases.")
                       go-gopkg-in-natefinch-lumberjack-v2
                       go-gopkg-in-yaml-v3))
       (propagated-inputs (list beads-next dolt tmux))
-      (home-page "https://github.com/steveyegge/gastown")
+      (home-page "https://github.com/gastownhall/gastown")
       (synopsis "Multi-agent orchestrator for Claude Code")
       (description
        "@command{gt} (Gastown) is a multi-agent orchestrator for Claude Code
@@ -447,7 +450,8 @@ project spaces called Rigs.")
                       go-k8s-io-apimachinery
                       go-k8s-io-client-go
                       go-pgregory-net-rapid))
-      (propagated-inputs (list beads-next tmux))
+      (propagated-inputs (list beads-next dolt jq lsof procps tmux
+                               util-linux))
       (home-page "https://github.com/gastownhall/gascity")
       (synopsis "Orchestration SDK for multi-agent workflows")
       (description
