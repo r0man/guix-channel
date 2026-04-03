@@ -417,7 +417,27 @@ project spaces called Rigs.")
                 (let ((module-dir (string-append "src/" unpack-path)))
                   (with-directory-excursion module-dir
                     (apply invoke "go" "install" "-trimpath"
-                           `(,@build-flags ,import-path)))))))))
+                           `(,@build-flags ,import-path))))))
+            (add-after 'install 'install-completions
+              (lambda* (#:key outputs #:allow-other-keys)
+                (let* ((out (assoc-ref outputs "out"))
+                       (gc (string-append out "/bin/gc"))
+                       (bash-dir (string-append out "/etc/bash_completion.d"))
+                       (zsh-dir (string-append out "/share/zsh/site-functions"))
+                       (fish-dir (string-append out
+                                  "/share/fish/vendor_completions.d")))
+                  (mkdir-p bash-dir)
+                  (mkdir-p zsh-dir)
+                  (mkdir-p fish-dir)
+                  (with-output-to-file (string-append bash-dir "/gc")
+                    (lambda ()
+                      (system* gc "completion" "bash")))
+                  (with-output-to-file (string-append zsh-dir "/_gc")
+                    (lambda ()
+                      (system* gc "completion" "zsh")))
+                  (with-output-to-file (string-append fish-dir "/gc.fish")
+                    (lambda ()
+                      (system* gc "completion" "fish")))))))))
       (native-inputs (list go-github-com-burntsushi-toml
                       go-github-com-cespare-xxhash-v2
                       go-github-com-fsnotify-fsnotify
