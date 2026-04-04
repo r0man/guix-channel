@@ -381,8 +381,8 @@ project spaces called Rigs.")
       (license license:expat))))
 
 (define-public gascity-next
-  (let ((commit "cdb46e9b4e0ccf9cd15a3d90371fbea585204095")
-        (revision "323"))
+  (let ((commit "610d229805efc1787734a77bdd9a471947d3e816")
+        (revision "334"))
     (package
       (name "gascity-next")
       (version (git-version "0.13.4" revision commit))
@@ -394,7 +394,7 @@ project spaces called Rigs.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "16g2svmac3wlpljd7pbxmy2hvjqbdvmnfzlmw0ydmp7d3q04q3h1"))))
+          (base32 "0cf6xg1b2408bmssdzq6w846js20lp7acxsv260zsv90w5kmqf9j"))))
       (build-system go-build-system)
       (arguments
        (list
@@ -470,7 +470,12 @@ project spaces called Rigs.")
                       go-k8s-io-apimachinery
                       go-k8s-io-client-go
                       go-pgregory-net-rapid))
-      (propagated-inputs (list beads-next dolt jq lsof procps tmux
+      (propagated-inputs (list beads-next
+                               dolt
+                               jq
+                               lsof
+                               procps
+                               tmux
                                util-linux))
       (home-page "https://github.com/gastownhall/gascity")
       (synopsis "Orchestration SDK for multi-agent workflows")
