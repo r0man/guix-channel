@@ -92,11 +92,8 @@ Originally forked from Kang Tu <tninja@@gmail.com>'s Aider.el.")
       (home-page "https://github.com/mrkkrp/avy-menu")
       (synopsis "Library providing avy-powered popup menu")
       (description
-       "The library provides an Avy-powered popup menu.  It is used in (at least) the
-following packages:
-
-* `ace-popup-menu' * `char-menu' * `hasky-extensions'
-
+       "The library provides an Avy-powered popup menu.  It is used in packages
+such as @code{ace-popup-menu}, @code{char-menu}, and @code{hasky-extensions}.
 It can also be used directly.")
       (license license:gpl3+))))
 
@@ -340,26 +337,14 @@ completion familiar to Emacs users.")
 
 Since version 22.1 Emacs has built-in support for themes.  That implementation
 does not derive from the implementation provided by this package.  Back when
-this was new we referred to the new implementation as `deftheme' themes, as
-opposed to `color-theme' themes.
+this was new we referred to the new implementation as @code{deftheme} themes, as
+opposed to @code{color-theme} themes.
 
 This package comes with a large collection of themes.  If you still use it
-because you want to use one of those, then you can never-the-less migrate to the
-\"new\" theme implementation.  The `color-theme-modern' package ports all themes
-that are bundles with `color-theme' to the `deftheme' format.  It also ports a
-few third-party themes.  Its documentation contains setup instructions.  Don't
-forget to uninstall `color-theme'.
-
-; Thanks
-
-Deepak Goel  <deego@glue.umd.edu> S.  Pokrovsky <pok@nbsp.nsk.su> for ideas and
-discussion.  Gordon Messmer <gordon@dragonsdawn.net> for ideas and discussion.
-Sriram Karra <karra@cs.utah.edu> for the color-theme-submit stuff.  Olgierd
-`Kingsajz' Ziolko <kingsajz@rpg.pl> for the spec-filter idea.  Brian Palmer for
-color-theme-library ideas and code All the users that contributed their color
-themes.
-
-\f")
+because you want to use one of those, then you can migrate to the new theme
+implementation.  The @code{color-theme-modern} package ports all themes that are
+bundled with @code{color-theme} to the @code{deftheme} format.  It also ports a
+few third-party themes.")
     (license license:gpl3+)))
 
 (define-public emacs-color-theme-solarized-r0man
@@ -561,43 +546,12 @@ Emacs users.")
     (home-page "unspecified")
     (synopsis "enhanced eval-expression command")
     (description
-     "Updates of this program may be available via the URL
-http://www.splode.com/~friedman/software/emacs-lisp/
-
-To use this package, put this in your .emacs:
-
-   (require 'eval-expr)    (eval-expr-install)
-
-Highlights:
-
-  * When reading the Lisp object interactively from the minibuffer, the
-minibuffer uses the Emacs Lisp Mode syntax table.  (Emacs 19.18 or     later
-only.)
-
-  * If you type an incomplete or otherwise syntactically invalid     expression
-(e.g.  you forget a closing paren), you can fix your     mistake without having
-to type it all over again.
-
-  * Can display the result in a buffer if it is too big to fit in the     echo
-area.  This buffer is placed in Emacs Lisp Mode.      (If you give a prefix arg,
-the result is placed in the current     buffer instead of the echo area or a
-separate temporary buffer.)
-
-  * The variables `eval-expr-print-level' and `eval-expr-print-length'     can
-be used to constrain the attempt to print recursive data     structures.  These
-variables are independent of the global     `print-level' and `print-length'
-variables so that eval-expression     can be used more easily for debugging.
-
-  * Pretty-printing complex results via `pp' function is possible.
-
-This program is loosely based on an earlier implemention written by Joe Wells
-<jbw@cs.bu.edu> called eval-expression-fix.el (last revised 1991-10-12).  That
-version was originally written for Emacs 18 and, while it worked with some
-quirky side effects in Emacs 19, created even more problems in Emacs 20 and
-didn't work in XEmacs at all.
-
-This rewrite should work in Emacs 19.18 or later and any version of XEmacs.
-However it will not work in Emacs 18.")
+     "This package provides an enhanced version of @code{eval-expression}.
+It uses Emacs Lisp Mode syntax in the minibuffer, allows correcting
+incomplete expressions without retyping, can display large results in a
+separate buffer, and supports pretty-printing via @code{pp}.  The variables
+@code{eval-expr-print-level} and @code{eval-expr-print-length} control
+printing of recursive data structures independently of the global settings.")
     (license license:gpl3+)))
 
 (define-public emacs-emacsql-sqlite
@@ -728,12 +682,9 @@ binary for communicating with a SQLite database.")
     (home-page "https://github.com/mola-T/flymd")
     (synopsis "On the fly markdown preview")
     (description
-     " flymd is a on the fly markdown preview package.  It is super, super, super easy
-to use.  Open a markdown file, M-x flymd-flyit The markdown file is opened in
-your favourite browser.  When you finished, close the browser page and kill the
-markdwon buffer.
-
-Please go https://github.com/mola-T/flymd for more info")
+     "Flymd is an on-the-fly markdown preview package.  Open a markdown file,
+run @code{M-x flymd-flyit}, and the file is opened in your browser.  When
+finished, close the browser page and kill the markdown buffer.")
     (license license:gpl3+)))
 
 (define-public emacs-github-browse-file
@@ -752,9 +703,10 @@ Please go https://github.com/mola-T/flymd for more info")
     (home-page "https://github.com/osener/github-browse-file")
     (synopsis "View the file you're editing on GitHub")
     (description
-     "Call `github-browse-file' (for the git blob) or `github-browse-file-blame' (for
-the git blame) to view current file on GitHub.  With a prefix argument (C-u),
-you can force them to use the \"master\" branch.")
+     "Call @code{github-browse-file} (for the git blob) or
+@code{github-browse-file-blame} (for the git blame) to view the current file
+on GitHub.  With a prefix argument (C-u), you can force them to use the
+@code{master} branch.")
     (license license:gpl3+)))
 
 (define-public emacs-guess-language
@@ -860,20 +812,10 @@ issues from Emacs.")
     (home-page "https://github.com/nyyManni/jiralib2")
     (synopsis "JIRA REST API bindings to Elisp")
     (description
-     "This file provides a programatic interface to JIRA.  It provides access to JIRA
-from other programs, but no user level functionality.
-
-jiralib2 supports three methods of authentication: cookie, basic and token.
-Cookie auth is the same which is used in the browser, and works by requesting a
-session id from the API.  Basic auth works by including the Authorization-header
-in all the requests.  Token authentication is similar to the basic
-authentication, but uses a server-side generated token instead of the password,
-and is only available with JIRA Cloud.  OAuth login is not supported.
-
-Jira References:
-
-Primary reference (on current Jira, only REST is supported):
-https://docs.atlassian.com/jira/REST/cloud/.")
+     "This package provides a programmatic interface to JIRA via its REST API.
+It provides access to JIRA from other programs, but no user level
+functionality.  It supports three methods of authentication: cookie, basic,
+and token.  OAuth login is not supported.")
     (license license:gpl3+)))
 
 (define-public emacs-json-process-client
@@ -959,23 +901,12 @@ over TCP.  The process must output one JSON message per line.")
     (home-page "https://github.com/andreasjansson/language-detection.el")
     (synopsis "Automatic language detection from code snippets")
     (description
-     "Automatic programming language detection using pre-trained random forest
-classifier.
-
-Supported languages:
-
- * ada  * awk  * c  * clojure  * cpp  * csharp  * css  * dart  * delphi  *
-emacslisp  * erlang  * fortran  * fsharp  * go  * groovy  * haskell  * html  *
-java  * javascript  * json  * latex  * lisp  * lua  * matlab  * objc  * perl  *
-php  * prolog  * python  * r  * ruby  * rust  * scala  * shell  * smalltalk  *
-sql  * swift  * visualbasic  * xml
-
-Entrypoints:
-
- * language-detection-buffer    - When called interactively, prints the language
-of the current      buffer to the echo area    - When called non-interactively,
-returns the language of the      current buffer  * language-detection-string
-- Non-interactive function, returns the language of its argument.")
+     "Automatic programming language detection using a pre-trained random forest
+classifier.  It supports many languages including Ada, AWK, C, Clojure, C++,
+C#, CSS, Dart, Delphi, Emacs Lisp, Erlang, Go, Haskell, HTML, Java,
+JavaScript, JSON, LaTeX, Lisp, Lua, Perl, PHP, Python, R, Ruby, Rust, Scala,
+Shell, SQL, Swift, and XML among others.  The main entry points are
+@code{language-detection-buffer} and @code{language-detection-string}.")
     (license license:gpl3+)))
 
 (define-public emacs-lsp-dart
@@ -1096,7 +1027,8 @@ and debugging support.")
       (home-page "https://github.com/abrochard/mermaid-mode")
       (synopsis "Major mode for working with mermaid graphs")
       (description
-       "Major mode for working with mermaid graphs.  See https://mermaid-js.github.io/.")
+       "Major mode for working with mermaid graphs.
+See @url{https://mermaid-js.github.io/}.")
       (license license:gpl3+))))
 
 (define-public emacs-tblui
@@ -1218,8 +1150,8 @@ from applications written in the Elisp language.")
     (home-page "https://github.com/titaniumbones/ox-slack")
     (synopsis "Slack Exporter for org-mode")
     (description
-     "This library implements a Slack backend for the Org exporter, based on the `md
-and `gfm back-ends.")
+     "This library implements a Slack backend for the Org exporter, based on the
+@code{md} and @code{gfm} back-ends.")
     (license license:gpl3+)))
 
 (define-public emacs-dall-e
@@ -1697,34 +1629,11 @@ high end GPU.")
     (home-page "https://github.com/josteink/wsd-mode")
     (synopsis "Emacs major-mode for www.websequencediagrams.com")
     (description
-     " This is a major-mode for modelling and editing sequence-diagrams using the
-syntax employed by the online service www.websequencediagrams.com.
-
-The mode supports inline rendering the diagrams through the API provided through
-the website and persisting these to image-files next to the files used to
-generate them.
-
-It will automatically activate for files with a WSD-extension.
-
-
-Features:
-
-- syntax higlighting of reccognized keywords - automatic indentation of
-block-statements - generating and saving diagrams generated through WSD's online
-API.  - support for WSD premium features (svg-export, etc) if API-key is
-provided.  - rendering diagrams inline in Emacs, or in external OS viewer if
-image   format is not supported by Emacs.
-
-
-Customization:
-
-To create mode-specific emacs-customizations, please use the wsd-mode-hook.
-
-A short summary of customizable variables:
-
-- wsd-api-key (default blank.  required for premium-features.) - wsd-format
-(default png.  svg requires premium, thus api-key.) - wsd-style (default
-modern-blue) - wsd-indent-offset (default 4) - wsd-font-lock-keywords")
+     "This is a major mode for modelling and editing sequence diagrams using the
+syntax employed by @url{https://www.websequencediagrams.com}.  It supports
+inline rendering of diagrams through the website API, saving diagrams to
+image files, syntax highlighting, automatic indentation of block statements,
+and WSD premium features such as SVG export when an API key is provided.")
     (license license:gpl3+)))
 
 (define-public emacs-pgemacs
