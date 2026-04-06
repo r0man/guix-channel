@@ -1725,10 +1725,10 @@ Emacs and Claude AI for coding assistance.")
       (license license:asl2.0))))
 
 (define-public emacs-claude-code-ide
-  (let ((commit "5f12e60c6d2d1802c8c1b7944bbdf935d5db1364"))
+  (let ((commit "56db02ee386d009ddb8b1482310f1f9beeefb810"))
     (package
       (name "emacs-claude-code-ide")
-      (version "0.2.6")
+      (version "0.2.7")
       (source
        (origin
          (method git-fetch)
@@ -1737,15 +1737,12 @@ Emacs and Claude AI for coding assistance.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "148xcrqff6khpwf8nnadcyvz8h6mk45xz1498k0wbzy80yzd2axn"))))
+          (base32 "060n6alwgnxqpqcl74c1ixjm0am1pfj2kx7v3wi4bys6dsf50zd8"))))
       (build-system emacs-build-system)
       (arguments (list #:tests? #f)) ; no tests
       (home-page "https://github.com/manzaltu/claude-code-ide.el")
       (propagated-inputs
-       (list emacs-eat
-             emacs-flycheck
-             emacs-transient
-             emacs-vterm
+       (list emacs-transient
              emacs-web-server
              emacs-websocket))
       (synopsis "Claude Code IDE integration for Emacs")
