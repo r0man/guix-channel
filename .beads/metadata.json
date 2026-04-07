@@ -1,0 +1,7 @@
+{
+  "database": "dolt",
+  "backend": "dolt",
+  "dolt_mode": "embedded",
+  "dolt_database": "guix_channel",
+  "project_id": "0771b8df-bdc3-49bd-9fd1-76f9ff193ec5"
+}
