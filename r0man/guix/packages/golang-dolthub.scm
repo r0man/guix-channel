@@ -684,6 +684,7 @@ logarithmic-time removal of both minimum and maximum elements.")
            go-github-com-oracle-oci-go-sdk-v65
            go-github-com-pkg-errors
            go-github-com-pmezard-go-difflib
+           go-github-com-prometheus-procfs
            go-github-com-sergi-go-diff
            go-github-com-shopspring-decimal
            go-github-com-silvasur-buzhash
