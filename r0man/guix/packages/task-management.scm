@@ -259,6 +259,7 @@ and utility functions needed to interact with Beads databases.")
       (build-system go-build-system)
       (arguments
        (list
+        #:go go-1.25
         #:install-source? #f
         #:import-path "github.com/steveyegge/gastown/cmd/gt"
         #:unpack-path "github.com/steveyegge/gastown"
@@ -300,7 +301,18 @@ and utility functions needed to interact with Beads databases.")
                 (copy-symlink-targets
                  "src/github.com/alecthomas/chroma/v2/lexers/embedded")
                 (copy-symlink-targets
-                 "src/github.com/alecthomas/chroma/v2/styles")))
+                 "src/github.com/alecthomas/chroma/v2/styles")
+                ;; Fix beads migrations embedded by the beads library.
+                (copy-symlink-targets
+                 (string-append "src/github.com/steveyegge/beads"
+                                "/internal/storage/schema/migrations"))
+                ;; Fix dolt embedded files (AGENT.md, weight maps).
+                (copy-symlink-targets
+                 (string-append "src/github.com/dolthub/dolt/go"
+                                "/libraries/doltcore/doltdb"))
+                (copy-symlink-targets
+                 (string-append "src/github.com/dolthub/go-mysql-server"
+                                "/sql/encodings"))))
             (delete 'check)
             (add-before 'build 'set-home
               (lambda _
@@ -326,6 +338,7 @@ and utility functions needed to interact with Beads databases.")
                     (lambda ()
                       (system* gt "completion" "fish")))))))))
       (native-inputs (list git
+                      icu4c
                       ;; Updated charmbracelet/x packages must appear before
                       ;; packages that propagate older versions, so they win
                       ;; collision resolution in setup-go-environment.
@@ -341,6 +354,17 @@ and utility functions needed to interact with Beads databases.")
                       go-github-com-charmbracelet-lipgloss
                       go-github-com-dolthub-dolt-go
                       go-github-com-dolthub-driver
+                      ;; Transitive dolt CLI dependencies needed for
+                      ;; compilation of the full dolt source tree.
+                      go-github-com-abiosoft-readline
+                      go-github-com-andreyvit-diff
+                      go-github-com-dolthub-ishell
+                      go-github-com-flynn-archive-go-shlex
+                      go-github-com-google-go-github-v57
+                      go-github-com-google-shlex
+                      go-github-com-pkg-profile
+                      go-github-com-skratchdot-open-golang
+                      go-github-com-tealeg-xlsx
                       go-github-com-fsnotify-fsnotify
                       go-github-com-go-rod-rod
                       go-github-com-go-sql-driver-mysql
