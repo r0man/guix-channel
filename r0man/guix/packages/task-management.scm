@@ -40,11 +40,11 @@
     #:use-module (r0man guix packages golang-xyz))
 
 (define-public beads-next
-  (let ((commit "72170267e00a96ec888f68a3279ddf0173b7adc7")
-        (revision "106"))
+  (let ((commit "d57dc7128a8657bcd462a4aa3a66da92d227a15a")
+        (revision "25"))
     (package
       (name "beads-next")
-      (version (git-version "1.0.0" revision commit))
+      (version (git-version "1.0.2" revision commit))
       (source
        (origin
          (method git-fetch)
@@ -53,7 +53,7 @@
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "1pa45f2ff9mdy82f1nfq9yvpqrbfg7slcrm4ynqn4fb4da2d4s0g"))))
+          (base32 "1jj9m5wis2hpa7by1is07jvywja4w9jgkg30vzik5iwrmsp23v2b"))))
       (build-system go-build-system)
       (arguments
        (list
@@ -95,14 +95,12 @@
                 (copy-symlink-targets
                  "src/github.com/alecthomas/chroma/v2/styles")
                 ;; Fix dolt embedded files (AGENT.md, weight maps).
-                (copy-symlink-targets
-                 (string-append
-                  "src/github.com/dolthub/dolt/go"
-                  "/libraries/doltcore/doltdb"))
-                (copy-symlink-targets
-                 (string-append
-                  "src/github.com/dolthub/go-mysql-server"
-                  "/sql/encodings"))))
+                (copy-symlink-targets (string-append
+                                       "src/github.com/dolthub/dolt/go"
+                                       "/libraries/doltcore/doltdb"))
+                (copy-symlink-targets (string-append
+                                       "src/github.com/dolthub/go-mysql-server"
+                                       "/sql/encodings"))))
             (add-before 'build 'set-home
               (lambda _
                 (setenv "HOME" "/tmp")))
@@ -193,11 +191,11 @@ machines.")
       (license license:expat))))
 
 (define-public go-github-com-steveyegge-beads
-  (let ((commit "72170267e00a96ec888f68a3279ddf0173b7adc7")
-        (revision "106"))
+  (let ((commit "d57dc7128a8657bcd462a4aa3a66da92d227a15a")
+        (revision "25"))
     (package
       (name "go-github-com-steveyegge-beads")
-      (version (git-version "1.0.0" revision commit))
+      (version (git-version "1.0.2" revision commit))
       (source
        (origin
          (method git-fetch)
@@ -206,7 +204,7 @@ machines.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "1pa45f2ff9mdy82f1nfq9yvpqrbfg7slcrm4ynqn4fb4da2d4s0g"))))
+          (base32 "1jj9m5wis2hpa7by1is07jvywja4w9jgkg30vzik5iwrmsp23v2b"))))
       (build-system go-build-system)
       (arguments
        (list
