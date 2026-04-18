@@ -324,16 +324,16 @@ maximum performance.")
 (define-public go-github-com-dolthub-go-icu-regex
   (package
     (name "go-github-com-dolthub-go-icu-regex")
-    (version "0.0.0-20250916051405-78a38d478790")
+    (version "0.0.0-20260412212219-49724d547866")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
              (url "https://github.com/dolthub/go-icu-regex")
-             (commit "78a38d478790877d822b14380da7dc8d4fda2849")))
+             (commit "49724d547866ae82c34c4f15873008454ec814a1")))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1bln24lbpv73nvdlh9qm0j6yrfphy52zf212vhmc62zfyim3kq8f"))))
+        (base32 "0w22akn9hqcd07gmgi0rkrb79v9l0h3167p012fzajsl4hasq33p"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -389,16 +389,16 @@ and other projects requiring MySQL SQL parsing capabilities.")
 (define-public go-github-com-dolthub-go-mysql-server
   (package
     (name "go-github-com-dolthub-go-mysql-server")
-    (version "0.20.1-0.20260408230922-6d219f1e7c8d")
+    (version "0.20.1-0.20260415223525-cbe3a4007b97")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
              (url "https://github.com/dolthub/go-mysql-server")
-             (commit "6d219f1e7c8da2816a4b282393128e0806d438a0")))
+             (commit "cbe3a4007b97344ead7a4abe8558388da86c336f")))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1cmm02jhrp86sr3rajjlnbv8r0ygg8mnxmzc7ysj8wn0x3cpb18i"))))
+        (base32 "1vlmbdb5p7n75nka1nsxgz5h2shak01lg4jdw6cmk74f38j5ca4z"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -602,7 +602,7 @@ logarithmic-time removal of both minimum and maximum elements.")
 (define-public go-github-com-dolthub-dolt-go
   (package
     (name "go-github-com-dolthub-dolt-go")
-    (version "1.86.1")
+    (version "1.86.3")
     (source
      (origin
        (method git-fetch)
@@ -611,7 +611,7 @@ logarithmic-time removal of both minimum and maximum elements.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "024haghl3xzwfr57440kia34ni81500cbrphpalxqfkp2z41lxj7"))
+        (base32 "0s10vwk0x0aij2jpigxp1z99xs6wsn0rkmysawh3by7asr4dp5nc"))
        (modules '((guix build utils)))
        (snippet
         ;; Replace google.golang.org/grpc/experimental/credentials
@@ -746,7 +746,7 @@ library for building interactive command-line applications.")
 (define-public go-github-com-dolthub-ishell
   (package
     (name "go-github-com-dolthub-ishell")
-    (version "0.0.0-20240701202509-2b217167d718")
+    (version "0.0.0-20260414231531-5f031e3e9037")
     (source
      (origin
        (method git-fetch)
@@ -755,7 +755,7 @@ library for building interactive command-line applications.")
              (commit (go-version->git-ref version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1h1j7rldaxlc7fi359il3p31v6ryfr8di51nd7yncnrfg4ra1vsd"))))
+        (base32 "1lsspwn3gnv5n2d5v36ybn7k1xk6zbkdj5ykc0rpina3jb75b634"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -1085,7 +1085,7 @@ a CLI for managing versioned databases with full MySQL compatibility.")
 (define-public go-github-com-dolthub-driver
   (package
     (name "go-github-com-dolthub-driver")
-    (version "1.84.0")
+    (version "1.84.1")
     (source
      (origin
        (method git-fetch)
@@ -1094,7 +1094,7 @@ a CLI for managing versioned databases with full MySQL compatibility.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1cip15h0im37avpxd2h9rqrdri0dn9dsjjs11hzm1dz2fi72l2f7"))))
+        (base32 "0pxd9bl6gqbc8zcndarrzajmny85vgpk73zzrrslpdr4y8w7iaxz"))))
     (build-system go-build-system)
     (arguments
      (list
