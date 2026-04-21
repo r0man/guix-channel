@@ -6,6 +6,7 @@
     #:use-module (gnu packages golang-crypto)
     #:use-module ((gnu packages golang-web)
                    #:hide (go-github-com-anthropics-anthropic-sdk-go
+                           go-github-com-danielgtaylor-huma-v2
                            go-go-opentelemetry-io-otel
                            go-go-opentelemetry-io-otel-exporters-stdout-stdouttrace
                            go-go-opentelemetry-io-otel-log
@@ -403,11 +404,11 @@ project spaces called Rigs.")
       (license license:expat))))
 
 (define-public gascity-next
-  (let ((commit "c19e979c26c715c20b117aac2d8a3e32f140c268")
-        (revision "820"))
+  (let ((commit "5a75cf9c3d6d240fe05e7a7406f5a74d4f890380")
+        (revision "1078"))
     (package
       (name "gascity-next")
-      (version (git-version "0.15.1" revision commit))
+      (version (git-version "1.0.0" revision commit))
       (source
        (origin
          (method git-fetch)
@@ -416,7 +417,7 @@ project spaces called Rigs.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "0n20a1qms9rm3c28k268yiaqqw2zgpacikbhplc8jl6s5ks6fv8m"))))
+          (base32 "11r0fz1k5yiral7b4dpklyy47nav8vx7vchrh19dr0a2rjbxkddw"))))
       (build-system go-build-system)
       (arguments
        (list
@@ -442,10 +443,12 @@ project spaces called Rigs.")
                            `(,@build-flags ,import-path)))))))))
       (native-inputs (list go-github-com-burntsushi-toml
                       go-github-com-cespare-xxhash-v2
+                      go-github-com-danielgtaylor-huma-v2
                       go-github-com-fsnotify-fsnotify
                       go-github-com-go-logr-stdr
                       go-github-com-go-sql-driver-mysql
                       go-github-com-invopop-jsonschema
+                      go-github-com-oapi-codegen-runtime
                       go-github-com-rogpeppe-go-internal
                       go-github-com-spf13-cobra
                       go-github-com-spf13-pflag
