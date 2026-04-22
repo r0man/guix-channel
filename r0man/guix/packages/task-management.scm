@@ -404,8 +404,8 @@ project spaces called Rigs.")
       (license license:expat))))
 
 (define-public gascity-next
-  (let ((commit "5a75cf9c3d6d240fe05e7a7406f5a74d4f890380")
-        (revision "1078"))
+  (let ((commit "bc6058d352fc2a46e6d43ff32e90d4a42f2b4bac")
+        (revision "1100"))
     (package
       (name "gascity-next")
       (version (git-version "1.0.0" revision commit))
@@ -417,7 +417,7 @@ project spaces called Rigs.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "11r0fz1k5yiral7b4dpklyy47nav8vx7vchrh19dr0a2rjbxkddw"))))
+          (base32 "1kmr8f0hlycjz01zc4s38czn7q1l2420jsird6gmfpgv4211kkx3"))))
       (build-system go-build-system)
       (arguments
        (list
@@ -440,7 +440,27 @@ project spaces called Rigs.")
                 (let ((module-dir (string-append "src/" unpack-path)))
                   (with-directory-excursion module-dir
                     (apply invoke "go" "install" "-trimpath"
-                           `(,@build-flags ,import-path)))))))))
+                           `(,@build-flags ,import-path))))))
+            (add-after 'install 'install-completions
+              (lambda* (#:key outputs #:allow-other-keys)
+                (let* ((out (assoc-ref outputs "out"))
+                       (gc (string-append out "/bin/gc"))
+                       (bash-dir (string-append out "/etc/bash_completion.d"))
+                       (zsh-dir (string-append out "/share/zsh/site-functions"))
+                       (fish-dir (string-append out
+                                  "/share/fish/vendor_completions.d")))
+                  (mkdir-p bash-dir)
+                  (mkdir-p zsh-dir)
+                  (mkdir-p fish-dir)
+                  (with-output-to-file (string-append bash-dir "/gc")
+                    (lambda ()
+                      (system* gc "completion" "bash")))
+                  (with-output-to-file (string-append zsh-dir "/_gc")
+                    (lambda ()
+                      (system* gc "completion" "zsh")))
+                  (with-output-to-file (string-append fish-dir "/gc.fish")
+                    (lambda ()
+                      (system* gc "completion" "fish")))))))))
       (native-inputs (list go-github-com-burntsushi-toml
                       go-github-com-cespare-xxhash-v2
                       go-github-com-danielgtaylor-huma-v2
