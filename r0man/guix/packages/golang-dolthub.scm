@@ -353,16 +353,16 @@ in go-mysql-server and Dolt.")
 (define-public go-github-com-dolthub-vitess
   (package
     (name "go-github-com-dolthub-vitess")
-    (version "0.0.0-20260309181228-a99af9c518ab")
+    (version "0.0.0-20260422060906-f6f5b5573b7b")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
              (url "https://github.com/dolthub/vitess")
-             (commit "a99af9c518abbc25bd6b3ec4eea89ee2b1f1920d")))
+             (commit "f6f5b5573b7ba91daa34027789b5602f18a11a62")))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0izyyy5iwd24xbqg4symnnkrzlss6qkzycihgwgj8s2qk0dabrn4"))))
+        (base32 "0cl34vm30drgiag3ypryxgdy8dv2lk33jk3qddazk29vk54nzw2d"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -374,8 +374,7 @@ in go-mysql-server and Dolt.")
       #~(modify-phases %standard-phases
           (delete 'build))))
     (native-inputs (list go-github-com-stretchr-testify))
-    (propagated-inputs (list go-golang-org-x-tools
-                             go-google-golang-org-grpc
+    (propagated-inputs (list go-golang-org-x-tools go-google-golang-org-grpc
                              go-google-golang-org-protobuf))
     (home-page "https://github.com/dolthub/vitess")
     (synopsis "MySQL-compatible SQL parser for Go")
@@ -389,16 +388,16 @@ and other projects requiring MySQL SQL parsing capabilities.")
 (define-public go-github-com-dolthub-go-mysql-server
   (package
     (name "go-github-com-dolthub-go-mysql-server")
-    (version "0.20.1-0.20260415223525-cbe3a4007b97")
+    (version "0.20.1-0.20260422200044-972069de98a8")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
              (url "https://github.com/dolthub/go-mysql-server")
-             (commit "cbe3a4007b97344ead7a4abe8558388da86c336f")))
+             (commit "972069de98a8e38c74f03f93317d9846e9ddf9a7")))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1vlmbdb5p7n75nka1nsxgz5h2shak01lg4jdw6cmk74f38j5ca4z"))))
+        (base32 "1s4hnrgg64q51dj4289i9q23id0aizpkhp76a0khw4xzmdqm8qwh"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -417,7 +416,8 @@ and other projects requiring MySQL SQL parsing capabilities.")
                                     "/sql/encodings")))
                 (when (file-exists? encodings-dir)
                   (for-each (lambda (file)
-                              (let ((path (string-append encodings-dir "/" file)))
+                              (let ((path (string-append encodings-dir "/"
+                                                         file)))
                                 (when (and (symbolic-link? path)
                                            (string-suffix? ".bin" file))
                                   (let ((target (readlink path)))
@@ -425,28 +425,28 @@ and other projects requiring MySQL SQL parsing capabilities.")
                                     (copy-file target path)))))
                             (scandir encodings-dir
                                      (lambda (f)
-                                       (not (member f '("." "..")))))))))))))
-    (propagated-inputs
-     (list go-github-com-cespare-xxhash
-           go-github-com-dolthub-flatbuffers
-           go-github-com-dolthub-go-icu-regex
-           go-github-com-dolthub-jsonpath
-           go-github-com-dolthub-vitess
-           go-github-com-go-sql-driver-mysql
-           go-github-com-gocraft-dbr-v2
-           go-github-com-google-uuid
-           go-github-com-hashicorp-golang-lru
-           go-github-com-lestrrat-go-strftime
-           go-github-com-pkg-errors
-           go-github-com-shopspring-decimal
-           go-github-com-sirupsen-logrus
-           go-golang-org-x-sync
-           go-golang-org-x-sys
-           go-golang-org-x-text
-           go-golang-org-x-tools
-           go-google-golang-org-grpc
-           go-gopkg-in-src-d-go-errors-v1
-           go-gopkg-in-yaml-v3))
+                                       (not (member f
+                                                    '("." "..")))))))))))))
+    (propagated-inputs (list go-github-com-cespare-xxhash
+                             go-github-com-dolthub-flatbuffers
+                             go-github-com-dolthub-go-icu-regex
+                             go-github-com-dolthub-jsonpath
+                             go-github-com-dolthub-vitess
+                             go-github-com-go-sql-driver-mysql
+                             go-github-com-gocraft-dbr-v2
+                             go-github-com-google-uuid
+                             go-github-com-hashicorp-golang-lru
+                             go-github-com-lestrrat-go-strftime
+                             go-github-com-pkg-errors
+                             go-github-com-shopspring-decimal
+                             go-github-com-sirupsen-logrus
+                             go-golang-org-x-sync
+                             go-golang-org-x-sys
+                             go-golang-org-x-text
+                             go-golang-org-x-tools
+                             go-google-golang-org-grpc
+                             go-gopkg-in-src-d-go-errors-v1
+                             go-gopkg-in-yaml-v3))
     (home-page "https://github.com/dolthub/go-mysql-server")
     (synopsis "MySQL-compatible SQL engine written in Go")
     (description
@@ -602,7 +602,7 @@ logarithmic-time removal of both minimum and maximum elements.")
 (define-public go-github-com-dolthub-dolt-go
   (package
     (name "go-github-com-dolthub-dolt-go")
-    (version "1.86.3")
+    (version "1.86.4")
     (source
      (origin
        (method git-fetch)
@@ -611,20 +611,18 @@ logarithmic-time removal of both minimum and maximum elements.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0s10vwk0x0aij2jpigxp1z99xs6wsn0rkmysawh3by7asr4dp5nc"))
+        (base32 "1ci4ascwhv0f9gwyaqh345xq98arvw6qb5va2l4sjcmrvcqa1mqx"))
        (modules '((guix build utils)))
        (snippet
         ;; Replace google.golang.org/grpc/experimental/credentials
         ;; (not available in grpc v1.69.2) with standard credentials.NewTLS
         '(begin
-           (substitute*
-               "go/libraries/doltcore/env/grpc_dial_provider.go"
+           (substitute* "go/libraries/doltcore/env/grpc_dial_provider.go"
              (("\texpcreds \"google.golang.org/grpc/experimental/credentials\"\n")
               "")
              (("expcreds\\.NewTLSWithALPNDisabled")
               "credentials.NewTLS"))
-           (substitute*
-               "go/libraries/doltcore/sqle/cluster/controller.go"
+           (substitute* "go/libraries/doltcore/sqle/cluster/controller.go"
              (("\texpcreds \"google.golang.org/grpc/experimental/credentials\"\n")
               "")
              (("expcreds\\.NewTLSWithALPNDisabled")
@@ -639,76 +637,75 @@ logarithmic-time removal of both minimum and maximum elements.")
       #:phases
       #~(modify-phases %standard-phases
           (delete 'build))))
-    (propagated-inputs
-     (list go-cloud-google-com-go
-           go-cloud-google-com-go-iam
-           go-cloud-google-com-go-storage
-           go-github-com-azure-azure-sdk-for-go-sdk-azcore
-           go-github-com-azure-azure-sdk-for-go-sdk-azidentity
-           go-github-com-azure-azure-sdk-for-go-sdk-storage-azblob
-           go-github-com-aliyun-aliyun-oss-go-sdk
-           go-github-com-aws-aws-sdk-go-v2
-           go-github-com-aws-aws-sdk-go-v2-config
-           go-github-com-aws-aws-sdk-go-v2-feature-s3-manager
-           go-github-com-aws-aws-sdk-go-v2-service-s3
-           go-github-com-aws-aws-sdk-go-v2-service-sts
-           go-github-com-aws-smithy-go
-           go-github-com-bcicen-jstream
-           go-github-com-cenkalti-backoff-v4
-           go-github-com-denisbrodbeck-machineid
-           go-github-com-dolthub-aws-sdk-go-ini-parser
-           go-github-com-dolthub-eventsapi-schema
-           go-github-com-dolthub-flatbuffers
-           go-github-com-dolthub-fslock
-           go-github-com-dolthub-go-mysql-server
-           go-github-com-dolthub-gozstd
-           go-github-com-dolthub-vitess
-           go-github-com-dustin-go-humanize
-           go-github-com-edsrzf-mmap-go
-           go-github-com-esote-minmaxheap
-           go-github-com-fatih-color
-           go-github-com-go-sql-driver-mysql
-           go-github-com-gocraft-dbr-v2
-           go-github-com-goccy-go-json
-           go-github-com-golang-snappy
-           go-github-com-google-btree
-           go-github-com-google-uuid
-           go-github-com-googleapis-gax-go-v2
-           go-github-com-hashicorp-golang-lru
-           go-github-com-hashicorp-golang-lru-v2
-           go-github-com-hdrhistogram-hdrhistogram-go
-           go-github-com-juju-gnuflag
-           go-github-com-kch42-buzhash
-           go-github-com-kylelemons-godebug
-           go-github-com-mohae-uvarint
-           go-github-com-oracle-oci-go-sdk-v65
-           go-github-com-pkg-errors
-           go-github-com-pmezard-go-difflib
-           go-github-com-prometheus-procfs
-           go-github-com-sergi-go-diff
-           go-github-com-shopspring-decimal
-           go-github-com-silvasur-buzhash
-           go-github-com-sirupsen-logrus
-           go-github-com-spf13-cobra
-           go-github-com-vbauerster-mpb-v8
-           go-github-com-xitongsys-parquet-go
-           go-github-com-xitongsys-parquet-go-source
-           go-github-com-xtaci-smux
-           go-github-com-zeebo-xxh3
-           go-go-uber-org-zap
-           go-golang-org-x-crypto
-           go-golang-org-x-net
-           go-golang-org-x-oauth2
-           go-golang-org-x-sync
-           go-golang-org-x-sys
-           go-golang-org-x-text
-           go-google-golang-org-api
-           go-google-golang-org-genproto
-           go-google-golang-org-grpc
-           go-google-golang-org-protobuf
-           go-gopkg-in-go-jose-go-jose-v2
-           go-gopkg-in-src-d-go-errors-v1
-           go-gopkg-in-yaml-v3))
+    (propagated-inputs (list go-cloud-google-com-go
+                        go-cloud-google-com-go-iam
+                        go-cloud-google-com-go-storage
+                        go-github-com-azure-azure-sdk-for-go-sdk-azcore
+                        go-github-com-azure-azure-sdk-for-go-sdk-azidentity
+                        go-github-com-azure-azure-sdk-for-go-sdk-storage-azblob
+                        go-github-com-aliyun-aliyun-oss-go-sdk
+                        go-github-com-aws-aws-sdk-go-v2
+                        go-github-com-aws-aws-sdk-go-v2-config
+                        go-github-com-aws-aws-sdk-go-v2-feature-s3-manager
+                        go-github-com-aws-aws-sdk-go-v2-service-s3
+                        go-github-com-aws-aws-sdk-go-v2-service-sts
+                        go-github-com-aws-smithy-go
+                        go-github-com-bcicen-jstream
+                        go-github-com-cenkalti-backoff-v4
+                        go-github-com-denisbrodbeck-machineid
+                        go-github-com-dolthub-aws-sdk-go-ini-parser
+                        go-github-com-dolthub-eventsapi-schema
+                        go-github-com-dolthub-flatbuffers
+                        go-github-com-dolthub-fslock
+                        go-github-com-dolthub-go-mysql-server
+                        go-github-com-dolthub-gozstd
+                        go-github-com-dolthub-vitess
+                        go-github-com-dustin-go-humanize
+                        go-github-com-edsrzf-mmap-go
+                        go-github-com-esote-minmaxheap
+                        go-github-com-fatih-color
+                        go-github-com-go-sql-driver-mysql
+                        go-github-com-gocraft-dbr-v2
+                        go-github-com-goccy-go-json
+                        go-github-com-golang-snappy
+                        go-github-com-google-btree
+                        go-github-com-google-uuid
+                        go-github-com-googleapis-gax-go-v2
+                        go-github-com-hashicorp-golang-lru
+                        go-github-com-hashicorp-golang-lru-v2
+                        go-github-com-hdrhistogram-hdrhistogram-go
+                        go-github-com-juju-gnuflag
+                        go-github-com-kch42-buzhash
+                        go-github-com-kylelemons-godebug
+                        go-github-com-mohae-uvarint
+                        go-github-com-oracle-oci-go-sdk-v65
+                        go-github-com-pkg-errors
+                        go-github-com-pmezard-go-difflib
+                        go-github-com-prometheus-procfs
+                        go-github-com-sergi-go-diff
+                        go-github-com-shopspring-decimal
+                        go-github-com-silvasur-buzhash
+                        go-github-com-sirupsen-logrus
+                        go-github-com-spf13-cobra
+                        go-github-com-vbauerster-mpb-v8
+                        go-github-com-xitongsys-parquet-go
+                        go-github-com-xitongsys-parquet-go-source
+                        go-github-com-xtaci-smux
+                        go-github-com-zeebo-xxh3
+                        go-go-uber-org-zap
+                        go-golang-org-x-crypto
+                        go-golang-org-x-net
+                        go-golang-org-x-oauth2
+                        go-golang-org-x-sync
+                        go-golang-org-x-sys
+                        go-golang-org-x-text
+                        go-google-golang-org-api
+                        go-google-golang-org-genproto
+                        go-google-golang-org-grpc
+                        go-google-golang-org-protobuf
+                        go-gopkg-in-go-jose-go-jose-v2
+                        go-gopkg-in-src-d-go-errors-v1
+                        go-gopkg-in-yaml-v3))
     (home-page "https://github.com/dolthub/dolt")
     (synopsis "Version-controlled SQL database engine")
     (description
@@ -935,7 +932,8 @@ AI assistants to interact with Dolt version-controlled SQL databases.")
       #:phases
       #~(modify-phases %standard-phases
           (add-before 'build 'set-home
-            (lambda _ (setenv "HOME" "/tmp")))
+            (lambda _
+              (setenv "HOME" "/tmp")))
           (add-after 'unpack 'fix-embed-symlinks
             (lambda _
               (use-modules (ice-9 ftw))
@@ -944,8 +942,8 @@ AI assistants to interact with Dolt version-controlled SQL databases.")
                                     "/sql/encodings")))
                 (when (file-exists? encodings-dir)
                   (for-each (lambda (file)
-                              (let ((path (string-append
-                                           encodings-dir "/" file)))
+                              (let ((path (string-append encodings-dir "/"
+                                                         file)))
                                 (when (and (symbolic-link? path)
                                            (string-suffix? ".bin" file))
                                   (let ((target (readlink path)))
@@ -953,100 +951,100 @@ AI assistants to interact with Dolt version-controlled SQL databases.")
                                     (copy-file target path)))))
                             (scandir encodings-dir
                                      (lambda (f)
-                                       (not (member f '("." "..")))))))))))))
-    (native-inputs
-     (list ;; All propagated-inputs from go-github-com-dolthub-dolt-go
-           go-cloud-google-com-go
-           go-cloud-google-com-go-iam
-           go-cloud-google-com-go-storage
-           go-github-com-azure-azure-sdk-for-go-sdk-azcore
-           go-github-com-azure-azure-sdk-for-go-sdk-azidentity
-           go-github-com-azure-azure-sdk-for-go-sdk-storage-azblob
-           go-github-com-aliyun-aliyun-oss-go-sdk
-           go-github-com-aws-aws-sdk-go-v2
-           go-github-com-aws-aws-sdk-go-v2-config
-           go-github-com-aws-aws-sdk-go-v2-feature-s3-manager
-           go-github-com-aws-aws-sdk-go-v2-service-s3
-           go-github-com-aws-aws-sdk-go-v2-service-sts
-           go-github-com-aws-smithy-go
-           go-github-com-bcicen-jstream
-           go-github-com-cenkalti-backoff-v4
-           go-github-com-denisbrodbeck-machineid
-           go-github-com-dolthub-aws-sdk-go-ini-parser
-           go-github-com-dolthub-eventsapi-schema
-           go-github-com-dolthub-flatbuffers
-           go-github-com-dolthub-fslock
-           go-github-com-dolthub-go-mysql-server
-           go-github-com-dolthub-gozstd
-           go-github-com-dolthub-vitess
-           go-github-com-dustin-go-humanize
-           go-github-com-edsrzf-mmap-go
-           go-github-com-esote-minmaxheap
-           go-github-com-fatih-color
-           go-github-com-go-sql-driver-mysql
-           go-github-com-gocraft-dbr-v2
-           go-github-com-goccy-go-json
-           go-github-com-golang-snappy
-           go-github-com-google-btree
-           go-github-com-google-uuid
-           go-github-com-googleapis-gax-go-v2
-           go-github-com-hashicorp-golang-lru
-           go-github-com-hashicorp-golang-lru-v2
-           go-github-com-hdrhistogram-hdrhistogram-go
-           go-github-com-juju-gnuflag
-           go-github-com-kch42-buzhash
-           go-github-com-kylelemons-godebug
-           go-github-com-mohae-uvarint
-           go-github-com-oracle-oci-go-sdk-v65
-           go-github-com-pkg-errors
-           go-github-com-pmezard-go-difflib
-           go-github-com-sergi-go-diff
-           go-github-com-shopspring-decimal
-           go-github-com-silvasur-buzhash
-           go-github-com-sirupsen-logrus
-           go-github-com-spf13-cobra
-           go-github-com-vbauerster-mpb-v8
-           go-github-com-xitongsys-parquet-go
-           go-github-com-xitongsys-parquet-go-source
-           go-github-com-xtaci-smux
-           go-github-com-zeebo-xxh3
-           go-go-uber-org-zap
-           go-golang-org-x-crypto
-           go-golang-org-x-net
-           go-golang-org-x-oauth2
-           go-golang-org-x-sync
-           go-golang-org-x-sys
-           go-golang-org-x-text
-           go-google-golang-org-api
-           go-google-golang-org-genproto
-           go-google-golang-org-grpc
-           go-google-golang-org-protobuf
-           go-gopkg-in-go-jose-go-jose-v2
-           go-gopkg-in-src-d-go-errors-v1
-           go-gopkg-in-yaml-v3
-           ;; CLI-specific dependencies
-           go-github-com-abiosoft-readline
-           go-github-com-andreyvit-diff
-           go-github-com-dolthub-dolt-mcp
-           go-github-com-dolthub-ishell
-           go-github-com-flynn-archive-go-shlex
-           go-github-com-google-go-github-v57
-           go-github-com-google-shlex
-           go-github-com-pkg-profile
-           go-github-com-prometheus-client-golang
-           go-github-com-shirou-gopsutil-v4/fixed
-           go-github-com-skratchdot-open-golang
-           go-github-com-tealeg-xlsx
-           go-github-com-tidwall-gjson
-           go-github-com-tidwall-sjson
-           go-github-com-xtaci-smux
-           go-go-opentelemetry-io-otel
-           go-go-opentelemetry-io-otel-exporters-jaeger
-           go-go-opentelemetry-io-otel-sdk
-           go-go-opentelemetry-io-otel-trace
-           go-gopkg-in-yaml-v2
-           ;; CGO dependencies
-           icu4c))
+                                       (not (member f
+                                                    '("." "..")))))))))))))
+    (native-inputs (list ;All propagated-inputs from go-github-com-dolthub-dolt-go
+                    go-cloud-google-com-go
+                    go-cloud-google-com-go-iam
+                    go-cloud-google-com-go-storage
+                    go-github-com-azure-azure-sdk-for-go-sdk-azcore
+                    go-github-com-azure-azure-sdk-for-go-sdk-azidentity
+                    go-github-com-azure-azure-sdk-for-go-sdk-storage-azblob
+                    go-github-com-aliyun-aliyun-oss-go-sdk
+                    go-github-com-aws-aws-sdk-go-v2
+                    go-github-com-aws-aws-sdk-go-v2-config
+                    go-github-com-aws-aws-sdk-go-v2-feature-s3-manager
+                    go-github-com-aws-aws-sdk-go-v2-service-s3
+                    go-github-com-aws-aws-sdk-go-v2-service-sts
+                    go-github-com-aws-smithy-go
+                    go-github-com-bcicen-jstream
+                    go-github-com-cenkalti-backoff-v4
+                    go-github-com-denisbrodbeck-machineid
+                    go-github-com-dolthub-aws-sdk-go-ini-parser
+                    go-github-com-dolthub-eventsapi-schema
+                    go-github-com-dolthub-flatbuffers
+                    go-github-com-dolthub-fslock
+                    go-github-com-dolthub-go-mysql-server
+                    go-github-com-dolthub-gozstd
+                    go-github-com-dolthub-vitess
+                    go-github-com-dustin-go-humanize
+                    go-github-com-edsrzf-mmap-go
+                    go-github-com-esote-minmaxheap
+                    go-github-com-fatih-color
+                    go-github-com-go-sql-driver-mysql
+                    go-github-com-gocraft-dbr-v2
+                    go-github-com-goccy-go-json
+                    go-github-com-golang-snappy
+                    go-github-com-google-btree
+                    go-github-com-google-uuid
+                    go-github-com-googleapis-gax-go-v2
+                    go-github-com-hashicorp-golang-lru
+                    go-github-com-hashicorp-golang-lru-v2
+                    go-github-com-hdrhistogram-hdrhistogram-go
+                    go-github-com-juju-gnuflag
+                    go-github-com-kch42-buzhash
+                    go-github-com-kylelemons-godebug
+                    go-github-com-mohae-uvarint
+                    go-github-com-oracle-oci-go-sdk-v65
+                    go-github-com-pkg-errors
+                    go-github-com-pmezard-go-difflib
+                    go-github-com-sergi-go-diff
+                    go-github-com-shopspring-decimal
+                    go-github-com-silvasur-buzhash
+                    go-github-com-sirupsen-logrus
+                    go-github-com-spf13-cobra
+                    go-github-com-vbauerster-mpb-v8
+                    go-github-com-xitongsys-parquet-go
+                    go-github-com-xitongsys-parquet-go-source
+                    go-github-com-xtaci-smux
+                    go-github-com-zeebo-xxh3
+                    go-go-uber-org-zap
+                    go-golang-org-x-crypto
+                    go-golang-org-x-net
+                    go-golang-org-x-oauth2
+                    go-golang-org-x-sync
+                    go-golang-org-x-sys
+                    go-golang-org-x-text
+                    go-google-golang-org-api
+                    go-google-golang-org-genproto
+                    go-google-golang-org-grpc
+                    go-google-golang-org-protobuf
+                    go-gopkg-in-go-jose-go-jose-v2
+                    go-gopkg-in-src-d-go-errors-v1
+                    go-gopkg-in-yaml-v3
+                    ;; CLI-specific dependencies
+                    go-github-com-abiosoft-readline
+                    go-github-com-andreyvit-diff
+                    go-github-com-dolthub-dolt-mcp
+                    go-github-com-dolthub-ishell
+                    go-github-com-flynn-archive-go-shlex
+                    go-github-com-google-go-github-v57
+                    go-github-com-google-shlex
+                    go-github-com-pkg-profile
+                    go-github-com-prometheus-client-golang
+                    go-github-com-shirou-gopsutil-v4/fixed
+                    go-github-com-skratchdot-open-golang
+                    go-github-com-tealeg-xlsx
+                    go-github-com-tidwall-gjson
+                    go-github-com-tidwall-sjson
+                    go-github-com-xtaci-smux
+                    go-go-opentelemetry-io-otel
+                    go-go-opentelemetry-io-otel-exporters-jaeger
+                    go-go-opentelemetry-io-otel-sdk
+                    go-go-opentelemetry-io-otel-trace
+                    go-gopkg-in-yaml-v2
+                    ;; CGO dependencies
+                    icu4c))
     (propagated-inputs '())
     (synopsis "SQL database with Git-like version control")
     (description
