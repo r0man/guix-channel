@@ -8,15 +8,67 @@
   #:use-module (guix utils)
   #:use-module (nonguix build-system binary))
 
-;; Upstream 2.1.119 changed the npm distribution to a thin wrapper that
-;; resolves platform-specific precompiled native binaries via
-;; optionalDependencies.  Guix's node-build-system cannot resolve those, so
-;; this package fetches the per-platform prebuilt binary from Anthropic's
-;; GitHub release (the canonical, signed upstream source) and patchelfs
-;; the native ELF to use Guix's glibc.
+;; Last working version built from the npm source distribution.  Upstream
+;; 2.1.119 switched to a native-binary distribution incompatible with
+;; node-build-system; see the `claude-code' package below for that path.
 (define-public node-anthropic-ai-claude-code
   (package
     (name "node-anthropic-ai-claude-code")
+    (version "2.1.111")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append
+             "https://registry.npmjs.org/@anthropic-ai/claude-code/"
+             "-/claude-code-" version ".tgz"))
+       (sha256
+        (base32 "067g0zyypl4l73062hkdbid2yyha3326ydmw4dsr2rd48zjm26nv"))))
+    (build-system node-build-system)
+    (arguments
+     (list
+      #:tests? #f
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'build)
+          (add-after 'install 'replace-vendored-ripgrep
+            (lambda* (#:key inputs outputs #:allow-other-keys)
+              (let* ((out (assoc-ref outputs "out"))
+                     (lib (string-append out "/lib/node_modules"
+                                         "/@anthropic-ai/claude-code"))
+                     (vendor-rg-dir (string-append lib "/vendor/ripgrep"))
+                     (rg-bin (search-input-file inputs "/bin/rg")))
+                ;; Delete all vendored ripgrep binaries
+                (when (file-exists? vendor-rg-dir)
+                  (delete-file-recursively vendor-rg-dir))
+                ;; Recreate the expected directory structure with symlinks to Guix ripgrep
+                (mkdir-p (string-append vendor-rg-dir "/arm64-linux"))
+                (mkdir-p (string-append vendor-rg-dir "/x64-linux"))
+                (symlink rg-bin
+                         (string-append vendor-rg-dir "/arm64-linux/rg"))
+                (symlink rg-bin
+                         (string-append vendor-rg-dir "/x64-linux/rg")))))
+          (delete 'validate-runpath))))
+    (inputs (list ripgrep))
+    (home-page "https://github.com/anthropics/claude-code")
+    (synopsis "AI coding assistant that lives in your terminal")
+    (description
+     "Claude Code is an agentic coding tool that lives in your terminal.
+It understands your codebase, edits files, runs terminal commands, and
+handles entire workflows through natural language commands.  Powered by
+Anthropic's Claude AI assistant.")
+    (license (license:non-copyleft
+              "https://github.com/anthropics/claude-code/blob/main/LICENSE.md"
+              "See LICENSE.md in the repository."))))
+
+;; Starting with 2.1.119, upstream's npm distribution became a thin wrapper
+;; that resolves platform-specific precompiled native binaries via
+;; optionalDependencies — incompatible with Guix's node-build-system.  This
+;; package fetches the per-platform prebuilt binary from Anthropic's
+;; GitHub release (the canonical, signed upstream source) and patchelfs
+;; the native ELF to use Guix's glibc.
+(define-public claude-code
+  (package
+    (name "claude-code")
     (version "2.1.119")
     (source
      (origin
