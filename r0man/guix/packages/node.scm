@@ -11,8 +11,9 @@
 ;; Upstream 2.1.119 changed the npm distribution to a thin wrapper that
 ;; resolves platform-specific precompiled native binaries via
 ;; optionalDependencies.  Guix's node-build-system cannot resolve those, so
-;; this package fetches the per-platform tarball directly and patchelfs the
-;; native ELF to use Guix's glibc.
+;; this package fetches the per-platform prebuilt binary from Anthropic's
+;; GitHub release (the canonical, signed upstream source) and patchelfs
+;; the native ELF to use Guix's glibc.
 (define-public node-anthropic-ai-claude-code
   (package
     (name "node-anthropic-ai-claude-code")
@@ -20,20 +21,21 @@
     (source
      (origin
        (method url-fetch)
-       (uri (let ((platform (cond ((target-aarch64?) "linux-arm64")
-                                  ((target-x86-64?) "linux-x64")
-                                  (else "linux-x64"))))
-              (string-append
-               "https://registry.npmjs.org/@anthropic-ai/claude-code-"
-               platform "/-/claude-code-" platform "-" version ".tgz")))
+       (uri (string-append
+             "https://github.com/anthropics/claude-code/releases/download/v"
+             version "/claude-"
+             (cond ((target-aarch64?) "linux-arm64")
+                   ((target-x86-64?) "linux-x64")
+                   (else "linux-x64"))
+             ".tar.gz"))
        (sha256
         (base32
          (cond ((target-aarch64?)
-                "028ky2zg98hm5hg3kqh0q8q7i78qcyj3r5cgbg8cpdzw58ya563g")
+                "00w5sbgqcbnqn3h2fc9ma01ywqmjqbrjvwkjjwckz39h7agy8vc6")
                ((target-x86-64?)
-                "1a4wms0idjkjsby9ib08bpcs1vmd8vmi3w01cq4xrh9ghr59b5ra")
+                "1s27dmlhy4bsji8j5ciq70y8d2ll43875vvwjfbkjy37q04f7d8g")
                (else
-                "1a4wms0idjkjsby9ib08bpcs1vmd8vmi3w01cq4xrh9ghr59b5ra"))))))
+                "1s27dmlhy4bsji8j5ciq70y8d2ll43875vvwjfbkjy37q04f7d8g"))))))
     (build-system binary-build-system)
     (arguments
      (list
