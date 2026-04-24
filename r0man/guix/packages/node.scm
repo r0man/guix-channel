@@ -4,46 +4,55 @@
   #:use-module (guix packages)
   #:use-module (guix download)
   #:use-module (guix build-system node)
-  #:use-module (guix gexp))
+  #:use-module (guix gexp)
+  #:use-module (guix utils)
+  #:use-module (nonguix build-system binary))
 
+;; Upstream 2.1.119 changed the npm distribution to a thin wrapper that
+;; resolves platform-specific precompiled native binaries via
+;; optionalDependencies.  Guix's node-build-system cannot resolve those, so
+;; this package fetches the per-platform tarball directly and patchelfs the
+;; native ELF to use Guix's glibc.
 (define-public node-anthropic-ai-claude-code
   (package
     (name "node-anthropic-ai-claude-code")
-    (version "2.1.111")
+    (version "2.1.119")
     (source
      (origin
        (method url-fetch)
-       (uri (string-append
-             "https://registry.npmjs.org/@anthropic-ai/claude-code/"
-             "-/claude-code-" version ".tgz"))
+       (uri (let ((platform (cond ((target-aarch64?) "linux-arm64")
+                                  ((target-x86-64?) "linux-x64")
+                                  (else "linux-x64"))))
+              (string-append
+               "https://registry.npmjs.org/@anthropic-ai/claude-code-"
+               platform "/-/claude-code-" platform "-" version ".tgz")))
        (sha256
-        (base32 "067g0zyypl4l73062hkdbid2yyha3326ydmw4dsr2rd48zjm26nv"))))
-    (build-system node-build-system)
+        (base32
+         (cond ((target-aarch64?)
+                "028ky2zg98hm5hg3kqh0q8q7i78qcyj3r5cgbg8cpdzw58ya563g")
+               ((target-x86-64?)
+                "1a4wms0idjkjsby9ib08bpcs1vmd8vmi3w01cq4xrh9ghr59b5ra")
+               (else
+                "1a4wms0idjkjsby9ib08bpcs1vmd8vmi3w01cq4xrh9ghr59b5ra"))))))
+    (build-system binary-build-system)
     (arguments
      (list
-      #:tests? #f
+      #:strip-binaries? #f
+      #:validate-runpath? #f
+      #:patchelf-plan #~'(("claude"))
+      #:install-plan #~'(("." "lib/claude-code/"))
       #:phases
       #~(modify-phases %standard-phases
-          (delete 'build)
-          (add-after 'install 'replace-vendored-ripgrep
-            (lambda* (#:key inputs outputs #:allow-other-keys)
-              (let* ((out (assoc-ref outputs "out"))
-                     (lib (string-append out "/lib/node_modules"
-                                         "/@anthropic-ai/claude-code"))
-                     (vendor-rg-dir (string-append lib "/vendor/ripgrep"))
-                     (rg-bin (search-input-file inputs "/bin/rg")))
-                ;; Delete all vendored ripgrep binaries
-                (when (file-exists? vendor-rg-dir)
-                  (delete-file-recursively vendor-rg-dir))
-                ;; Recreate the expected directory structure with symlinks to Guix ripgrep
-                (mkdir-p (string-append vendor-rg-dir "/arm64-linux"))
-                (mkdir-p (string-append vendor-rg-dir "/x64-linux"))
-                (symlink rg-bin
-                         (string-append vendor-rg-dir "/arm64-linux/rg"))
-                (symlink rg-bin
-                         (string-append vendor-rg-dir "/x64-linux/rg")))))
-          (delete 'validate-runpath))))
-    (inputs (list ripgrep))
+          (add-after 'unpack 'chmod-binary
+            (lambda _
+              (chmod "claude" #o755)))
+          (add-after 'install 'symlink-binary
+            (lambda _
+              (let ((bin (string-append #$output "/bin")))
+                (mkdir-p bin)
+                (symlink (string-append #$output "/lib/claude-code/claude")
+                         (string-append bin "/claude"))))))))
+    (supported-systems '("aarch64-linux" "x86_64-linux"))
     (home-page "https://github.com/anthropics/claude-code")
     (synopsis "AI coding assistant that lives in your terminal")
     (description
