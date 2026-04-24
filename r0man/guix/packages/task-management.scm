@@ -243,8 +243,8 @@ and utility functions needed to interact with Beads databases.")
       (license license:expat))))
 
 (define-public gastown-next
-  (let ((commit "61063982d7fb5ec31fdb985804f0033244cfa215")
-        (revision "6904"))
+  (let ((commit "b1dc37c75dbd0404e81e024385d77115b908eafe")
+        (revision "6995"))
     (package
       (name "gastown-next")
       (version (git-version "1.0.0" revision commit))
@@ -256,7 +256,7 @@ and utility functions needed to interact with Beads databases.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "0w76xc6h0c7hqz2j611ja2npcsszni7b7ajdigwc4nv386f5w84r"))))
+          (base32 "1yaqh5y36pwmss2v981x1byvw6ycp8ph7y14h4imr2f89fspdx04"))))
       (build-system go-build-system)
       (arguments
        (list
@@ -304,16 +304,16 @@ and utility functions needed to interact with Beads databases.")
                 (copy-symlink-targets
                  "src/github.com/alecthomas/chroma/v2/styles")
                 ;; Fix beads migrations embedded by the beads library.
-                (copy-symlink-targets
-                 (string-append "src/github.com/steveyegge/beads"
-                                "/internal/storage/schema/migrations"))
+                (copy-symlink-targets (string-append
+                                       "src/github.com/steveyegge/beads"
+                                       "/internal/storage/schema/migrations"))
                 ;; Fix dolt embedded files (AGENT.md, weight maps).
-                (copy-symlink-targets
-                 (string-append "src/github.com/dolthub/dolt/go"
-                                "/libraries/doltcore/doltdb"))
-                (copy-symlink-targets
-                 (string-append "src/github.com/dolthub/go-mysql-server"
-                                "/sql/encodings"))))
+                (copy-symlink-targets (string-append
+                                       "src/github.com/dolthub/dolt/go"
+                                       "/libraries/doltcore/doltdb"))
+                (copy-symlink-targets (string-append
+                                       "src/github.com/dolthub/go-mysql-server"
+                                       "/sql/encodings"))))
             (delete 'check)
             (add-before 'build 'set-home
               (lambda _
