@@ -9,7 +9,7 @@
 (define-public pi-coding-agent
   (package
     (name "pi-coding-agent")
-    (version "0.66.1")
+    (version "0.70.2")
     (source
      (origin
        (method url-fetch)
@@ -23,11 +23,11 @@
        (sha256
         (base32
          (cond ((target-aarch64?)
-                "11d3s5qsl7910fbgmvwc495bk2k57lgjm1f7cw7f2sax4s9yvpv4")
+                "1vz6j1dwspc6n0a21v4syx2x76gnmhqhf6n2lx9mcwxza1805xci")
                ((target-x86-64?)
-                "0c0cw9kz3irln8r4zsp3iqpwc3wrpkkrwcyfj307zygk9ym1pmzy")
+                "0jgp8rsfq02fblrdq9ypdj3x093lifn7cm7dmy6jddw6wil24cal")
                (else
-                "0c0cw9kz3irln8r4zsp3iqpwc3wrpkkrwcyfj307zygk9ym1pmzy"))))))
+                "0jgp8rsfq02fblrdq9ypdj3x093lifn7cm7dmy6jddw6wil24cal"))))))
     (build-system binary-build-system)
     (arguments
      (list
