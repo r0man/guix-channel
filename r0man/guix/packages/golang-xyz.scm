@@ -9,6 +9,7 @@
   #:use-module (guix gexp)
   #:use-module (guix git-download)
   #:use-module (guix packages)
+  #:use-module (guix utils)
   #:use-module (r0man guix packages golang-maths))
 
 (define-public go-github-com-aleksi-pointer
@@ -785,3 +786,31 @@ arbitrary values in Go.  It can hash nearly any Go type, including complex
 types like structs, arrays, slices, and maps.  This is useful for creating
 cache keys, detecting changes, or implementing set operations.")
     (license license:expat)))
+
+(define-public go-github-com-jackc-pgx-v5-5.7.6
+  ;; Newer pgx required by go-github-com-dolthub-dolt-mcp 0.3.6 (which pins
+  ;; github.com/jackc/pgx/v5 v5.7.6).  Inherits from the upstream 5.7.1
+  ;; package and only overrides the version, source, and tests.
+  (package
+    (inherit go-github-com-jackc-pgx-v5)
+    (name "go-github-com-jackc-pgx-v5")
+    (version "5.7.6")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/jackc/pgx")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0nx5hipym0bibyvrs5ik4lb5qyfjxmwixvd91fqa00qwrwannc1w"))))
+    (arguments
+     (substitute-keyword-arguments
+         (package-arguments go-github-com-jackc-pgx-v5)
+       ;; The bulk of the test suite requires a running Postgres server
+       ;; (PGX_TEST_DATABASE) which is not available in the build
+       ;; environment.  The upstream 5.7.1 package restricts tests to a
+       ;; small subdir set; keep that behavior but disable tests entirely
+       ;; here to avoid environment-dependent failures on the bumped
+       ;; version.
+       ((#:tests? _? #f) #f)))))
