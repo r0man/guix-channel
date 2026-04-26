@@ -888,7 +888,7 @@ enabling AI assistants to interact with external tools and data sources.")
 (define-public go-github-com-dolthub-dolt-mcp
   (package
     (name "go-github-com-dolthub-dolt-mcp")
-    (version "0.3.6")
+    (version "0.3.4")
     (source
      (origin
        (method git-fetch)
@@ -897,7 +897,7 @@ enabling AI assistants to interact with external tools and data sources.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "03dlk2nnvybjyrkxiivxnrq6i4agrnb51ygahxy63adnvksw6x9c"))))
+        (base32 "1fkwzbiyfdwmm66fswnhhsdzkwigkn1dpa1crblm4qngj7ch6rfw"))))
     (build-system go-build-system)
     (arguments
      (list
