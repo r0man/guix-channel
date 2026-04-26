@@ -814,3 +814,40 @@ cache keys, detecting changes, or implementing set operations.")
        ;; here to avoid environment-dependent failures on the bumped
        ;; version.
        ((#:tests? _? #f) #f)))))
+
+(define-public go-github-com-pganalyze-pg-query-go-v6
+  (package
+    (name "go-github-com-pganalyze-pg-query-go-v6")
+    (version "6.2.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/pganalyze/pg_query_go")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1rs6lpr7p2yin6bzx83c48rr5gdz7nra5fw72pnrk0mrgg47ksfm"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/pganalyze/pg_query_go/v6"
+      ;; The package bundles libpg_query (a vendored Postgres parser) as
+      ;; a large set of C sources under parser/.  Building it via cgo is
+      ;; expensive and the test suite parses many SQL fixtures; keep the
+      ;; tests enabled (no external services required) but skip the
+      ;; benchmark to keep build times reasonable.
+      #:test-flags #~(list "-run" "^Test")))
+    (propagated-inputs
+     (list go-github-com-google-go-cmp
+           go-golang-org-x-xerrors
+           go-google-golang-org-protobuf))
+    (home-page "https://github.com/pganalyze/pg_query_go")
+    (synopsis "Go bindings for the Postgres SQL parser (libpg_query)")
+    (description
+     "This package provides Go bindings to libpg_query, allowing Go
+programs to parse SQL queries using the actual PostgreSQL parser.  It
+includes a vendored copy of the libpg_query C sources, which are
+compiled in via cgo.  Useful for accurate SQL parsing, normalization,
+and fingerprinting.")
+    (license license:bsd-3)))
