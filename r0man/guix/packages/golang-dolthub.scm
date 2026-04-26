@@ -602,7 +602,7 @@ logarithmic-time removal of both minimum and maximum elements.")
 (define-public go-github-com-dolthub-dolt-go
   (package
     (name "go-github-com-dolthub-dolt-go")
-    (version "1.86.4")
+    (version "1.86.5")
     (source
      (origin
        (method git-fetch)
@@ -611,7 +611,7 @@ logarithmic-time removal of both minimum and maximum elements.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1ci4ascwhv0f9gwyaqh345xq98arvw6qb5va2l4sjcmrvcqa1mqx"))
+        (base32 "1615k7k8bky0wa91di92lncg92pkvnkpjld0cni181bikwj6jyqy"))
        (modules '((guix build utils)))
        (snippet
         ;; Replace google.golang.org/grpc/experimental/credentials
@@ -888,7 +888,7 @@ enabling AI assistants to interact with external tools and data sources.")
 (define-public go-github-com-dolthub-dolt-mcp
   (package
     (name "go-github-com-dolthub-dolt-mcp")
-    (version "0.3.4")
+    (version "0.3.6")
     (source
      (origin
        (method git-fetch)
@@ -897,7 +897,7 @@ enabling AI assistants to interact with external tools and data sources.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1fkwzbiyfdwmm66fswnhhsdzkwigkn1dpa1crblm4qngj7ch6rfw"))))
+        (base32 "03dlk2nnvybjyrkxiivxnrq6i4agrnb51ygahxy63adnvksw6x9c"))))
     (build-system go-build-system)
     (arguments
      (list
