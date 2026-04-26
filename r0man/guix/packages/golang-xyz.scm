@@ -2,6 +2,7 @@
   #:use-module ((guix licenses) #:prefix license:)
   #:use-module (gnu packages golang)
   #:use-module (gnu packages golang-build)
+  #:use-module (gnu packages golang-check)
   #:use-module (gnu packages golang-crypto)
   #:use-module (gnu packages golang-web)
   #:use-module (gnu packages golang-xyz)
@@ -851,3 +852,97 @@ includes a vendored copy of the libpg_query C sources, which are
 compiled in via cgo.  Useful for accurate SQL parsing, normalization,
 and fingerprinting.")
     (license license:bsd-3)))
+
+(define-public go-github-com-wasilibs-wazero-helpers
+  (let ((commit "cd30c44769bb5d387ede147f6f80fe1972c0c65e")
+        (revision "0"))
+    (package
+      (name "go-github-com-wasilibs-wazero-helpers")
+      (version (git-version "0.0.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/wasilibs/wazero-helpers")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "108n8pr20m68sf5m8vycjyknsmh5nnf46jdd35adw7bcv019maz5"))))
+      (build-system go-build-system)
+      (arguments
+       (list
+        #:import-path "github.com/wasilibs/wazero-helpers"
+        ;; The module root has no Go files; build/install all
+        ;; subpackages (currently just the allocator).
+        #:phases
+        #~(modify-phases %standard-phases
+            (replace 'build
+              (lambda* (#:key import-path #:allow-other-keys)
+                (invoke "go" "install" "-ldflags=-s -w" "-trimpath"
+                        (string-append import-path "/allocator"))))
+            (replace 'check
+              (lambda* (#:key tests? import-path #:allow-other-keys)
+                (when tests?
+                  (invoke "go" "test"
+                          (string-append import-path "/allocator"))))))))
+      (native-inputs
+       (list go-github-com-stretchr-testify))
+      (propagated-inputs
+       (list go-github-com-tetratelabs-wazero
+             go-golang-org-x-sys))
+      (home-page "https://github.com/wasilibs/wazero-helpers")
+      (synopsis "Helper utilities for the wazero WebAssembly runtime")
+      (description
+       "This package provides helper utilities used by various wasilibs
+Go modules that wrap C libraries compiled to WebAssembly and run them
+via @code{wazero}.  It currently exposes a non-moving allocator suitable
+for passing memory across the cgo/wasm boundary.")
+      (license license:expat))))
+
+(define-public go-github-com-wasilibs-go-pgquery
+  (let ((commit "2d1882eb027feb538df975c4b8d39aa2aaebb127")
+        (revision "0"))
+    (package
+      (name "go-github-com-wasilibs-go-pgquery")
+      (version (git-version "0.0.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/wasilibs/go-pgquery")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "01fa0rnwhk6rlranm15m2mcn9wz7lm0y1f1vz1yajqgyw56f9010"))))
+      (build-system go-build-system)
+      (arguments
+       (list
+        #:import-path "github.com/wasilibs/go-pgquery"
+        ;; The default (non-cgo) build runs libpg_query as a WebAssembly
+        ;; module via wazero.  The compiled wasm blob is shipped as
+        ;; @file{internal/wasm/libpg_query.so}; rebuilding it from
+        ;; source would require a clang/wasi toolchain not currently in
+        ;; this channel.  Run the test suite to verify the embedded
+        ;; module loads and parses correctly.  Skip the build/ helper
+        ;; submodule, which has its own go.mod and pulls in goyek/x.
+        #:phases
+        #~(modify-phases %standard-phases
+            (replace 'check
+              (lambda* (#:key tests? import-path #:allow-other-keys)
+                (when tests?
+                  (invoke "go" "test" import-path)))))))
+      (propagated-inputs
+       (list go-github-com-google-go-cmp
+             go-github-com-pganalyze-pg-query-go-v6
+             go-github-com-tetratelabs-wazero
+             go-github-com-wasilibs-wazero-helpers
+             go-google-golang-org-protobuf))
+      (home-page "https://github.com/wasilibs/go-pgquery")
+      (synopsis "Pure-Go Postgres SQL parser via WebAssembly")
+      (description
+       "This package provides a CGO-free Go wrapper around
+@code{libpg_query} (the PostgreSQL SQL parser) by running it as a
+WebAssembly module through the @code{wazero} runtime.  It mirrors the
+API of @code{github.com/pganalyze/pg_query_go} so existing callers can
+switch backends without code changes.")
+      (license license:expat))))
