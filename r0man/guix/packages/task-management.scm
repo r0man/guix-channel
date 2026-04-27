@@ -41,8 +41,8 @@
     #:use-module (r0man guix packages golang-xyz))
 
 (define-public beads-next
-  (let ((commit "0fffa44a2302a496dfa4ffa838843b3bbf0ee122")
-        (revision "28"))
+  (let ((commit "674561360d7cd98a4e00fb5993bec4720375b043")
+        (revision "29"))
     (package
       (name "beads-next")
       (version (git-version "1.0.3" revision commit))
@@ -54,7 +54,7 @@
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "1rxpbcfbmj62fbb5dir97zpqm6p329zlh96rjq9qbqkhkd10mg6v"))))
+          (base32 "0lm2hcrn1321q18vnsmw327rghylk2scaqsnjaijsvzj7nrv0pj0"))))
       (build-system go-build-system)
       (arguments
        (list
