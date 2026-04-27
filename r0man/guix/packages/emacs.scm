@@ -1947,8 +1947,8 @@ and allows performing operations on pods interactively.  It complements
       (license license:gpl3+))))
 
 (define-public emacs-madolt
-  (let ((commit "d5002d3be4b334c43d55daa5654eaeed14109aff")
-        (revision "1"))
+  (let ((commit "dd3475db734eb8c00fce97584e7a322e001d2981")
+        (revision "2"))
     (package
       (name "emacs-madolt")
       (version (git-version "0.1" revision commit))
@@ -1960,14 +1960,12 @@ and allows performing operations on pods interactively.  It complements
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "0clhgx858jzcx571l8708zw7bs44ks0672pfl2r37l8zzc3ifplx"))))
+          (base32 "1wky452gd2f2g5pm8gj5jcffmkp2l1z3k3spqyw11x0wla3pafiq"))))
       (build-system emacs-build-system)
       (arguments
        (list
         #:tests? #f))
-      (propagated-inputs (list emacs-compat
-                               emacs-magit
-                               emacs-transient
+      (propagated-inputs (list emacs-compat emacs-magit emacs-transient
                                emacs-with-editor))
       (home-page "https://github.com/aspiers/madolt")
       (synopsis "Magit-like interface for Dolt databases")
