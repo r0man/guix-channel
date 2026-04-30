@@ -8,8 +8,6 @@
                    #:hide (go-github-com-anthropics-anthropic-sdk-go
                            go-github-com-danielgtaylor-huma-v2
                            go-go-opentelemetry-io-otel
-                           go-go-opentelemetry-io-otel-exporters-otlp-otlpmetric-otlpmetrichttp
-                           go-go-opentelemetry-io-otel-exporters-stdout-stdoutmetric
                            go-go-opentelemetry-io-otel-exporters-stdout-stdouttrace
                            go-go-opentelemetry-io-otel-log
                            go-go-opentelemetry-io-otel-metric
