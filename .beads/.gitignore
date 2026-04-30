@@ -14,6 +14,9 @@ daemon.*
 # Interactions log (runtime, not versioned)
 interactions.jsonl
 
+# Auto-exported issues (export.auto disabled; using Dolt as source of truth)
+issues.jsonl
+
 # Push state (runtime, per-machine)
 push-state.json
 
