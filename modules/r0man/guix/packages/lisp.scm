@@ -1,4 +1,6 @@
 (define-module (r0man guix packages lisp)
+  #:use-module (gnu packages cpp)
+  #:use-module (gnu packages libffi)
   #:use-module (gnu packages lisp-check)
   #:use-module (gnu packages lisp-xyz)
   #:use-module (guix build-system asdf)
@@ -10,9 +12,9 @@
   #:use-module (guix packages))
 
 (define-public sbcl-cl-autowrap-next
-  (let ((revision "2")
-        (commit "1e6735ae8e22bd8805b89a1857417756bb8a0f31"))
-    ;; no taged branches
+  (let ((revision "3")
+        (commit "4bba9e37b59cd191dea150a89aef7245a40b1c9d"))
+    ;; no tagged branches
     (package
       (name "sbcl-cl-autowrap")
       (version (git-version "1.0" revision commit))
@@ -24,17 +26,30 @@
                (commit commit)))
          (file-name (git-file-name "cl-autowrap" version))
          (sha256
-          (base32 "0pbabpmg61bflx6kxllqvhbvxqwjsik3nnynqdhgzzkgzk6jlixv"))))
+          (base32 "1sfvhyrwm9dhxi0y42xp7mx8mvs6lmq3bzxdx34frxni5srcgly0"))))
       (build-system asdf-build-system/sbcl)
-      (arguments
-       `(#:asd-systems '("cl-plus-c" "cl-autowrap")))
+      (native-inputs
+       (list c2ffi))
       (inputs
-       `(("alexandria" ,sbcl-alexandria)
-         ("cffi" ,sbcl-cffi)
-         ("cl-json" ,sbcl-cl-json)
-         ("cl-ppcre" ,sbcl-cl-ppcre)
-         ("defpackage-plus" ,sbcl-defpackage-plus)
-         ("trivial-features" ,sbcl-trivial-features)))
+       (list libffi
+             sbcl-alexandria
+             sbcl-cffi
+             sbcl-cl-json
+             sbcl-cl-ppcre
+             sbcl-defpackage-plus
+             sbcl-trivial-features))
+      (arguments
+       (list #:asd-systems ''("cl-autowrap" "cl-plus-c" "cl-autowrap/libffi")
+             #:phases
+             #~(modify-phases %standard-phases
+                 (add-after 'unpack 'fix-paths
+                   (lambda* (#:key inputs #:allow-other-keys)
+                     (substitute* "autowrap-libffi/library.lisp"
+                       (("libffi.so")
+                        (search-input-file inputs "lib/libffi.so")))
+                     (substitute* "autowrap-libffi/autowrap.lisp"
+                       (("/usr/lib64/libffi-3.2.1/include")
+                        (search-input-directory inputs "include"))))))))
       (home-page "https://github.com/rpav/cl-autowrap")
       (synopsis "FFI wrapper generator for Common Lisp")
       (description "This is a c2ffi-based wrapper generator for Common Lisp.")
