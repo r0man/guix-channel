@@ -16,7 +16,7 @@
         (commit "4bba9e37b59cd191dea150a89aef7245a40b1c9d"))
     ;; no tagged branches
     (package
-      (name "sbcl-cl-autowrap")
+      (name "sbcl-cl-autowrap-next")
       (version (git-version "1.0" revision commit))
       (source
        (origin
