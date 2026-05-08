@@ -766,7 +766,24 @@ finished, close the browser page and kill the markdown buffer.")
                                                  "/share/emacs/site-lisp")
                                   "^ghostel-[0-9]"
                                   #:directories? #t))))
-                  (install-file "ghostel-module.so" dest)))))))
+                  (install-file "ghostel-module.so" dest))))
+            (add-after 'install-native-module 'install-etc
+              (lambda _
+                ;; Still inside `lisp/' from `enter-lisp-dir', so the
+                ;; source `etc/' tree sits one level up.  Place it next
+                ;; to the installed .el files (the MELPA-flat layout
+                ;; that `ghostel--resource-root' probes for first) so
+                ;; shell integration (etc/shell/ghostel.{bash,zsh,fish}
+                ;; + bootstrap/) and bundled terminfo
+                ;; (etc/terminfo/{x,78}/xterm-ghostty) resolve at
+                ;; runtime.
+                (let ((dest (car (find-files
+                                  (string-append #$output
+                                                 "/share/emacs/site-lisp")
+                                  "^ghostel-[0-9]"
+                                  #:directories? #t))))
+                  (copy-recursively "../etc"
+                                    (string-append dest "/etc"))))))))
       (native-inputs (list zig-0.15))
       (inputs (list ghostty-latest))
       (supported-systems '("x86_64-linux" "aarch64-linux"))
