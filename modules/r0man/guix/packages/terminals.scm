@@ -78,6 +78,15 @@
                     (string-append #$(this-package-input "bzip2")
                                    "/lib/libbz2.so")
                     "bzip2/lib/libbzip2.so")))
+               (add-after 'install 'fix-desktop-file
+                 (lambda _
+                   (let ((desktop (string-append
+                                   #$output
+                                   "/share/applications/com.mitchellh.ghostty.desktop")))
+                     (when (file-exists? desktop)
+                       (substitute* desktop
+                         (("(TryExec|Exec)=\\./bin/ghostty" _ key)
+                          (string-append key "=" #$output "/bin/ghostty")))))))
                (add-after 'unpack 'unpack-zig
                  (lambda _
                    (for-each
@@ -471,6 +480,15 @@ native UIs.  Ghostty provides all three.")
                       (string-append #$(this-package-input "bzip2")
                                      "/lib/libbz2.so")
                       "bzip2/lib/libbzip2.so")))
+                 (add-after 'install 'fix-desktop-file
+                   (lambda _
+                     (let ((desktop (string-append
+                                     #$output
+                                     "/share/applications/com.mitchellh.ghostty.desktop")))
+                       (when (file-exists? desktop)
+                         (substitute* desktop
+                           (("(TryExec|Exec)=\\./bin/ghostty" _ key)
+                            (string-append key "=" #$output "/bin/ghostty")))))))
                  (add-after 'unpack 'unpack-zig
                    (lambda _
                      (for-each
