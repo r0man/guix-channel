@@ -602,7 +602,7 @@ logarithmic-time removal of both minimum and maximum elements.")
 (define-public go-github-com-dolthub-dolt-go
   (package
     (name "go-github-com-dolthub-dolt-go")
-    (version "2.0.1")
+    (version "1.88.1")
     (source
      (origin
        (method git-fetch)
@@ -611,7 +611,7 @@ logarithmic-time removal of both minimum and maximum elements.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0vhmnnfzrkfdnyx922pympvv201dywq5p6nsvx2qhkmlb8lnbmbh"))
+        (base32 "0gpgbbil2cpgwys1dd15x0zlvmdy8sh8ny2klnpn1b2p6d3xcaay"))
        (modules '((guix build utils)))
        (snippet
         ;; Replace google.golang.org/grpc/experimental/credentials
