@@ -2059,8 +2059,8 @@ and allows performing operations on pods interactively.  It complements
       (license license:gpl3+))))
 
 (define-public emacs-madolt
-  (let ((commit "dd3475db734eb8c00fce97584e7a322e001d2981")
-        (revision "2"))
+  (let ((commit "84df9091faefe1c7b0b919d438e82156b75f58cd")
+        (revision "3"))
     (package
       (name "emacs-madolt")
       (version (git-version "0.1" revision commit))
@@ -2072,7 +2072,7 @@ and allows performing operations on pods interactively.  It complements
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "1wky452gd2f2g5pm8gj5jcffmkp2l1z3k3spqyw11x0wla3pafiq"))))
+          (base32 "0xw20z9762kqkdl0zpkagwwnnlb1xq6hb69nqgs2h5dkxpvqiy6g"))))
       (build-system emacs-build-system)
       (arguments
        (list
