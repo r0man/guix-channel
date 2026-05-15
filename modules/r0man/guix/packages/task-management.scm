@@ -404,8 +404,8 @@ project spaces called Rigs.")
       (license license:expat))))
 
 (define-public gascity-next
-  (let ((commit "d9c24755ff2db22538023cc0272925999e44cf78")
-        (revision "1776"))
+  (let ((commit "0fd707bc43d8dbcb469b57ce6b5524bb652f7a61")
+        (revision "1802"))
     (package
       (name "gascity-next")
       (version (git-version "1.1.0" revision commit))
@@ -417,7 +417,7 @@ project spaces called Rigs.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "1ib34bfhrgvphic6h0vvczwrqkack5xw8fswfb3p3s8dp32wksyr"))))
+          (base32 "0wnpb084rqidr4mx99f3mphzmwnd44m47xll0b5xdsc335k456hn"))))
       (build-system go-build-system)
       (arguments
        (list
