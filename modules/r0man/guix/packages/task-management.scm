@@ -460,7 +460,22 @@ project spaces called Rigs.")
                       (system* gc "completion" "zsh")))
                   (with-output-to-file (string-append fish-dir "/gc.fish")
                     (lambda ()
-                      (system* gc "completion" "fish")))))))))
+                      (system* gc "completion" "fish"))))))
+            (add-after 'install 'install-examples
+              ;; Ship the whole upstream `examples/' tree (~1.9 MiB,
+              ;; text/config only) so a Guix home service can bootstrap
+              ;; any example city with `gc init --from
+              ;; <out>/share/gascity/examples/<name>' — gastown,
+              ;; dolt, swarm, lifecycle, hyperscale, bd.  Each example
+              ;; city carries its own self-contained packs/ subtree.
+              (lambda* (#:key outputs unpack-path #:allow-other-keys)
+                (let* ((out (assoc-ref outputs "out"))
+                       (src (string-append "src/" unpack-path
+                                           "/examples"))
+                       (dst (string-append out
+                                           "/share/gascity/examples")))
+                  (mkdir-p (dirname dst))
+                  (copy-recursively src dst)))))))
       (native-inputs (list go-github-com-burntsushi-toml
                       go-github-com-cespare-xxhash-v2
                       go-github-com-danielgtaylor-huma-v2
