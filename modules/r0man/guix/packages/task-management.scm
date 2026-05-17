@@ -404,8 +404,8 @@ project spaces called Rigs.")
       (license license:expat))))
 
 (define-public gascity-next
-  (let ((commit "d240189695522595206dbe4b6ef8c10c967ab795")
-        (revision "1821"))
+  (let ((commit "9930aff02b059341113ad673567acb49848956d7")
+        (revision "3331"))
     (package
       (name "gascity-next")
       (version (git-version "1.1.0" revision commit))
@@ -417,7 +417,7 @@ project spaces called Rigs.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "1ismcp53xr1z39xgnk6s0242z88yn79w3xi3na0n9vykkn64yzcx"))))
+          (base32 "1yy7s75qam3756wdxgflbb82pgvb7f6x260wwczvv83mfxmz9kam"))))
       (build-system go-build-system)
       (arguments
        (list
@@ -470,10 +470,8 @@ project spaces called Rigs.")
               ;; city carries its own self-contained packs/ subtree.
               (lambda* (#:key outputs unpack-path #:allow-other-keys)
                 (let* ((out (assoc-ref outputs "out"))
-                       (src (string-append "src/" unpack-path
-                                           "/examples"))
-                       (dst (string-append out
-                                           "/share/gascity/examples")))
+                       (src (string-append "src/" unpack-path "/examples"))
+                       (dst (string-append out "/share/gascity/examples")))
                   (mkdir-p (dirname dst))
                   (copy-recursively src dst)))))))
       (native-inputs (list go-github-com-burntsushi-toml
