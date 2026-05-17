@@ -1,48 +1,49 @@
 (define-module (r0man guix packages task-management)
-    #:use-module ((guix licenses) #:prefix license:)
-    #:use-module (gnu packages golang)
-    #:use-module (gnu packages golang-build)
-    #:use-module (gnu packages golang-check)
-    #:use-module (gnu packages golang-crypto)
-    #:use-module ((gnu packages golang-web)
-                   #:hide (go-github-com-anthropics-anthropic-sdk-go
-                           go-github-com-danielgtaylor-huma-v2
-                           go-go-opentelemetry-io-otel
-                           go-go-opentelemetry-io-otel-exporters-stdout-stdouttrace
-                           go-go-opentelemetry-io-otel-log
-                           go-go-opentelemetry-io-otel-metric
-                           go-go-opentelemetry-io-otel-sdk
-                           go-go-opentelemetry-io-otel-sdk-log
-                           go-go-opentelemetry-io-otel-sdk-metric
-                           go-go-opentelemetry-io-otel-trace
-                           go-go-opentelemetry-io-proto-otlp))
-    #:use-module ((gnu packages golang-xyz)
-                   #:hide (go-github-com-charmbracelet-bubbles
-                           go-github-com-charmbracelet-bubbletea
-                           go-github-com-charmbracelet-colorprofile
-                           go-github-com-charmbracelet-x-ansi
-                           go-github-com-charmbracelet-x-cellbuf
-                           go-github-com-charmbracelet-x-term
-                           go-github-com-charmbracelet-x-windows))
-    #:use-module (gnu packages icu4c)
-    #:use-module (gnu packages linux)
-    #:use-module (gnu packages lsof)
-    #:use-module (gnu packages tmux)
-    #:use-module (gnu packages web)
-    #:use-module (gnu packages version-control)
-    #:use-module (gnu packages)
-    #:use-module (guix build-system go)
-    #:use-module (guix gexp)
-    #:use-module (guix git-download)
-    #:use-module (guix packages)
-    #:use-module (r0man guix packages golang-charm)
-    #:use-module (r0man guix packages golang-dolthub)
-    #:use-module (r0man guix packages golang-web)
-    #:use-module (r0man guix packages golang-xyz))
+  #:use-module ((guix licenses)
+                #:prefix license:)
+  #:use-module (gnu packages golang)
+  #:use-module (gnu packages golang-build)
+  #:use-module (gnu packages golang-check)
+  #:use-module (gnu packages golang-crypto)
+  #:use-module ((gnu packages golang-web)
+                #:hide (go-github-com-anthropics-anthropic-sdk-go
+                        go-github-com-danielgtaylor-huma-v2
+                        go-go-opentelemetry-io-otel
+                        go-go-opentelemetry-io-otel-exporters-stdout-stdouttrace
+                        go-go-opentelemetry-io-otel-log
+                        go-go-opentelemetry-io-otel-metric
+                        go-go-opentelemetry-io-otel-sdk
+                        go-go-opentelemetry-io-otel-sdk-log
+                        go-go-opentelemetry-io-otel-sdk-metric
+                        go-go-opentelemetry-io-otel-trace
+                        go-go-opentelemetry-io-proto-otlp))
+  #:use-module ((gnu packages golang-xyz)
+                #:hide (go-github-com-charmbracelet-bubbles
+                        go-github-com-charmbracelet-bubbletea
+                        go-github-com-charmbracelet-colorprofile
+                        go-github-com-charmbracelet-x-ansi
+                        go-github-com-charmbracelet-x-cellbuf
+                        go-github-com-charmbracelet-x-term
+                        go-github-com-charmbracelet-x-windows))
+  #:use-module (gnu packages icu4c)
+  #:use-module (gnu packages linux)
+  #:use-module (gnu packages lsof)
+  #:use-module (gnu packages tmux)
+  #:use-module (gnu packages web)
+  #:use-module (gnu packages version-control)
+  #:use-module (gnu packages)
+  #:use-module (guix build-system go)
+  #:use-module (guix gexp)
+  #:use-module (guix git-download)
+  #:use-module (guix packages)
+  #:use-module (r0man guix packages golang-charm)
+  #:use-module (r0man guix packages golang-dolthub)
+  #:use-module (r0man guix packages golang-web)
+  #:use-module (r0man guix packages golang-xyz))
 
 (define-public beads-next
-  (let ((commit "ffd5e32aa0706ea931a43d1cf3751fe2be7a4fcf")
-        (revision "86"))
+  (let ((commit "74c66722b14cc32e70ecc4182788d4de40b6d906")
+        (revision "87"))
     (package
       (name "beads-next")
       (version (git-version "1.0.4" revision commit))
@@ -54,7 +55,7 @@
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "1b7128dl8235vn75j9j0600555mzvkiyv1x59avw86mw4v237n5y"))))
+          (base32 "0csiygpplb6f40fp3hj63cm6d14fiqay2lii5skyhql6544ml1j1"))))
       (build-system go-build-system)
       (arguments
        (list
