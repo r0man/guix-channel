@@ -9,32 +9,35 @@
 (define-public pi-coding-agent
   (package
     (name "pi-coding-agent")
-    (version "0.70.2")
+    (version "0.75.3")
     (source
      (origin
        (method url-fetch)
        (uri (string-append
-             "https://github.com/badlogic/pi-mono/releases/download/v"
+             "https://github.com/earendil-works/pi/releases/download/v"
              version "/pi-linux-"
-             (cond ((target-aarch64?) "arm64")
-                   ((target-x86-64?) "x64")
-                   (else "x64"))
-             ".tar.gz"))
-       (sha256
-        (base32
-         (cond ((target-aarch64?)
-                "1vz6j1dwspc6n0a21v4syx2x76gnmhqhf6n2lx9mcwxza1805xci")
+             (cond
+               ((target-aarch64?)
+                "arm64")
                ((target-x86-64?)
-                "0jgp8rsfq02fblrdq9ypdj3x093lifn7cm7dmy6jddw6wil24cal")
-               (else
-                "0jgp8rsfq02fblrdq9ypdj3x093lifn7cm7dmy6jddw6wil24cal"))))))
+                "x64")
+               (else "x64")) ".tar.gz"))
+       (sha256
+        (base32 (cond
+                  ((target-aarch64?)
+                   "1kgfjwwb681cfbm19zc1lnbly0aywssf5i0lh4k4m9flkasqj4rl")
+                  ((target-x86-64?)
+                   "1hvqpb8q46l1w14z8bpfwfzbdmazdnyy3g0xrx57i2m9bgdlivw6")
+                  (else "1hvqpb8q46l1w14z8bpfwfzbdmazdnyy3g0xrx57i2m9bgdlivw6"))))))
     (build-system binary-build-system)
     (arguments
      (list
       #:strip-binaries? #f
       #:validate-runpath? #f
-      #:patchelf-plan #~'(("pi"))
-      #:install-plan #~'(("." "lib/pi-coding-agent/"))
+      #:patchelf-plan
+      #~'(("pi"))
+      #:install-plan
+      #~'(("." "lib/pi-coding-agent/"))
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'chmod-binary
@@ -47,7 +50,7 @@
                 (symlink (string-append #$output "/lib/pi-coding-agent/pi")
                          (string-append bin "/pi"))))))))
     (supported-systems '("aarch64-linux" "x86_64-linux"))
-    (home-page "https://github.com/badlogic/pi-mono")
+    (home-page "https://github.com/earendil-works/pi")
     (synopsis "Minimal terminal coding agent")
     (description
      "Pi is a minimal terminal coding harness that adapts to your workflow
