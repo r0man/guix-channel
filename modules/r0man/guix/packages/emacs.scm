@@ -690,114 +690,123 @@ finished, close the browser page and kill the markdown buffer.")
     (license license:gpl3+)))
 
 (define-public emacs-ghostel
-  (let ((commit "f9b106c847a12411e026b8aa262c61454c3058b9")
-        (revision "0"))
-    (package
-      (name "emacs-ghostel")
-      (version (git-version "0.22.1" revision commit))
-      (source
-       (origin
-         (method git-fetch)
-         (uri (git-reference
-               (url "https://github.com/dakra/ghostel")
-               (commit commit)))
-         (file-name (git-file-name name version))
-         (sha256
-          (base32 "18wk31c32c9pdfrk09c34q8p1950ixsx8xl5f6r0gvd2ckj8m5j2"))))
-      (build-system emacs-build-system)
-      (arguments
-       (list
-        #:phases
-        #~(modify-phases %standard-phases
-            ;; Compile ghostel-module.so before entering lisp/ so the elisp
-            ;; build sees the .so already next to ghostel.el.  We bypass
-            ;; upstream build.zig (which fetches its own ghostty as a Zig
-            ;; dependency) and link directly against the libghostty-vt.so
-            ;; from the ghostty-latest Guix package.
-            (add-after 'unpack 'build-native-module
-              (lambda* (#:key inputs #:allow-other-keys)
-                (let* ((zig (search-input-file inputs "/bin/zig"))
-                       (ghostty-lib (dirname (search-input-file
-                                              inputs "/lib/libghostty-vt.so")))
-                       (ghostty-inc (dirname (dirname (search-input-file
-                                                      inputs "/include/ghostty/vt.h")))))
-                  (setenv "ZIG_GLOBAL_CACHE_DIR"
-                          (string-append (getcwd) "/.zig-global-cache"))
-                  (setenv "ZIG_LOCAL_CACHE_DIR"
-                          (string-append (getcwd) "/.zig-cache"))
-                  (invoke
-                   zig "build-lib"
-                   "-dynamic"
-                   "-OReleaseFast"
-                   "-mcpu=baseline"
-                   "-fstrip"
-                   "-lc"
-                   (string-append "-L" ghostty-lib)
-                   "-lghostty-vt"
-                   (string-append "-I" ghostty-inc)
-                   "-isystem" "vendor"
-                   "-I" "vendor/stb"
-                   "-fsoname=ghostel-module.so"
-                   "--version-script" "symbols.map"
-                   "-rpath" ghostty-lib  ;embed lookup path so the .so loads
-                   "-femit-bin=lisp/ghostel-module.so"
-                   "--name" "ghostel-module"
-                   "src/module.zig"
-                   "src/stb_image.c"))))
-            (add-after 'build-native-module 'enter-lisp-dir
-              (lambda _
-                ;; Keep LICENSE reachable from the build dir so
-                ;; `install-license-files' picks it up.
-                (copy-file "LICENSE" "lisp/LICENSE")
-                (chdir "lisp")))
-            ;; A docstring in ghostel-debug.el contains the literal
-            ;; sequence `\"/bin/sh\"', which trips `patch-el-files'
-            ;; while it scans for /bin/<exec> references.  Ghostel uses
-            ;; /bin/sh as a runtime literal (the spawned shell on the
-            ;; remote/local host), so no patching is needed here.
-            (delete 'patch-el-files)
-            (add-after 'install 'install-native-module
-              (lambda _
-                ;; emacs-build-system's `install' phase only copies
-                ;; .el/.elc/.info/.texi.  Drop ghostel-module.so next to
-                ;; ghostel.el manually so emacs finds it on first load.
-                (let ((dest (car (find-files
-                                  (string-append #$output
-                                                 "/share/emacs/site-lisp")
-                                  "^ghostel-[0-9]"
-                                  #:directories? #t))))
-                  (install-file "ghostel-module.so" dest))))
-            (add-after 'install-native-module 'install-etc
-              (lambda _
-                ;; Still inside `lisp/' from `enter-lisp-dir', so the
-                ;; source `etc/' tree sits one level up.  Place it next
-                ;; to the installed .el files (the MELPA-flat layout
-                ;; that `ghostel--resource-root' probes for first) so
-                ;; shell integration (etc/shell/ghostel.{bash,zsh,fish}
-                ;; + bootstrap/) and bundled terminfo
-                ;; (etc/terminfo/{x,78}/xterm-ghostty) resolve at
-                ;; runtime.
-                (let ((dest (car (find-files
-                                  (string-append #$output
-                                                 "/share/emacs/site-lisp")
-                                  "^ghostel-[0-9]"
-                                  #:directories? #t))))
-                  (copy-recursively "../etc"
-                                    (string-append dest "/etc"))))))))
-      (native-inputs (list zig-0.15))
-      (inputs (list ghostty-latest))
-      (supported-systems '("x86_64-linux" "aarch64-linux"))
-      (home-page "https://github.com/dakra/ghostel")
-      (synopsis "Emacs terminal emulator using libghostty-vt")
-      (description
-       "Ghostel is an Emacs terminal emulator powered by libghostty-vt, the
+  (package
+    (name "emacs-ghostel")
+    (version "0.28.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/dakra/ghostel")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0zl9n9j1rd07sg929z33p8f7lgfxnp6dzz7jglf4mf902x3dxcz2"))))
+    (build-system emacs-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; Compile ghostel-module.so before entering lisp/ so the elisp
+          ;; build sees the .so already next to ghostel.el.  We bypass
+          ;; upstream build.zig (which fetches its own ghostty as a Zig
+          ;; dependency) and link directly against the libghostty-vt.so
+          ;; from the ghostty-latest Guix package.
+          (add-after 'unpack 'build-native-module
+            (lambda* (#:key inputs #:allow-other-keys)
+              (let* ((zig (search-input-file inputs "/bin/zig"))
+                     (ghostty-lib (dirname (search-input-file inputs
+                                            "/lib/libghostty-vt.so")))
+                     (ghostty-inc (dirname (dirname (search-input-file inputs
+                                                     "/include/ghostty/vt.h")))))
+                (setenv "ZIG_GLOBAL_CACHE_DIR"
+                        (string-append (getcwd) "/.zig-global-cache"))
+                (setenv "ZIG_LOCAL_CACHE_DIR"
+                        (string-append (getcwd) "/.zig-cache"))
+                (invoke zig
+                        "build-lib"
+                        "-dynamic"
+                        "-OReleaseFast"
+                        "-mcpu=baseline"
+                        "-fstrip"
+                        "-lc"
+                        (string-append "-L" ghostty-lib)
+                        "-lghostty-vt"
+                        (string-append "-I" ghostty-inc)
+                        "-isystem"
+                        "vendor"
+                        "-I"
+                        "vendor/stb"
+                        "-fsoname=ghostel-module.so"
+                        "--version-script"
+                        "symbols.map"
+                        "-rpath"
+                        ghostty-lib ;embed lookup path so the .so loads
+                        "-femit-bin=lisp/ghostel-module.so"
+                        "--name"
+                        "ghostel-module"
+                        "src/module.zig"
+                        "src/stb_image.c"))))
+          (add-after 'build-native-module 'enter-lisp-dir
+            (lambda _
+              ;; Keep LICENSE reachable from the build dir so
+              ;; `install-license-files' picks it up.
+              (copy-file "LICENSE" "lisp/LICENSE")
+              (chdir "lisp")))
+          ;; A docstring in ghostel-debug.el contains the literal
+          ;; sequence `\"/bin/sh\"', which trips `patch-el-files'
+          ;; while it scans for /bin/<exec> references.  Ghostel uses
+          ;; /bin/sh as a runtime literal (the spawned shell on the
+          ;; remote/local host), so no patching is needed here.
+          (delete 'patch-el-files)
+          (add-after 'install 'install-native-module
+            (lambda _
+              ;; emacs-build-system's `install' phase only copies
+              ;; .el/.elc/.info/.texi.  Drop ghostel-module.so next to
+              ;; ghostel.el manually so emacs finds it on first load.
+              ;; Also write the sidecar version file the elisp loader
+              ;; reads to detect a stale on-disk module without
+              ;; `module-load'-ing it first.
+              (let ((dest (car (find-files (string-append #$output
+                                            "/share/emacs/site-lisp")
+                                           "^ghostel-[0-9]"
+                                           #:directories? #t))))
+                (install-file "ghostel-module.so" dest)
+                (call-with-output-file (string-append dest
+                                        "/ghostel-module.version")
+                  (lambda (port)
+                    (display #$version port)
+                    (newline port))))))
+          (add-after 'install-native-module 'install-etc
+            (lambda _
+              ;; Still inside `lisp/' from `enter-lisp-dir', so the
+              ;; source `etc/' tree sits one level up.  Place it next
+              ;; to the installed .el files (the MELPA-flat layout
+              ;; that `ghostel--resource-root' probes for first) so
+              ;; shell integration (etc/shell/ghostel.{bash,zsh,fish}
+              ;; + bootstrap/) and bundled terminfo
+              ;; (etc/terminfo/{x,78}/xterm-ghostty) resolve at
+              ;; runtime.
+              (let ((dest (car (find-files (string-append #$output
+                                            "/share/emacs/site-lisp")
+                                           "^ghostel-[0-9]"
+                                           #:directories? #t))))
+                (copy-recursively "../etc"
+                                  (string-append dest "/etc"))))))))
+    (native-inputs (list zig-0.15))
+    (inputs (list ghostty-latest))
+    (supported-systems '("x86_64-linux" "aarch64-linux"))
+    (home-page "https://github.com/dakra/ghostel")
+    (synopsis "Emacs terminal emulator using libghostty-vt")
+    (description
+     "Ghostel is an Emacs terminal emulator powered by libghostty-vt, the
 same VT engine that drives the Ghostty terminal.  Inspired by emacs-libvterm,
 a native dynamic module handles terminal state and rendering, while Elisp
 manages the shell process, keymap, and buffer.  This package builds the
 native module from source and links it against @code{libghostty-vt.so} from
 the @code{ghostty-latest} Guix package, so @code{M-x ghostel} works
 out-of-the-box with no download or compile prompt.")
-      (license license:gpl3+))))
+    (license license:gpl3+)))
 
 (define-public emacs-github-browse-file
   (package
