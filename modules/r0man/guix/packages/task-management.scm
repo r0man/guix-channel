@@ -244,8 +244,8 @@ and utility functions needed to interact with Beads databases.")
       (license license:expat))))
 
 (define-public gastown-next
-  (let ((commit "85c72f70f0fe976e8280bbf026d0bc0f2cd33e2c")
-        (revision "7129"))
+  (let ((commit "625bcf8a92f9faef9804f73624a8bf770085ebd2")
+        (revision "7130"))
     (package
       (name "gastown-next")
       (version (git-version "1.1.0" revision commit))
@@ -257,7 +257,7 @@ and utility functions needed to interact with Beads databases.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "1fi1qcdiqdicdmrfsarnmpyciqp7r1qglvr7yqw0lzma7647m1a4"))))
+          (base32 "0dv0zqp9j7ih049zpnffsb2sjzxsbh8lsp4762ch5s6wxsf47nzx"))))
       (build-system go-build-system)
       (arguments
        (list
@@ -308,6 +308,9 @@ and utility functions needed to interact with Beads databases.")
                 (copy-symlink-targets (string-append
                                        "src/github.com/steveyegge/beads"
                                        "/internal/storage/schema/migrations"))
+                (copy-symlink-targets (string-append
+                                       "src/github.com/steveyegge/beads"
+                                       "/internal/storage/schema/migrations/ignored"))
                 ;; Fix dolt embedded files (AGENT.md, weight maps).
                 (copy-symlink-targets (string-append
                                        "src/github.com/dolthub/dolt/go"
