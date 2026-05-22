@@ -193,11 +193,11 @@ machines.")
       (license license:expat))))
 
 (define-public go-github-com-steveyegge-beads
-  (let ((commit "d57dc7128a8657bcd462a4aa3a66da92d227a15a")
-        (revision "25"))
+  (let ((commit "3a7a2e852a739f43e3c6c58ee36693dea8bac693")
+        (revision "0"))
     (package
       (name "go-github-com-steveyegge-beads")
-      (version (git-version "1.0.2" revision commit))
+      (version (git-version "1.0.4" revision commit))
       (source
        (origin
          (method git-fetch)
@@ -206,7 +206,7 @@ machines.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "1jj9m5wis2hpa7by1is07jvywja4w9jgkg30vzik5iwrmsp23v2b"))))
+          (base32 "12gmp0ddmdbs6h7ysqpx79n721854ir23pjia27pcr0raj7hfspb"))))
       (build-system go-build-system)
       (arguments
        (list
