@@ -176,32 +176,30 @@ hash.  It uses AES instructions when available for optimal performance.")
 
 
 (define-public go-github-com-dolthub-fslock
-  (let ((commit "ef20baba23181a40c4ae76dfb303c99d3188e1c9")
-        (revision "0"))
-    (package
-      (name "go-github-com-dolthub-fslock")
-      (version (git-version "0.0.3" revision commit))
-      (source
-       (origin
-         (method git-fetch)
-         (uri (git-reference
-               (url "https://github.com/dolthub/fslock")
-               (commit commit)))
-         (file-name (git-file-name name version))
-         (sha256
-          (base32 "126sk70ni646z9m4zzmvgl7g8vid1fg9sk4xyj53l9m5y95n4hay"))))
-      (build-system go-build-system)
-      (arguments
-       (list
-        #:import-path "github.com/dolthub/fslock"))
-      (native-inputs (list go-gopkg-in-check-v1))
-      (home-page "https://github.com/dolthub/fslock")
-      (synopsis "Cross-platform file locking library for Go")
-      (description
-       "This package provides a cross-process mutex based on file locks that
+  (package
+    (name "go-github-com-dolthub-fslock")
+    (version "0.0.4")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/dolthub/fslock")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0w4gy1n7c3c0sxh0lv6bav61gj8mwnjvqfcr95aza1v83d8i5npc"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/dolthub/fslock"))
+    (native-inputs (list go-github-com-stretchr-testify))
+    (home-page "https://github.com/dolthub/fslock")
+    (synopsis "Cross-platform file locking library for Go")
+    (description
+     "This package provides a cross-process mutex based on file locks that
 works on Windows and Unix platforms.  It uses LockFileEx on Windows and flock
 on Unix systems.")
-      (license license:lgpl3))))
+    (license license:lgpl3)))
 
 
 (define-public go-github-com-dolthub-jsonpath
@@ -353,16 +351,16 @@ in go-mysql-server and Dolt.")
 (define-public go-github-com-dolthub-vitess
   (package
     (name "go-github-com-dolthub-vitess")
-    (version "0.0.0-20260505163811-77e5224be390")
+    (version "0.0.0-20260521165014-2fdb4300ae8d")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
              (url "https://github.com/dolthub/vitess")
-             (commit "77e5224be3908844ecf040b2b7af61d6dd59aca5")))
+             (commit "2fdb4300ae8de3754c6961557799e1153e75f085")))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1m883cjshkkcv75s29fd4xwgrjh1nmawnz801mqcdii4p6ypv6w5"))))
+        (base32 "1fhyzhr64yj0h1hiz7ppha938kvi13ly4vyndws65sxmjy5mkz55"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -388,16 +386,16 @@ and other projects requiring MySQL SQL parsing capabilities.")
 (define-public go-github-com-dolthub-go-mysql-server
   (package
     (name "go-github-com-dolthub-go-mysql-server")
-    (version "0.20.1-0.20260507202550-43d6daf5958b")
+    (version "0.20.1-0.20260526174314-044bab1ab87a")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
              (url "https://github.com/dolthub/go-mysql-server")
-             (commit "43d6daf5958b5531a41a9ed6a4ce4fc6e1c78fd0")))
+             (commit "044bab1ab87a8a786e1d7eb2c452bddbd535a5b6")))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1wxclf9inzab4jdm5cqjmv7z5yvh2vxl2knnvkcxwvsc3x1zi00j"))))
+        (base32 "1kf156vwa1dvz2klhp2sxa9x5g7f0rgd9gd3y82hjvj0l5rfy3k8"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -428,6 +426,7 @@ and other projects requiring MySQL SQL parsing capabilities.")
                                        (not (member f
                                                     '("." "..")))))))))))))
     (propagated-inputs (list go-github-com-cespare-xxhash
+                             go-github-com-cockroachdb-apd-v3
                              go-github-com-dolthub-flatbuffers
                              go-github-com-dolthub-go-icu-regex
                              go-github-com-dolthub-jsonpath
@@ -921,10 +920,37 @@ AI assistants to interact with Dolt version-controlled SQL databases.")
   (package
     (inherit go-github-com-dolthub-dolt-go)
     (name "dolt")
+    ;; Decoupled from go-github-com-dolthub-dolt-go (pinned at 1.88.1 for
+    ;; beads): the standalone CLI tracks the dolt v2 release line.
+    (version "2.0.7")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/dolthub/dolt")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name "dolt" version))
+       (sha256
+        (base32 "0zh59k313z7pfhaw3bxq7rk3ms33f45ljwi8n0xc7ab6y5idwxmj"))
+       (modules '((guix build utils)))
+       (snippet
+        ;; Replace google.golang.org/grpc/experimental/credentials
+        ;; (not available in grpc v1.69.2) with standard credentials.NewTLS
+        '(begin
+           (substitute* "go/libraries/doltcore/env/grpc_dial_provider.go"
+             (("\texpcreds \"google.golang.org/grpc/experimental/credentials\"\n")
+              "")
+             (("expcreds\\.NewTLSWithALPNDisabled")
+              "credentials.NewTLS"))
+           (substitute* "go/libraries/doltcore/sqle/cluster/controller.go"
+             (("\texpcreds \"google.golang.org/grpc/experimental/credentials\"\n")
+              "")
+             (("expcreds\\.NewTLSWithALPNDisabled")
+              "credentials.NewTLS"))))))
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.25
+      #:go go-1.26
       #:install-source? #f
       #:import-path "github.com/dolthub/dolt/go/cmd/dolt"
       #:unpack-path "github.com/dolthub/dolt"
@@ -1025,6 +1051,7 @@ AI assistants to interact with Dolt version-controlled SQL databases.")
                     ;; CLI-specific dependencies
                     go-github-com-abiosoft-readline
                     go-github-com-andreyvit-diff
+                    go-github-com-cockroachdb-apd-v3
                     go-github-com-dolthub-dolt-mcp
                     go-github-com-dolthub-ishell
                     go-github-com-flynn-archive-go-shlex
