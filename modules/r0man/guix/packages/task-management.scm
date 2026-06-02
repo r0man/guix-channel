@@ -408,123 +408,121 @@ project spaces called Rigs.")
       (license license:expat))))
 
 (define-public gascity-next
-  (let ((commit "a066a8f35e7ac056ec7b2dd87bfc8b14eb5ed055")
-        (revision "3656"))
-    (package
-      (name "gascity-next")
-      (version (git-version "1.1.0" revision commit))
-      (source
-       (origin
-         (method git-fetch)
-         (uri (git-reference
-               (url "https://github.com/gastownhall/gascity")
-               (commit commit)))
-         (file-name (git-file-name name version))
-         (sha256
-          (base32 "1f71p4ws2sdrjjdqaap94sswmccl4v95n0lqz9qblm76glr5ic8z"))))
-      (build-system go-build-system)
-      (arguments
-       (list
-        #:go go-1.26
-        #:install-source? #f
-        #:import-path "github.com/gastownhall/gascity/cmd/gc"
-        #:unpack-path "github.com/gastownhall/gascity"
-        #:build-flags
-        #~(list (string-append "-ldflags=" "-s -w" " -X main.version=v"
-                               #$(package-version this-package)))
-        #:phases
-        #~(modify-phases %standard-phases
-            (delete 'check)
-            (add-before 'build 'set-home
-              (lambda _
-                (setenv "HOME" "/tmp")))
-            (replace 'build
-              (lambda* (#:key build-flags import-path unpack-path
-                        #:allow-other-keys)
-                (let ((module-dir (string-append "src/" unpack-path)))
-                  (with-directory-excursion module-dir
-                    (apply invoke "go" "install" "-trimpath"
-                           `(,@build-flags ,import-path))))))
-            (add-after 'install 'install-completions
-              (lambda* (#:key outputs #:allow-other-keys)
-                (let* ((out (assoc-ref outputs "out"))
-                       (gc (string-append out "/bin/gc"))
-                       (bash-dir (string-append out "/etc/bash_completion.d"))
-                       (zsh-dir (string-append out "/share/zsh/site-functions"))
-                       (fish-dir (string-append out
-                                  "/share/fish/vendor_completions.d")))
-                  (mkdir-p bash-dir)
-                  (mkdir-p zsh-dir)
-                  (mkdir-p fish-dir)
-                  (with-output-to-file (string-append bash-dir "/gc")
-                    (lambda ()
-                      (system* gc "completion" "bash")))
-                  (with-output-to-file (string-append zsh-dir "/_gc")
-                    (lambda ()
-                      (system* gc "completion" "zsh")))
-                  (with-output-to-file (string-append fish-dir "/gc.fish")
-                    (lambda ()
-                      (system* gc "completion" "fish"))))))
-            (add-after 'install 'install-examples
-              ;; Ship the whole upstream `examples/' tree (~1.9 MiB,
-              ;; text/config only) so a Guix home service can bootstrap
-              ;; any example city with `gc init --from
-              ;; <out>/share/gascity/examples/<name>' — gastown,
-              ;; dolt, swarm, lifecycle, hyperscale, bd.  Each example
-              ;; city carries its own self-contained packs/ subtree.
-              (lambda* (#:key outputs unpack-path #:allow-other-keys)
-                (let* ((out (assoc-ref outputs "out"))
-                       (src (string-append "src/" unpack-path "/examples"))
-                       (dst (string-append out "/share/gascity/examples")))
-                  (mkdir-p (dirname dst))
-                  (copy-recursively src dst)))))))
-      (native-inputs (list go-github-com-burntsushi-toml
-                      go-github-com-cespare-xxhash-v2
-                      go-github-com-danielgtaylor-huma-v2
-                      go-github-com-fsnotify-fsnotify
-                      go-github-com-go-logr-stdr
-                      go-github-com-go-sql-driver-mysql
-                      go-github-com-invopop-jsonschema
-                      go-github-com-oapi-codegen-runtime
-                      go-github-com-rogpeppe-go-internal
-                      go-github-com-spf13-cobra
-                      go-github-com-spf13-pflag
-                      go-github-com-stretchr-testify
-                      go-go-opentelemetry-io-auto-sdk
-                      go-go-opentelemetry-io-otel
-                      go-go-opentelemetry-io-otel-exporters-otlp-otlplog-otlploghttp
-                      go-go-opentelemetry-io-otel-exporters-otlp-otlpmetric-otlpmetrichttp
-                      go-go-opentelemetry-io-otel-log
-                      go-go-opentelemetry-io-otel-metric
-                      go-go-opentelemetry-io-otel-sdk
-                      go-go-opentelemetry-io-otel-sdk-log
-                      go-go-opentelemetry-io-otel-sdk-metric
-                      go-go-opentelemetry-io-proto-otlp
-                      go-github-com-cenkalti-backoff-v5
-                      go-golang-org-x-sync
-                      go-golang-org-x-sys
-                      go-golang-org-x-term
-                      go-golang-org-x-text
-                      go-golang-org-x-time
-                      go-google-golang-org-grpc
-                      go-gopkg-in-yaml-v3
-                      go-k8s-io-api
-                      go-k8s-io-apimachinery
-                      go-k8s-io-client-go
-                      go-pgregory-net-rapid))
-      (propagated-inputs (list beads-next
-                               dolt
-                               jq
-                               lsof
-                               procps
-                               tmux
-                               util-linux))
-      (home-page "https://github.com/gastownhall/gascity")
-      (synopsis "Orchestration SDK for multi-agent workflows")
-      (description
-       "@command{gc} (Gas City) is an orchestration-builder SDK for multi-agent
+  (package
+    (name "gascity-next")
+    (version "1.2.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/gastownhall/gascity")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "04pxgdy9hsvr5s0m10dk9r30khzzii1hfbvz3bkqdaz42s9s3mxb"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:go go-1.26
+      #:install-source? #f
+      #:import-path "github.com/gastownhall/gascity/cmd/gc"
+      #:unpack-path "github.com/gastownhall/gascity"
+      #:build-flags
+      #~(list (string-append "-ldflags=" "-s -w" " -X main.version=v"
+                             #$(package-version this-package)))
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'check)
+          (add-before 'build 'set-home
+            (lambda _
+              (setenv "HOME" "/tmp")))
+          (replace 'build
+            (lambda* (#:key build-flags import-path unpack-path
+                      #:allow-other-keys)
+              (let ((module-dir (string-append "src/" unpack-path)))
+                (with-directory-excursion module-dir
+                  (apply invoke "go" "install" "-trimpath"
+                         `(,@build-flags ,import-path))))))
+          (add-after 'install 'install-completions
+            (lambda* (#:key outputs #:allow-other-keys)
+              (let* ((out (assoc-ref outputs "out"))
+                     (gc (string-append out "/bin/gc"))
+                     (bash-dir (string-append out "/etc/bash_completion.d"))
+                     (zsh-dir (string-append out "/share/zsh/site-functions"))
+                     (fish-dir (string-append out
+                                "/share/fish/vendor_completions.d")))
+                (mkdir-p bash-dir)
+                (mkdir-p zsh-dir)
+                (mkdir-p fish-dir)
+                (with-output-to-file (string-append bash-dir "/gc")
+                  (lambda ()
+                    (system* gc "completion" "bash")))
+                (with-output-to-file (string-append zsh-dir "/_gc")
+                  (lambda ()
+                    (system* gc "completion" "zsh")))
+                (with-output-to-file (string-append fish-dir "/gc.fish")
+                  (lambda ()
+                    (system* gc "completion" "fish"))))))
+          (add-after 'install 'install-examples
+            ;; Ship the whole upstream `examples/' tree (~1.9 MiB,
+            ;; text/config only) so a Guix home service can bootstrap
+            ;; any example city with `gc init --from
+            ;; <out>/share/gascity/examples/<name>' — gastown,
+            ;; dolt, swarm, lifecycle, hyperscale, bd.  Each example
+            ;; city carries its own self-contained packs/ subtree.
+            (lambda* (#:key outputs unpack-path #:allow-other-keys)
+              (let* ((out (assoc-ref outputs "out"))
+                     (src (string-append "src/" unpack-path "/examples"))
+                     (dst (string-append out "/share/gascity/examples")))
+                (mkdir-p (dirname dst))
+                (copy-recursively src dst)))))))
+    (native-inputs (list go-github-com-burntsushi-toml
+                    go-github-com-cespare-xxhash-v2
+                    go-github-com-danielgtaylor-huma-v2
+                    go-github-com-fsnotify-fsnotify
+                    go-github-com-go-logr-stdr
+                    go-github-com-go-sql-driver-mysql
+                    go-github-com-invopop-jsonschema
+                    go-github-com-oapi-codegen-runtime
+                    go-github-com-rogpeppe-go-internal
+                    go-github-com-spf13-cobra
+                    go-github-com-spf13-pflag
+                    go-github-com-stretchr-testify
+                    go-go-opentelemetry-io-auto-sdk
+                    go-go-opentelemetry-io-otel
+                    go-go-opentelemetry-io-otel-exporters-otlp-otlplog-otlploghttp
+                    go-go-opentelemetry-io-otel-exporters-otlp-otlpmetric-otlpmetrichttp
+                    go-go-opentelemetry-io-otel-log
+                    go-go-opentelemetry-io-otel-metric
+                    go-go-opentelemetry-io-otel-sdk
+                    go-go-opentelemetry-io-otel-sdk-log
+                    go-go-opentelemetry-io-otel-sdk-metric
+                    go-go-opentelemetry-io-proto-otlp
+                    go-github-com-cenkalti-backoff-v5
+                    go-golang-org-x-sync
+                    go-golang-org-x-sys
+                    go-golang-org-x-term
+                    go-golang-org-x-text
+                    go-golang-org-x-time
+                    go-google-golang-org-grpc
+                    go-gopkg-in-yaml-v3
+                    go-k8s-io-api
+                    go-k8s-io-apimachinery
+                    go-k8s-io-client-go
+                    go-pgregory-net-rapid))
+    (propagated-inputs (list beads-next
+                             dolt
+                             jq
+                             lsof
+                             procps
+                             tmux
+                             util-linux))
+    (home-page "https://github.com/gastownhall/gascity")
+    (synopsis "Orchestration SDK for multi-agent workflows")
+    (description
+     "@command{gc} (Gas City) is an orchestration-builder SDK for multi-agent
 coding workflows.  It extracts the reusable infrastructure from Gastown into
 a configurable toolkit with runtime providers, work routing, formulas, orders,
 health patrol, and a declarative city configuration.  It supports multiple
 runtime backends including tmux, subprocess, exec, ACP, and Kubernetes.")
-      (license license:expat))))
+    (license license:expat)))
