@@ -916,13 +916,59 @@ AI assistants to interact with Dolt version-controlled SQL databases.")
     (license license:asl2.0)))
 
 
+;; Dolt 2.x requires newer go-mysql-server and vitess than the rest of the
+;; beads ecosystem, which stays pinned to go-github-com-dolthub-dolt-go
+;; 1.88.1.  The sql.FunctionProvider interface changed after
+;; go-mysql-server 044bab1ab87a, so dolt-go 1.88.1 no longer compiles
+;; against the revisions dolt 2.x needs.  Keep the shared packages pinned
+;; for beads and use these dolt-specific variants only for the dolt CLI.
+
+(define-public go-github-com-dolthub-vitess-for-dolt
+  (package
+    (inherit go-github-com-dolthub-vitess)
+    (name "go-github-com-dolthub-vitess-for-dolt")
+    (version "0.0.0-20260528164423-e3f9fa81284c")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/dolthub/vitess")
+             (commit "e3f9fa81284cc50261facd765338cc3f00a09226")))
+       (file-name (git-file-name "go-github-com-dolthub-vitess"
+                                 "0.0.0-20260528164423-e3f9fa81284c"))
+       (sha256
+        (base32 "0vxslbsqmg94xnkjnsc9bxldx099sr1bbk20rrmhswdgb4l2rczp"))))))
+
+
+(define-public go-github-com-dolthub-go-mysql-server-for-dolt
+  (package
+    (inherit go-github-com-dolthub-go-mysql-server)
+    (name "go-github-com-dolthub-go-mysql-server-for-dolt")
+    (version "0.20.1-0.20260601185611-f066a7510ce0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/dolthub/go-mysql-server")
+             (commit "f066a7510ce0211b318e704db34aac4e67e2f3bc")))
+       (file-name (git-file-name "go-github-com-dolthub-go-mysql-server"
+                                 "0.20.1-0.20260601185611-f066a7510ce0"))
+       (sha256
+        (base32 "1qycd5a4dyrvc8rz0wn0nnnh693s6gswg22xzygfdkm1blv3ydj4"))))
+    (propagated-inputs
+     (modify-inputs (package-propagated-inputs
+                     go-github-com-dolthub-go-mysql-server)
+       (delete "go-github-com-dolthub-vitess")
+       (prepend go-github-com-dolthub-vitess-for-dolt)))))
+
+
 (define-public dolt
   (package
     (inherit go-github-com-dolthub-dolt-go)
     (name "dolt")
     ;; Decoupled from go-github-com-dolthub-dolt-go (pinned at 1.88.1 for
     ;; beads): the standalone CLI tracks the dolt v2 release line.
-    (version "2.0.7")
+    (version "2.1.2")
     (source
      (origin
        (method git-fetch)
@@ -931,7 +977,7 @@ AI assistants to interact with Dolt version-controlled SQL databases.")
              (commit (string-append "v" version))))
        (file-name (git-file-name "dolt" version))
        (sha256
-        (base32 "0zh59k313z7pfhaw3bxq7rk3ms33f45ljwi8n0xc7ab6y5idwxmj"))
+        (base32 "0a2amfpl979645gn0ap775vi1dqw4wibm8sd32mk3cjwn0ssz6cy"))
        (modules '((guix build utils)))
        (snippet
         ;; Replace google.golang.org/grpc/experimental/credentials
@@ -1000,9 +1046,9 @@ AI assistants to interact with Dolt version-controlled SQL databases.")
                     go-github-com-dolthub-eventsapi-schema
                     go-github-com-dolthub-flatbuffers
                     go-github-com-dolthub-fslock
-                    go-github-com-dolthub-go-mysql-server
+                    go-github-com-dolthub-go-mysql-server-for-dolt
                     go-github-com-dolthub-gozstd
-                    go-github-com-dolthub-vitess
+                    go-github-com-dolthub-vitess-for-dolt
                     go-github-com-dustin-go-humanize
                     go-github-com-edsrzf-mmap-go
                     go-github-com-esote-minmaxheap
