@@ -1781,7 +1781,7 @@ object-relational DBMS from Emacs.")
 (define-public emacs-editor-code-assistant
   (package
     (name "emacs-editor-code-assistant")
-    (version "0.4.1")
+    (version "0.9.1")
     (source
      (origin
        (method git-fetch)
@@ -1790,11 +1790,11 @@ object-relational DBMS from Emacs.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "17a53j4pr4liyyf854x04xk4qrd38z45j3x4gqlfj8sp9c67r1l7"))))
+        (base32 "053qqrwlrnaa306kq8fz9s2dlaavgd71frxikkyq7ph6gnj2p6wf"))))
     (build-system emacs-build-system)
     (home-page "https://github.com/editor-code-assistant/eca-emacs")
     (propagated-inputs (list emacs-compat emacs-dash emacs-f
-                             emacs-markdown-mode))
+                             emacs-markdown-mode emacs-s))
     (synopsis "Editor Code Assistant for Emacs")
     (description "Editor Code Assistant (ECA) integration for Emacs.")
     (license license:asl2.0)))
