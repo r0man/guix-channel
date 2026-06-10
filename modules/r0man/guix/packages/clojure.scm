@@ -114,7 +114,7 @@ perform refactors and more.")
 (define-public editor-code-assistant
   (package
     (name "editor-code-assistant")
-    (version "0.92.0")
+    (version "0.140.0")
     (source
      (origin
        (method url-fetch/zipbomb)
@@ -131,21 +131,21 @@ perform refactors and more.")
        (sha256
         (base32 (cond
                   ((target-aarch64?)
-                   "1sqz90rxysp4p2zf7kvdkhggxn7p65hn3zy5njx3x5j75srs083g")
+                   "1j57n6qpb47cph14qsrcwdh4k4b1dqynk8dks7g1sy33hx4a0if8")
                   ((target-x86-64?)
-                   "0divw47yficwcxfj9sn2hkgwhbwjsm1s4qqkngz6ch52icnqikvz"))))))
+                   "00mwb76kqx0ilzzam4q5g8qr3dvqy5ack8p6bsyskc89hdn1pf1c"))))))
     (build-system binary-build-system)
     (arguments
      (list
-      #:patchelf-plan (if (target-aarch64?)
-                          `'(("eca" ("gcc" "libc" "zlib"))) #f)
+      #:patchelf-plan `'(("eca" ("gcc:lib" "libc" "zlib")))
       #:install-plan `'(("eca" "/bin/"))))
-    (inputs (list `(,gcc "lib") zlib))
+    (inputs `(("gcc:lib" ,gcc "lib")
+              ("zlib" ,zlib)))
     (supported-systems '("aarch64-linux" "x86_64-linux"))
     (home-page "https://github.com/editor-code-assistant/eca")
     (synopsis "Editor Code Assistant")
     (description "AI pair programming capabilities in any editor.")
-    (license license:expat)))
+    (license license:asl2.0)))
 
 (define-public clojure-tools-bin-latest
   (package
