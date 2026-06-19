@@ -457,66 +457,21 @@ through the Go module system instead of vendoring checked-in copies.")
       #:build-flags
       #~(list (string-append "-ldflags=" "-s -w" " -X main.version=v"
                              #$(package-version this-package)))
+      ;; gc embeds files from dependencies that setup-go symlinks into GOPATH,
+      ;; but go:embed refuses symlinked files.  The standard 'fix-embed-files
+      ;; phase materialises every symlink whose base name matches one of these
+      ;; patterns (recursively under src/), which covers:
+      ;;   - dolt doltdb        //go:embed AGENT.md          (.md)
+      ;;   - go-mysql-server    //go:embed *_Weights.bin     (.bin)
+      ;;   - beads migrations   //go:embed migrations/*.up.sql (.sql)
+      ;;   - gascity-packs      //go:embed all:gastown all:gascity
+      ;;                        (.md .toml .sh .py .yaml .txt .tmpl .json)
+      #:embed-files
+      #~(list ".*\\.md" ".*\\.bin" ".*\\.sql" ".*\\.toml" ".*\\.sh"
+              ".*\\.py" ".*\\.yaml" ".*\\.txt" ".*\\.tmpl" ".*\\.json")
       #:phases
       #~(modify-phases %standard-phases
           (delete 'check)
-          (add-after 'unpack 'fix-embedded-symlinks
-            (lambda _
-              (use-modules (ice-9 ftw))
-              ;; Replace symlinked files with actual copies to work around the
-              ;; Go embed limitation with the Guix store.  gc compiles the full
-              ;; dolt source tree (pulled in transitively via the beads native
-              ;; Dolt store), which embeds files through symlinks.
-              (define (copy-symlink-targets dir)
-                (when (file-exists? dir)
-                  (for-each (lambda (file)
-                              (let ((path (string-append dir "/" file)))
-                                (when (symbolic-link? path)
-                                  (let ((target (readlink path)))
-                                    (delete-file path)
-                                    (copy-file target path)))))
-                            (scandir dir
-                                     (lambda (f)
-                                       (not (member f '("." ".."))))))))
-              ;; Recursively materialise an entire embedded tree: setup-go
-              ;; symlinks each file of a dependency into GOPATH, but go:embed
-              ;; refuses symlinked files, so the gascity-packs pack trees must
-              ;; be turned into real files at every depth.
-              (define (copy-symlink-targets* dir)
-                (when (file-exists? dir)
-                  (for-each (lambda (file)
-                              (let ((path (string-append dir "/" file)))
-                                (cond
-                                 ((symbolic-link? path)
-                                  (let ((target (readlink path)))
-                                    (delete-file path)
-                                    (copy-file target path)))
-                                 ((file-is-directory? path)
-                                  (copy-symlink-targets* path)))))
-                            (scandir dir
-                                     (lambda (f)
-                                       (not (member f '("." ".."))))))))
-              ;; Fix dolt embedded files (AGENT.md, weight maps).
-              (copy-symlink-targets (string-append
-                                     "src/github.com/dolthub/dolt/go"
-                                     "/libraries/doltcore/doltdb"))
-              (copy-symlink-targets (string-append
-                                     "src/github.com/dolthub/go-mysql-server"
-                                     "/sql/encodings"))
-              ;; Fix beads migrations embedded by the beads library.
-              (copy-symlink-targets (string-append
-                                     "src/github.com/steveyegge/beads"
-                                     "/internal/storage/schema/migrations"))
-              (copy-symlink-targets (string-append
-                                     "src/github.com/steveyegge/beads"
-                                     "/internal/storage/schema/migrations/ignored"))
-              ;; Fix gascity-packs pack trees embedded by gc.
-              (copy-symlink-targets* (string-append
-                                      "src/github.com/gastownhall/gascity-packs"
-                                      "/gastown"))
-              (copy-symlink-targets* (string-append
-                                      "src/github.com/gastownhall/gascity-packs"
-                                      "/gascity"))))
           (add-before 'build 'set-home
             (lambda _
               (setenv "HOME" "/tmp")))
