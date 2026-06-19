@@ -201,6 +201,25 @@ works on Windows and Unix platforms.  It uses LockFileEx on Windows and flock
 on Unix systems.")
     (license license:lgpl3)))
 
+(define-public go-github-com-dolthub-fslock-for-dolt
+  ;; The standalone dolt v2 CLI tracks a newer fslock whose New returns
+  ;; (*Lock, error) and adds Lock.Close.  go-github-com-dolthub-dolt-go
+  ;; (pinned at 1.88.1 for beads) still uses the single-return 0.0.4 API,
+  ;; so this 0.0.5 variant is scoped to the dolt package only.
+  (package
+    (inherit go-github-com-dolthub-fslock)
+    (name "go-github-com-dolthub-fslock-for-dolt")
+    (version "0.0.5")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/dolthub/fslock")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name "go-github-com-dolthub-fslock" version))
+       (sha256
+        (base32 "06akb0m5cikp6z5r5yl0y3yrshw9pwa7wsmy1lq4lz17x519njkf"))))))
+
 
 (define-public go-github-com-dolthub-jsonpath
   (package
@@ -927,34 +946,34 @@ AI assistants to interact with Dolt version-controlled SQL databases.")
   (package
     (inherit go-github-com-dolthub-vitess)
     (name "go-github-com-dolthub-vitess-for-dolt")
-    (version "0.0.0-20260528164423-e3f9fa81284c")
+    (version "0.0.0-20260604210335-0893abc80542")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
              (url "https://github.com/dolthub/vitess")
-             (commit "e3f9fa81284cc50261facd765338cc3f00a09226")))
+             (commit "0893abc805429d8a31ea9fa395ff118fa95474da")))
        (file-name (git-file-name "go-github-com-dolthub-vitess"
-                                 "0.0.0-20260528164423-e3f9fa81284c"))
+                                 "0.0.0-20260604210335-0893abc80542"))
        (sha256
-        (base32 "0vxslbsqmg94xnkjnsc9bxldx099sr1bbk20rrmhswdgb4l2rczp"))))))
+        (base32 "0msmz4pjsdcp687nqhnpffjkc49asvgv8c6p4db4dwkcac0ndv02"))))))
 
 
 (define-public go-github-com-dolthub-go-mysql-server-for-dolt
   (package
     (inherit go-github-com-dolthub-go-mysql-server)
     (name "go-github-com-dolthub-go-mysql-server-for-dolt")
-    (version "0.20.1-0.20260601185611-f066a7510ce0")
+    (version "0.20.1-0.20260605175459-433dbaebc97f")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
              (url "https://github.com/dolthub/go-mysql-server")
-             (commit "f066a7510ce0211b318e704db34aac4e67e2f3bc")))
+             (commit "433dbaebc97f8373496b6d47a6c38d58ea93c4c3")))
        (file-name (git-file-name "go-github-com-dolthub-go-mysql-server"
-                                 "0.20.1-0.20260601185611-f066a7510ce0"))
+                                 "0.20.1-0.20260605175459-433dbaebc97f"))
        (sha256
-        (base32 "1qycd5a4dyrvc8rz0wn0nnnh693s6gswg22xzygfdkm1blv3ydj4"))))
+        (base32 "1xvwwfx5k7fl6bhc583z7wydid3gnzgala9a9l35y5zixv4qjqrx"))))
     (propagated-inputs
      (modify-inputs (package-propagated-inputs
                      go-github-com-dolthub-go-mysql-server)
@@ -968,7 +987,7 @@ AI assistants to interact with Dolt version-controlled SQL databases.")
     (name "dolt")
     ;; Decoupled from go-github-com-dolthub-dolt-go (pinned at 1.88.1 for
     ;; beads): the standalone CLI tracks the dolt v2 release line.
-    (version "2.1.2")
+    (version "2.1.4")
     (source
      (origin
        (method git-fetch)
@@ -977,7 +996,7 @@ AI assistants to interact with Dolt version-controlled SQL databases.")
              (commit (string-append "v" version))))
        (file-name (git-file-name "dolt" version))
        (sha256
-        (base32 "0a2amfpl979645gn0ap775vi1dqw4wibm8sd32mk3cjwn0ssz6cy"))
+        (base32 "0lxvqnz4nx3p9iqhrsbz001sx18hyihdphcxnwh37gffx30ql36h"))
        (modules '((guix build utils)))
        (snippet
         ;; Replace google.golang.org/grpc/experimental/credentials
@@ -1045,7 +1064,7 @@ AI assistants to interact with Dolt version-controlled SQL databases.")
                     go-github-com-dolthub-aws-sdk-go-ini-parser
                     go-github-com-dolthub-eventsapi-schema
                     go-github-com-dolthub-flatbuffers
-                    go-github-com-dolthub-fslock
+                    go-github-com-dolthub-fslock-for-dolt
                     go-github-com-dolthub-go-mysql-server-for-dolt
                     go-github-com-dolthub-gozstd
                     go-github-com-dolthub-vitess-for-dolt
