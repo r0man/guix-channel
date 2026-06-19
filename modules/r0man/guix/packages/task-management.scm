@@ -405,10 +405,39 @@ code review, Mayor for cross-project coordination) within containerized
 project spaces called Rigs.")
     (license license:expat)))
 
+(define-public go-github-com-gastownhall-gascity-packs
+  (package
+    (name "go-github-com-gastownhall-gascity-packs")
+    (version "0.3.1-0.20260617013242-33d3a430a67d")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/gastownhall/gascity-packs")
+             (commit "33d3a430a67d1782ad364556cb566bdb01d0afe3")))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1dlj2plrnsxqn974qjfbj89pmwslzf6pkp1fk06zg1rx9bvd3lq8"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:install-source? #t
+      #:import-path "github.com/gastownhall/gascity-packs"
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'check))))
+    (home-page "https://github.com/gastownhall/gascity-packs")
+    (synopsis "Embedded pack content for Gas City")
+    (description
+     "This package exposes the Gas City registry pack content as embedded Go
+filesystems, so the @command{gc} binary can depend on released pack bytes
+through the Go module system instead of vendoring checked-in copies.")
+    (license license:expat)))
+
 (define-public gascity-next
   (package
     (name "gascity-next")
-    (version "1.2.1")
+    (version "1.3.1")
     (source
      (origin
        (method git-fetch)
@@ -417,7 +446,7 @@ project spaces called Rigs.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "04pxgdy9hsvr5s0m10dk9r30khzzii1hfbvz3bkqdaz42s9s3mxb"))))
+        (base32 "1fgy7lxn5lgbh1czgnbf6rx5zym8rd9axkf5dyms0k17iky501hz"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -431,6 +460,63 @@ project spaces called Rigs.")
       #:phases
       #~(modify-phases %standard-phases
           (delete 'check)
+          (add-after 'unpack 'fix-embedded-symlinks
+            (lambda _
+              (use-modules (ice-9 ftw))
+              ;; Replace symlinked files with actual copies to work around the
+              ;; Go embed limitation with the Guix store.  gc compiles the full
+              ;; dolt source tree (pulled in transitively via the beads native
+              ;; Dolt store), which embeds files through symlinks.
+              (define (copy-symlink-targets dir)
+                (when (file-exists? dir)
+                  (for-each (lambda (file)
+                              (let ((path (string-append dir "/" file)))
+                                (when (symbolic-link? path)
+                                  (let ((target (readlink path)))
+                                    (delete-file path)
+                                    (copy-file target path)))))
+                            (scandir dir
+                                     (lambda (f)
+                                       (not (member f '("." ".."))))))))
+              ;; Recursively materialise an entire embedded tree: setup-go
+              ;; symlinks each file of a dependency into GOPATH, but go:embed
+              ;; refuses symlinked files, so the gascity-packs pack trees must
+              ;; be turned into real files at every depth.
+              (define (copy-symlink-targets* dir)
+                (when (file-exists? dir)
+                  (for-each (lambda (file)
+                              (let ((path (string-append dir "/" file)))
+                                (cond
+                                 ((symbolic-link? path)
+                                  (let ((target (readlink path)))
+                                    (delete-file path)
+                                    (copy-file target path)))
+                                 ((file-is-directory? path)
+                                  (copy-symlink-targets* path)))))
+                            (scandir dir
+                                     (lambda (f)
+                                       (not (member f '("." ".."))))))))
+              ;; Fix dolt embedded files (AGENT.md, weight maps).
+              (copy-symlink-targets (string-append
+                                     "src/github.com/dolthub/dolt/go"
+                                     "/libraries/doltcore/doltdb"))
+              (copy-symlink-targets (string-append
+                                     "src/github.com/dolthub/go-mysql-server"
+                                     "/sql/encodings"))
+              ;; Fix beads migrations embedded by the beads library.
+              (copy-symlink-targets (string-append
+                                     "src/github.com/steveyegge/beads"
+                                     "/internal/storage/schema/migrations"))
+              (copy-symlink-targets (string-append
+                                     "src/github.com/steveyegge/beads"
+                                     "/internal/storage/schema/migrations/ignored"))
+              ;; Fix gascity-packs pack trees embedded by gc.
+              (copy-symlink-targets* (string-append
+                                      "src/github.com/gastownhall/gascity-packs"
+                                      "/gastown"))
+              (copy-symlink-targets* (string-append
+                                      "src/github.com/gastownhall/gascity-packs"
+                                      "/gascity"))))
           (add-before 'build 'set-home
             (lambda _
               (setenv "HOME" "/tmp")))
@@ -474,17 +560,37 @@ project spaces called Rigs.")
                      (dst (string-append out "/share/gascity/examples")))
                 (mkdir-p (dirname dst))
                 (copy-recursively src dst)))))))
-    (native-inputs (list go-github-com-burntsushi-toml
+    (native-inputs (list icu4c
+                    go-github-com-burntsushi-toml
                     go-github-com-cespare-xxhash-v2
                     go-github-com-danielgtaylor-huma-v2
+                    go-github-com-dolthub-dolt-go
+                    go-github-com-dolthub-driver
+                    ;; Transitive dolt CLI dependencies needed for compilation
+                    ;; of the full dolt source tree (pulled in via the beads
+                    ;; native Dolt store).
+                    go-github-com-abiosoft-readline
+                    go-github-com-andreyvit-diff
+                    go-github-com-dolthub-ishell
+                    go-github-com-flynn-archive-go-shlex
+                    go-github-com-google-go-github-v57
+                    go-github-com-google-shlex
+                    go-github-com-pkg-profile
+                    go-github-com-skratchdot-open-golang
+                    go-github-com-tealeg-xlsx
                     go-github-com-fsnotify-fsnotify
+                    go-github-com-gastownhall-gascity-packs
                     go-github-com-go-logr-stdr
                     go-github-com-go-sql-driver-mysql
+                    go-github-com-google-uuid
+                    go-github-com-gorilla-websocket
                     go-github-com-invopop-jsonschema
+                    go-github-com-masterminds-semver-v3
                     go-github-com-oapi-codegen-runtime
                     go-github-com-rogpeppe-go-internal
                     go-github-com-spf13-cobra
                     go-github-com-spf13-pflag
+                    go-github-com-steveyegge-beads
                     go-github-com-stretchr-testify
                     go-go-opentelemetry-io-auto-sdk
                     go-go-opentelemetry-io-otel
