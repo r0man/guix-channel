@@ -437,7 +437,7 @@ through the Go module system instead of vendoring checked-in copies.")
 (define-public gascity-next
   (package
     (name "gascity-next")
-    (version "1.3.1")
+    (version "1.3.2")
     (source
      (origin
        (method git-fetch)
@@ -446,7 +446,7 @@ through the Go module system instead of vendoring checked-in copies.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1fgy7lxn5lgbh1czgnbf6rx5zym8rd9axkf5dyms0k17iky501hz"))))
+        (base32 "0j8pp625pdyshdgfipjja6f0mm0zggc1j0m3fwd939waalshx4iz"))))
     (build-system go-build-system)
     (arguments
      (list
