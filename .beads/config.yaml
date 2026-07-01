@@ -56,3 +56,5 @@
 export.auto: false
 
 export.git-add: false
+
+sync.remote: "git+ssh://git@github.com/r0man/guix-channel"
