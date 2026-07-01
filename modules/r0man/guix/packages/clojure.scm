@@ -21,7 +21,7 @@
 (define-public babashka
   (package
     (name "babashka")
-    (version "1.12.214")
+    (version "1.12.218")
     (source
      (origin
        (method url-fetch/tarbomb)
@@ -40,21 +40,22 @@
        (sha256
         (base32 (cond
                   ((target-aarch64?)
-                   "1zj5j6gr5lhympl2bjrdhjf72im0259mdgfd56s07cqwlhl6vg5n")
+                   "00l3lqd6xgp3kdqj80w0k1a8ma4444wc39isrnxkmlqdzc51ksg9")
                   ((target-x86-64?)
-                   "18xlvbj78pasaf9vcn8rcjgd5022hi3ip1q722r31qpn023hj9i9"))))))
+                   "1y6srnrz9i6zm296y17iaj73r2a0k0vy87537pggycj7g762il3v"))))))
     (build-system binary-build-system)
     (arguments
      (list
       #:patchelf-plan (if (target-aarch64?)
-                          `'(("bb" ("gcc" "libc" "zlib"))) #f)
+                          `'(("bb" ("gcc:lib" "libc" "zlib"))) #f)
       #:install-plan `'(("./bb" "/bin/"))
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'chmod
             (lambda _
               (chmod "bb" #o755))))))
-    (inputs (list (list gcc "lib") zlib))
+    (inputs `(("gcc:lib" ,gcc "lib")
+              ("zlib" ,zlib)))
     (supported-systems '("aarch64-linux" "x86_64-linux"))
     (home-page "https://github.com/babashka/babashka")
     (synopsis "Native, fast starting Clojure interpreter for scripting")
