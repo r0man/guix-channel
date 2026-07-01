@@ -1,6 +1,7 @@
 (define-module (r0man guix packages emacs)
   #:use-module ((guix licenses) #:prefix license:)
   #:use-module (gnu packages autotools)
+  #:use-module (gnu packages compression)
   #:use-module (gnu packages databases)
   #:use-module (gnu packages emacs)
   #:use-module (gnu packages emacs-build)
@@ -15,7 +16,6 @@
   #:use-module (guix gexp)
   #:use-module (guix git-download)
   #:use-module (guix utils)
-  #:use-module (r0man guix packages terminals)
   #:use-module (guix packages))
 
 (define-public emacs-aider
@@ -692,7 +692,7 @@ finished, close the browser page and kill the markdown buffer.")
 (define-public emacs-ghostel
   (package
     (name "emacs-ghostel")
-    (version "0.28.0")
+    (version "0.39.0")
     (source
      (origin
        (method git-fetch)
@@ -701,111 +701,326 @@ finished, close the browser page and kill the markdown buffer.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0zl9n9j1rd07sg929z33p8f7lgfxnp6dzz7jglf4mf902x3dxcz2"))))
+        (base32 "1pik989dzzijmqkfqya8h188gk3n4jj5h5ikldzx046rfyrw7aw5"))))
     (build-system emacs-build-system)
     (arguments
      (list
       #:phases
       #~(modify-phases %standard-phases
           ;; Compile ghostel-module.so before entering lisp/ so the elisp
-          ;; build sees the .so already next to ghostel.el.  We bypass
-          ;; upstream build.zig (which fetches its own ghostty as a Zig
-          ;; dependency) and link directly against the libghostty-vt.so
-          ;; from the ghostty-latest Guix package.
+          ;; build sees the .so already next to ghostel.el.  Since 0.29
+          ;; the module consumes ghostty-vt as a Zig *module* (@import),
+          ;; not the libghostty-vt C ABI, so the whole VT engine is
+          ;; compiled from source via upstream build.zig.  The build
+          ;; sandbox has no network, so we pre-seed zig's global package
+          ;; cache with the pinned ghostty checkout and every dependency
+          ;; `zig build' resolves, then build fully offline.
+          ;;
+          ;; We populate $ZIG_GLOBAL_CACHE_DIR/p/<hash>/ and run plain
+          ;; `zig build' rather than `zig build --system': the latter
+          ;; forces a single-threaded path through the uucode comptime
+          ;; Unicode-table generation that is roughly 15x slower.
           (add-after 'unpack 'build-native-module
             (lambda* (#:key inputs #:allow-other-keys)
-              (let* ((zig (search-input-file inputs "/bin/zig"))
-                     (ghostty-lib (dirname (search-input-file inputs
-                                            "/lib/libghostty-vt.so")))
-                     (ghostty-inc (dirname (dirname (search-input-file inputs
-                                                     "/include/ghostty/vt.h")))))
-                (setenv "ZIG_GLOBAL_CACHE_DIR"
-                        (string-append (getcwd) "/.zig-global-cache"))
+              (let ((zig (search-input-file inputs "/bin/zig"))
+                    (cache (string-append (getcwd) "/.zig-global-cache")))
+                (setenv "ZIG_GLOBAL_CACHE_DIR" cache)
                 (setenv "ZIG_LOCAL_CACHE_DIR"
-                        (string-append (getcwd) "/.zig-cache"))
-                (invoke zig
-                        "build-lib"
-                        "-dynamic"
-                        "-OReleaseFast"
-                        "-mcpu=baseline"
-                        "-fstrip"
-                        "-lc"
-                        (string-append "-L" ghostty-lib)
-                        "-lghostty-vt"
-                        (string-append "-I" ghostty-inc)
-                        "-isystem"
-                        "vendor"
-                        "-I"
-                        "vendor/stb"
-                        "-fsoname=ghostel-module.so"
-                        "--version-script"
-                        "symbols.map"
-                        "-rpath"
-                        ghostty-lib ;embed lookup path so the .so loads
-                        "-femit-bin=lisp/ghostel-module.so"
-                        "--name"
-                        "ghostel-module"
-                        "src/module.zig"
-                        "src/stb_image.c"))))
+                        (string-append (getcwd) "/.zig-local-cache"))
+                (for-each
+                 (lambda (entry)
+                   ;; ENTRY is (cache-dir-name source); a git-fetch
+                   ;; source lowers to a directory, every other to a
+                   ;; tarball to unpack with a single top-level strip.
+                   (let* ((dst (car entry))
+                          (src (cadr entry))
+                          (dest (string-append cache "/p/" dst)))
+                     (mkdir-p dest)
+                     (if (file-is-directory? src)
+                         (copy-recursively src dest)
+                         (invoke "tar" "-xf" src "-C" dest
+                                 "--strip-components=1"))))
+                 `(;; The ghostty checkout pinned in ghostel's
+                   ;; build.zig.zon; provides the ghostty-vt module and
+                   ;; the vendored pkg/* C shims.
+                   ("ghostty-1.3.2-dev-5UdBC7zDFAUYSL6EmAqDQxvWQCma-1lZ9QTXws90lLV6"
+                    (ungexp
+                     (origin
+                       (method url-fetch)
+                       (uri "https://github.com/ghostty-org/ghostty/archive/6246c288ae1087c8d67f75432a59da004b30bf25.tar.gz")
+                       (sha256
+                        (base32
+                         "0zf82ziicl5ciyhgbj691vmgdgcwdnqsjbgj2czwmdjgvfc01cyz")))))
+                   ;; uucode drives the comptime Unicode-table generation
+                   ;; the ghostty-vt module needs.
+                   ("uucode-0.2.0-ZZjBPqZVVABQepOqZHR7vV_NcaN-wats0IB6o-Exj6m9"
+                    (ungexp
+                     (origin
+                       (method url-fetch)
+                       (uri "https://deps.files.ghostty.org/uucode-0.2.0-ZZjBPqZVVABQepOqZHR7vV_NcaN-wats0IB6o-Exj6m9.tar.gz")
+                       (sha256
+                        (base32
+                         "15az8qzp0rg5qj8ma0dam9j8jbf4wwb7wxsiq3iymmlb9w7yxayh")))))
+                   ("uucode-0.1.0-ZZjBPj96QADXyt5sqwBJUnhaDYs_qBeeKijZvlRa0eqM"
+                    (ungexp
+                     (origin
+                       (method git-fetch)
+                       (uri (git-reference
+                             (url "https://github.com/jacobsandlund/uucode")
+                             (commit "5f05f8f83a75caea201f12cc8ea32a2d82ea9732")))
+                       (file-name "uucode")
+                       (sha256
+                        (base32
+                         "1zrdyhnqs0v46qasxb2kwd7694j8r8z6w4zlnfp42x8j6kwy2wxh")))))
+                   ("N-V-__8AAGmZhABbsPJLfbqrh6JTHsXhY6qCaLAQyx25e0XE"
+                    (ungexp
+                     (origin
+                       (method url-fetch)
+                       (uri "https://deps.files.ghostty.org/highway-66486a10623fa0d72fe91260f96c892e41aceb06.tar.gz")
+                       (sha256
+                        (base32
+                         "04m21b46h6c4x099r9qb720ql9llpzz8yq3k94i8zq7l7s4zim47")))))
+                   ;; The remaining entries are ghostty's other build.zig
+                   ;; dependencies.  ghostel builds only the ghostty-vt
+                   ;; module, but ghostty's build() constructs its full
+                   ;; graph, so every dependency it references must be in
+                   ;; the cache (a plain `zig build' would otherwise try
+                   ;; to fetch the missing ones over the network).
+                   ("zigimg-0.1.0-8_eo2vHnEwCIVW34Q14Ec-xUlzIoVg86-7FU2ypPtxms"
+                    (ungexp
+                     (origin
+                       (method url-fetch)
+                       (uri "https://github.com/ivanstepanovftw/zigimg/archive/d7b7ab0ba0899643831ef042bd73289510b39906.tar.gz")
+                       (sha256
+                        (base32
+                         "0ly53dd3pj8hl3kkf3h8x4dw79yb7riwj9qc9da18mdkl9mxf7ic")))))
+                   ("vaxis-0.5.1-BWNV_LosCQAGmCCNOLljCIw6j6-yt53tji6n6rwJ2BhS"
+                    (ungexp
+                     (origin
+                       (method url-fetch)
+                       (uri "https://deps.files.ghostty.org/vaxis-7dbb9fd3122e4ffad262dd7c151d80d863b68558.tar.gz")
+                       (sha256
+                        (base32
+                         "1xlf12dlzda0z4d3svq0qibvfgqzkrv4igg6qqg58nwwr0mk6wif")))))
+                   ("z2d-0.10.0-j5P_Hu-6FgBsZNgwphIqh17jDnj8_yPtD8yzjO6PpHRQ"
+                    (ungexp
+                     (origin
+                       (method url-fetch)
+                       (uri "https://deps.files.ghostty.org/z2d-0.10.0-j5P_Hu-6FgBsZNgwphIqh17jDnj8_yPtD8yzjO6PpHRQ.tar.gz")
+                       (sha256
+                        (base32
+                         "1xwpcw2awxf2r1kz27m0j4pzpi5g92gd1i2mzqvhkvnmxyi1vwk9")))))
+                   ("zf-0.10.3-OIRy8RuJAACKA3Lohoumrt85nRbHwbpMcUaLES8vxDnh"
+                    (ungexp
+                     (origin
+                       (method url-fetch)
+                       (uri "https://deps.files.ghostty.org/zf-3c52637b7e937c5ae61fd679717da3e276765b23.tar.gz")
+                       (sha256
+                        (base32
+                         "0s25gjvp7rns1l52jvgbd7aakndlvfs5xh9b4wk9wkphia95s09v")))))
+                   ("libxev-0.0.0-86vtc4IcEwCqEYxEYoN_3KXmc6A9VLcm22aVImfvecYs"
+                    (ungexp
+                     (origin
+                       (method url-fetch)
+                       (uri "https://deps.files.ghostty.org/libxev-34fa50878aec6e5fa8f532867001ab3c36fae23e.tar.gz")
+                       (sha256
+                        (base32
+                         "1mvx91wn7499xfx76fxijq4x66x1g5yk4cpr52hii9g4jrmyl0v0")))))
+                   ("gobject-0.3.0-Skun7ANLnwDvEfIpVmohcppXgOvg_I6YOJFmPIsKfXk-"
+                    (ungexp
+                     (origin
+                       (method url-fetch)
+                       (uri "https://deps.files.ghostty.org/gobject-2025-11-08-23-1.tar.zst")
+                       (sha256
+                        (base32
+                         "0j0csvsyvp0193mpkdp25s14kargppmdyslbhi5qw788y0347gfr")))))
+                   ("N-V-__8AAAzZywE3s51XfsLbP9eyEw57ae9swYB9aGB6fCMs"
+                    (ungexp
+                     (origin
+                       (method url-fetch)
+                       (uri "https://deps.files.ghostty.org/wuffs-122037b39d577ec2db3fd7b2130e7b69ef6cc1807d68607a7c232c958315d381b5cd.tar.gz")
+                       (sha256
+                        (base32
+                         "04qwpr8c4xjla4skwb1fpvkjc0c611qhbhz9xp3c9rlnpq5d4k4y")))))
+                   ("N-V-__8AAB0eQwD-0MdOEBmz7intriBReIsIDNlukNVoNu6o"
+                    (ungexp
+                     (origin
+                       (method url-fetch)
+                       (uri "https://deps.files.ghostty.org/zlib-1220fed0c74e1019b3ee29edae2051788b080cd96e90d56836eea857b0b966742efb.tar.gz")
+                       (sha256
+                        (base32
+                         "0p6h2i9ajdp46lckdpibfqy4vz5nh5r22bqq96mp41k0ydiqis0p")))))
+                   ("N-V-__8AABzkUgISeKGgXAzgtutgJsZc0-kkeqBBscJgMkvy"
+                    (ungexp
+                     (origin
+                       (method url-fetch)
+                       (uri "https://deps.files.ghostty.org/glslang-12201278a1a05c0ce0b6eb6026c65cd3e9247aa041b1c260324bf29cee559dd23ba1.tar.gz")
+                       (sha256
+                        (base32
+                         "1dcpm70fhxk07vk37f5l0hb9gxfv6pjgbqskk8dfbcwwa2xyv8hl")))))
+                   ("N-V-__8AADYiAAB_80AWnH1AxXC0tql9thT-R-DYO1gBqTLc"
+                    (ungexp
+                     (origin
+                       (method url-fetch)
+                       (uri "https://deps.files.ghostty.org/pixels-12207ff340169c7d40c570b4b6a97db614fe47e0d83b5801a932dcd44917424c8806.tar.gz")
+                       (sha256
+                        (base32
+                         "06pi3f3lhyxfzczhwrc2b4n0jhhzydbz96qlpw12a24is0b3ps2m")))))
+                   ("N-V-__8AAEbOfQBnvcFcCX2W5z7tDaN8vaNZGamEQtNOe0UI"
+                    (ungexp
+                     (origin
+                       (method url-fetch)
+                       (uri "https://github.com/ocornut/imgui/archive/refs/tags/v1.92.5-docking.tar.gz")
+                       (sha256
+                        (base32
+                         "1jzr65gpx4mqfcdbnf2rm2kd20jmj9whwdb7x1df3wvmih7c45n8")))))
+                   ("N-V-__8AAG02ugUcWec-Ndp-i7JTsJ0dgF8nnJRUInkGLG7G"
+                    (ungexp
+                     (origin
+                       (method url-fetch)
+                       (uri "https://deps.files.ghostty.org/harfbuzz-11.0.0.tar.xz")
+                       (sha256
+                        (base32
+                         "16rb7aazy36pj3xrjy149dd90j9yv7q5jnqx5kz2air1zsx52qzi")))))
+                   ("N-V-__8AAG3RoQEyRC2Vw7Qoro5SYBf62IHn3HjqtNVY6aWK"
+                    (ungexp
+                     (origin
+                       (method url-fetch)
+                       (uri "https://deps.files.ghostty.org/libxml2-2.11.5.tar.gz")
+                       (sha256
+                        (base32
+                         "05b2kbccbkb5pkizwx2s170lcqvaj7iqjr5injsl5sry5sg0aa3c")))))
+                   ("N-V-__8AAGi9AwC7QV7hLqjN6iBkXA2y5dxw285nkSLlVB7I"
+                    (ungexp
+                     (origin
+                       (method url-fetch)
+                       (uri "https://deps.files.ghostty.org/ghostty-themes-release-20260525-155808-7335c0a.tgz")
+                       (sha256
+                        (base32
+                         "0ifyjw1xxap54h1j49di0mpnapwd4020mc3igx4danhxsi2s6sqw")))))
+                   ("N-V-__8AAHjwMQDBXnLq3Q2QhaivE0kE2aD138vtX2Bq1g7c"
+                    (ungexp
+                     (origin
+                       (method url-fetch)
+                       (uri "https://deps.files.ghostty.org/oniguruma-1220c15e72eadd0d9085a8af134904d9a0f5dfcbed5f606ad60edc60ebeccd9706bb.tar.gz")
+                       (sha256
+                        (base32
+                         "187jk4fxdkzc0wrcx4kdy4v6p1snwmv8r97i1d68yi3q5qha26h0")))))
+                   ("N-V-__8AAIC5lwAVPJJzxnCAahSvZTIlG-HhtOvnM1uh-66x"
+                    (ungexp
+                     (origin
+                       (method url-fetch)
+                       (uri "https://deps.files.ghostty.org/JetBrainsMono-2.304.tar.gz")
+                       (sha256
+                        (base32
+                         "1i2w213919avi0apgbw720wqy0z46a89bwv3b65hkbc2icg6jyn5")))))
+                   ("N-V-__8AAIrfdwARSa-zMmxWwFuwpXf1T3asIN7s5jqi9c1v"
+                    (ungexp
+                     (origin
+                       (method url-fetch)
+                       (uri "https://deps.files.ghostty.org/fontconfig-2.14.2.tar.gz")
+                       (sha256
+                        (base32
+                         "0mcarq6v9k7k9a8is23vq9as0niv0hbagwdabknaq6472n9dv8iv")))))
+                   ("N-V-__8AAJrvXQCqAT8Mg9o_tk6m0yf5Fz-gCNEOKLyTSerD"
+                    (ungexp
+                     (origin
+                       (method url-fetch)
+                       (uri "https://deps.files.ghostty.org/libpng-1220aa013f0c83da3fb64ea6d327f9173fa008d10e28bc9349eac3463457723b1c66.tar.gz")
+                       (sha256
+                        (base32
+                         "0fm0y7543w2gx5sz3zg9i46x1am51c77a554r0zqwpphdjs9bk7y")))))
+                   ("N-V-__8AAKLKpwC4H27Ps_0iL3bPkQb-z6ZVSrB-x_3EEkub"
+                    (ungexp
+                     (origin
+                       (method url-fetch)
+                       (uri "https://deps.files.ghostty.org/freetype-1220b81f6ecfb3fd222f76cf9106fecfa6554ab07ec7fdc4124b9bb063ae2adf969d.tar.gz")
+                       (sha256
+                        (base32
+                         "035r5bypzapa1x7za7lpvpkz58fxynz4anqzbk8705hmspsh2wj2")))))
+                   ("N-V-__8AAMVLTABmYkLqhZPLXnMl-KyN38R8UVYqGrxqO26s"
+                    (ungexp
+                     (origin
+                       (method url-fetch)
+                       (uri "https://deps.files.ghostty.org/NerdFontsSymbolsOnly-3.4.0.tar.gz")
+                       (sha256
+                        (base32
+                         "010d7gkv359qg555d89i4hhgb56c8f69kw5jsx4f5gflaswx2r0i")))))
+                   ("N-V-__8AANb6pwD7O1WG6L5nvD_rNMvnSc9Cpg1ijSlTYywv"
+                    (ungexp
+                     (origin
+                       (method url-fetch)
+                       (uri "https://deps.files.ghostty.org/spirv_cross-1220fb3b5586e8be67bc3feb34cbe749cf42a60d628d2953632c2f8141302748c8da.tar.gz")
+                       (sha256
+                        (base32
+                         "1qspcsx56v0mddarb6f05i748wsl2ln3d8863ydsczsyqk7nyaxm")))))
+                   ("N-V-__8AANT61wB--nJ95Gj_ctmzAtcjloZ__hRqNw5lC1Kr"
+                    (ungexp
+                     (origin
+                       (method url-fetch)
+                       (uri "https://deps.files.ghostty.org/DearBindings_v0.17_ImGui_v1.92.5-docking.tar.gz")
+                       (sha256
+                        (base32
+                         "18xsf0zisr9q8xqa8g3kh4qkqb9rrikkvqiyhmwzc9h9w00cbzlb")))))))
+                ;; Emits ghostel-module.so and its sidecar
+                ;; ghostel-module.version (the version the elisp loader
+                ;; compares against to detect a stale module) at the
+                ;; source root.  Drop both next to ghostel.el so the
+                ;; elisp byte-compile can load the module and the
+                ;; install phase can pick them up.
+                (invoke zig "build" "-Doptimize=ReleaseFast" "-Dcpu=baseline")
+                (copy-file "ghostel-module.so" "lisp/ghostel-module.so")
+                (copy-file "ghostel-module.version"
+                           "lisp/ghostel-module.version"))))
           (add-after 'build-native-module 'enter-lisp-dir
             (lambda _
               ;; Keep LICENSE reachable from the build dir so
               ;; `install-license-files' picks it up.
               (copy-file "LICENSE" "lisp/LICENSE")
               (chdir "lisp")))
-          ;; A docstring in ghostel-debug.el contains the literal
-          ;; sequence `\"/bin/sh\"', which trips `patch-el-files'
-          ;; while it scans for /bin/<exec> references.  Ghostel uses
-          ;; /bin/sh as a runtime literal (the spawned shell on the
-          ;; remote/local host), so no patching is needed here.
+          ;; Several .el files contain the literal sequence `"/bin/sh"'
+          ;; (a runtime shell literal, not a build path), which trips
+          ;; `patch-el-files' while it scans for /bin/<exec> references.
+          ;; No patching is needed here.
           (delete 'patch-el-files)
           (add-after 'install 'install-native-module
             (lambda _
               ;; emacs-build-system's `install' phase only copies
-              ;; .el/.elc/.info/.texi.  Drop ghostel-module.so next to
-              ;; ghostel.el manually so emacs finds it on first load.
-              ;; Also write the sidecar version file the elisp loader
-              ;; reads to detect a stale on-disk module without
-              ;; `module-load'-ing it first.
+              ;; .el/.elc/.info/.texi, so drop the rest next to the
+              ;; installed ghostel.el (the MELPA-flat layout that
+              ;; `ghostel--resource-root' probes for first):
+              ;;   - ghostel-module.so, the native module;
+              ;;   - ghostel-module.version, the sidecar the elisp
+              ;;     loader reads to detect a stale on-disk module
+              ;;     without `module-load'-ing it first;
+              ;;   - etc/, holding shell integration
+              ;;     (etc/shell/ghostel.{bash,zsh,fish} + bootstrap/)
+              ;;     and bundled terminfo (etc/terminfo/{x,78}/xterm-ghostty).
+              ;; Still inside `lisp/' from `enter-lisp-dir', so the
+              ;; source `etc/' tree sits one level up.
               (let ((dest (car (find-files (string-append #$output
                                             "/share/emacs/site-lisp")
                                            "^ghostel-[0-9]"
                                            #:directories? #t))))
                 (install-file "ghostel-module.so" dest)
-                (call-with-output-file (string-append dest
-                                        "/ghostel-module.version")
-                  (lambda (port)
-                    (display #$version port)
-                    (newline port))))))
-          (add-after 'install-native-module 'install-etc
-            (lambda _
-              ;; Still inside `lisp/' from `enter-lisp-dir', so the
-              ;; source `etc/' tree sits one level up.  Place it next
-              ;; to the installed .el files (the MELPA-flat layout
-              ;; that `ghostel--resource-root' probes for first) so
-              ;; shell integration (etc/shell/ghostel.{bash,zsh,fish}
-              ;; + bootstrap/) and bundled terminfo
-              ;; (etc/terminfo/{x,78}/xterm-ghostty) resolve at
-              ;; runtime.
-              (let ((dest (car (find-files (string-append #$output
-                                            "/share/emacs/site-lisp")
-                                           "^ghostel-[0-9]"
-                                           #:directories? #t))))
+                (install-file "ghostel-module.version" dest)
                 (copy-recursively "../etc"
                                   (string-append dest "/etc"))))))))
-    (native-inputs (list zig-0.15))
-    (inputs (list ghostty-latest))
-    (supported-systems '("x86_64-linux" "aarch64-linux"))
+    (native-inputs (list zig-0.15 zstd))
+    ;; 0.29+ compiles the ghostty-vt engine (uucode comptime Unicode
+    ;; tables) from source.  On aarch64 that comptime pass is
+    ;; single-threaded and slow enough to blow past the build daemon's
+    ;; --max-silent-time; only x86_64 is verified to build.
+    (supported-systems '("x86_64-linux"))
     (home-page "https://github.com/dakra/ghostel")
     (synopsis "Emacs terminal emulator using libghostty-vt")
     (description
      "Ghostel is an Emacs terminal emulator powered by libghostty-vt, the
 same VT engine that drives the Ghostty terminal.  Inspired by emacs-libvterm,
 a native dynamic module handles terminal state and rendering, while Elisp
-manages the shell process, keymap, and buffer.  This package builds the
-native module from source and links it against @code{libghostty-vt.so} from
-the @code{ghostty-latest} Guix package, so @code{M-x ghostel} works
-out-of-the-box with no download or compile prompt.")
+manages the shell process, keymap, and buffer.  This package compiles the
+native module (including the ghostty-vt engine) from source, so @code{M-x
+ghostel} works out-of-the-box with no download or compile prompt.")
     (license license:gpl3+)))
 
 (define-public emacs-github-browse-file
