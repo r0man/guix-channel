@@ -67,7 +67,7 @@ be using bash otherwise.")
 (define-public clojure-lsp
   (package
     (name "clojure-lsp")
-    (version "2025.11.28-12.47.43")
+    (version "2026.05.05-12.58.26")
     (source
      (origin
        (method url-fetch/zipbomb)
@@ -84,9 +84,9 @@ be using bash otherwise.")
        (sha256
         (base32 (cond
                   ((target-aarch64?)
-                   "0gy1va0bkrkhffbpl99m1x306ivyhj4jm586sxw3vha5qqb0k61i")
+                   "00dniff3sd9ficmbvpbnrx66lql9msc8cla8wlhzr2h53c2wqnyc")
                   ((target-x86-64?)
-                   "03fdmzf2jg0p4xfq1db26c4p1k12g318ra5fxh519314127kf8b0"))))))
+                   "1l1hi8ili0pwk1bhah4h082ziblprj6n8c5dlsf9jqfvs47xlmml"))))))
     (build-system binary-build-system)
     (arguments
      (list
