@@ -1007,11 +1007,6 @@ finished, close the browser page and kill the markdown buffer.")
                 (copy-recursively "../etc"
                                   (string-append dest "/etc"))))))))
     (native-inputs (list zig-0.15 zstd))
-    ;; 0.29+ compiles the ghostty-vt engine (uucode comptime Unicode
-    ;; tables) from source.  On aarch64 that comptime pass is
-    ;; single-threaded and slow enough to blow past the build daemon's
-    ;; --max-silent-time; only x86_64 is verified to build.
-    (supported-systems '("x86_64-linux"))
     (home-page "https://github.com/dakra/ghostel")
     (synopsis "Emacs terminal emulator using libghostty-vt")
     (description
