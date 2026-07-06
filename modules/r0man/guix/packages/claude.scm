@@ -15,7 +15,7 @@
 (define-public claude-code
   (package
     (name "claude-code")
-    (version "2.1.198")
+    (version "2.1.201")
     (source
      (origin
        (method url-fetch)
@@ -31,10 +31,10 @@
        (sha256
         (base32 (cond
                   ((target-aarch64?)
-                   "11bqs3sba0vkmrkgkws85v23pjjzj6q1a1vp08rzdmpahp7hjyi3")
+                   "0fcm3yrpzjdp9j2fp76sjbfxpv9qkzmkzfr8aakbcgbk6c83mxws")
                   ((target-x86-64?)
-                   "1ahxqwj5jfbdqn0a1xy1w09zmcp9s5ib630rvaxkd08dp7dvjcwa")
-                  (else "1ahxqwj5jfbdqn0a1xy1w09zmcp9s5ib630rvaxkd08dp7dvjcwa"))))))
+                   "0pq1q269q5ihl9fvxs8ivfc8smmbaqaqp4vbd5blmhk2zspxwr06")
+                  (else "0pq1q269q5ihl9fvxs8ivfc8smmbaqaqp4vbd5blmhk2zspxwr06"))))))
     (build-system binary-build-system)
     (arguments
      (list
