@@ -437,7 +437,7 @@ through the Go module system instead of vendoring checked-in copies.")
 (define-public gascity-next
   (package
     (name "gascity-next")
-    (version "1.3.2")
+    (version "1.3.3")
     (source
      (origin
        (method git-fetch)
@@ -446,7 +446,7 @@ through the Go module system instead of vendoring checked-in copies.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0j8pp625pdyshdgfipjja6f0mm0zggc1j0m3fwd939waalshx4iz"))))
+        (base32 "1il1s0q5m39m3w5s7ykva5rpzap4sq8m7jk14sha7y1n8la06s46"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -507,7 +507,8 @@ through the Go module system instead of vendoring checked-in copies.")
             ;; text/config only) so a Guix home service can bootstrap
             ;; any example city with `gc init --from
             ;; <out>/share/gascity/examples/<name>' — gastown,
-            ;; dolt, swarm, lifecycle, hyperscale, bd.  Each example
+            ;; t3bridge-gastown, swarm, lifecycle, hyperscale, bd.
+            ;; Each example
             ;; city carries its own self-contained packs/ subtree.
             (lambda* (#:key outputs unpack-path #:allow-other-keys)
               (let* ((out (assoc-ref outputs "out"))
