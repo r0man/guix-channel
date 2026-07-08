@@ -1146,6 +1146,64 @@ a CLI for managing versioned databases with full MySQL compatibility.")
     (license license:asl2.0)))
 
 
+(define-public go-github-com-dolthub-dolt-go-v2
+  ;; Library variant of the dolt v2 release line, needed by
+  ;; go-github-com-dolthub-driver-v2 and beads-next.  Kept separate from
+  ;; go-github-com-dolthub-dolt-go (pinned at 1.88.1), which is still used
+  ;; by go-github-com-steveyegge-beads and gastown-next.
+  (package
+    (inherit go-github-com-dolthub-dolt-go)
+    (name "go-github-com-dolthub-dolt-go-v2")
+    (version (package-version dolt))
+    (source (package-source dolt))
+    (propagated-inputs
+     (modify-inputs (package-propagated-inputs go-github-com-dolthub-dolt-go)
+       (delete "go-github-com-dolthub-fslock"
+               "go-github-com-dolthub-go-mysql-server"
+               "go-github-com-dolthub-vitess")
+       (prepend go-github-com-dolthub-fslock-for-dolt
+                go-github-com-dolthub-go-mysql-server-for-dolt
+                go-github-com-dolthub-vitess-for-dolt)))))
+
+
+(define-public go-github-com-dolthub-eventkit
+  (package
+    (name "go-github-com-dolthub-eventkit")
+    (version "0.0.0-20260611184414-99f5693e696a")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/dolthub/eventkit")
+             (commit "99f5693e696ae64e517b14d6e9a3fd1294a67b46")))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0lkwpvfwir3mf5g7j3bm256s9byp73brbadyj8pzj3phyg9qan6i"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/dolthub/eventkit"
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'build))))
+    (native-inputs (list go-github-com-stretchr-testify))
+    (propagated-inputs (list go-github-com-denisbrodbeck-machineid
+                             go-github-com-dolthub-fslock-for-dolt
+                             go-github-com-google-uuid))
+    (home-page "https://github.com/dolthub/eventkit")
+    (synopsis "Fire-and-forget event telemetry for Go CLIs")
+    (description
+     "This package provides event telemetry for Go command line tools.  It
+buffers events in-process, spills them to a durable disk queue, and ships
+them out-of-band via a detached flusher subprocess so the user-facing
+command never blocks on the network.")
+    ;; The repository does not contain a license file (as of commit
+    ;; 99f5693); other DoltHub projects are Apache 2.0.
+    (license (license:non-copyleft
+              "https://github.com/dolthub/eventkit"
+              "No license file published upstream."))))
+
+
 (define-public go-gorm-io-driver-mysql
   (package
     (name "go-gorm-io-driver-mysql")
@@ -1207,6 +1265,38 @@ a CLI for managing versioned databases with full MySQL compatibility.")
      "This package provides a Go database/sql compatible driver for Dolt,
 enabling embedded version-controlled SQL databases in Go applications.")
     (license license:asl2.0)))
+
+
+(define-public go-github-com-dolthub-driver-v2
+  ;; The v2 driver tracks the dolt v2 release line and requires the newer
+  ;; fslock 0.0.5 API, so it propagates the -for-dolt package variants.
+  (package
+    (inherit go-github-com-dolthub-driver)
+    (name "go-github-com-dolthub-driver-v2")
+    (version "2.1.4")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/dolthub/driver")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "116zhrm6djkm1qp0xv1krc6bcpjq9lca72zqf1f2mvbgvanv15y3"))))
+    (arguments
+     (list
+      #:import-path "github.com/dolthub/driver/v2"
+      ;; Tests require a running Dolt database.
+      #:tests? #f
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'build))))
+    (propagated-inputs (list go-github-com-cenkalti-backoff-v4
+                             go-github-com-dolthub-dolt-go-v2
+                             go-github-com-dolthub-go-mysql-server-for-dolt
+                             go-github-com-dolthub-vitess-for-dolt
+                             go-gorm-io-driver-mysql
+                             go-gorm-io-gorm))))
 
 ;; Additional dependencies for dolt
 
