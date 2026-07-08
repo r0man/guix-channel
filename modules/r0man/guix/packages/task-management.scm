@@ -42,155 +42,154 @@
   #:use-module (r0man guix packages golang-xyz))
 
 (define-public beads-next
-  (let ((commit "fbcee6c6246c874ed98a129d9c1ac22127d8c585")
-        (revision "1"))
-    (package
-      (name "beads-next")
-      (version (git-version "1.0.5" revision commit))
-      (source
-       (origin
-         (method git-fetch)
-         (uri (git-reference
-               (url "https://github.com/gastownhall/beads")
-               (commit commit)))
-         (file-name (git-file-name name version))
-         (sha256
-          (base32 "13aqfv5wvyvqcbddiwjrid39sndqxw7dqw8nakbn9z3w26xzhjqp"))))
-      (build-system go-build-system)
-      (arguments
-       (list
-        #:go go-1.26
-        #:install-source? #f
-        #:import-path "github.com/steveyegge/beads/cmd/bd"
-        #:unpack-path "github.com/steveyegge/beads"
-        #:phases
-        #~(modify-phases %standard-phases
-            (replace 'check
-              (lambda* (#:key tests? import-path #:allow-other-keys)
-                (when tests?
-                  ;; Run only the setup tests which don't depend on
-                  ;; testcontainers-go (Docker).  The other test packages
-                  ;; import internal/testutil which pulls in testcontainers-go
-                  ;; for Dolt container management, unavailable in the sandbox.
-                  (invoke "go" "test" "-v"
-                          "github.com/steveyegge/beads/cmd/bd/setup"))))
-            (add-after 'unpack 'fix-embedded-symlinks
-              (lambda _
-                (use-modules (ice-9 ftw))
-                ;; Replace symlinked files with actual copies
-                ;; to work around Go embed limitation with Guix store.
-                (define (copy-symlink-targets dir)
-                  (when (file-exists? dir)
-                    (for-each (lambda (file)
-                                (let ((path (string-append dir "/" file)))
-                                  (when (symbolic-link? path)
-                                    (let ((target (readlink path)))
-                                      (delete-file path)
-                                      (copy-file target path)))))
-                              (scandir dir
-                                       (lambda (f)
-                                         (not (member f
-                                                      '("." ".."))))))))
-                ;; Fix chroma lexer and style embedded files.
-                (copy-symlink-targets
-                 "src/github.com/alecthomas/chroma/v2/lexers/embedded")
-                (copy-symlink-targets
-                 "src/github.com/alecthomas/chroma/v2/styles")
-                ;; Fix dolt embedded files (AGENT.md, weight maps).
-                (copy-symlink-targets (string-append
-                                       "src/github.com/dolthub/dolt/go"
-                                       "/libraries/doltcore/doltdb"))
-                (copy-symlink-targets (string-append
-                                       "src/github.com/dolthub/go-mysql-server"
-                                       "/sql/encodings"))))
-            (add-before 'build 'set-home
-              (lambda _
-                (setenv "HOME" "/tmp")))
-            (add-after 'install 'install-completions
-              (lambda* (#:key outputs #:allow-other-keys)
-                (let* ((out (assoc-ref outputs "out"))
-                       (bd (string-append out "/bin/bd"))
-                       (bash-dir (string-append out "/etc/bash_completion.d"))
-                       (zsh-dir (string-append out "/share/zsh/site-functions"))
-                       (fish-dir (string-append out
-                                  "/share/fish/vendor_completions.d")))
-                  (mkdir-p bash-dir)
-                  (mkdir-p zsh-dir)
-                  (mkdir-p fish-dir)
-                  (with-output-to-file (string-append bash-dir "/bd")
-                    (lambda ()
-                      (system* bd "completion" "bash")))
-                  (with-output-to-file (string-append zsh-dir "/_bd")
-                    (lambda ()
-                      (system* bd "completion" "zsh")))
-                  (with-output-to-file (string-append fish-dir "/bd.fish")
-                    (lambda ()
-                      (system* bd "completion" "fish")))))))))
-      (native-inputs (list git
-                      icu4c
-                      ;; Updated charmbracelet/x packages must appear before
-                      ;; packages that propagate older versions, so they win
-                      ;; collision resolution in setup-go-environment.
-                      go-github-com-charmbracelet-colorprofile
-                      go-github-com-charmbracelet-ultraviolet
-                      go-github-com-charmbracelet-x-ansi
-                      go-github-com-charmbracelet-x-cellbuf
-                      go-github-com-charmbracelet-x-term
-                      go-github-com-charmbracelet-x-windows
-                      go-github-com-anthropics-anthropic-sdk-go
-                      go-github-com-burntsushi-toml
-                      go-github-com-cenkalti-backoff-v4
-                      go-github-com-cenkalti-backoff-v5
-                      go-charm-land-glamour-v2
-                      go-charm-land-huh-v2
-                      go-charm-land-lipgloss-v2
-                      go-github-com-charmbracelet-lipgloss
-                      go-github-com-dolthub-driver
-                      ;; Transitive dolt CLI dependencies needed for
-                      ;; compilation of the full dolt source tree.
-                      go-github-com-abiosoft-readline
-                      go-github-com-andreyvit-diff
-                      go-github-com-dolthub-ishell
-                      go-github-com-flynn-archive-go-shlex
-                      go-github-com-google-go-github-v57
-                      go-github-com-google-shlex
-                      go-github-com-pkg-profile
-                      go-github-com-skratchdot-open-golang
-                      go-github-com-tealeg-xlsx
-                      go-github-com-fsnotify-fsnotify
-                      go-github-com-go-sql-driver-mysql
-                      go-github-com-muesli-termenv
-                      go-github-com-olebedev-when
-                      go-github-com-spf13-cobra
-                      go-github-com-spf13-viper
-                      go-github-com-stretchr-testify
-                      go-go-opentelemetry-io-otel
-                      go-go-opentelemetry-io-otel-exporters-otlp-otlpmetric-otlpmetrichttp
-                      go-go-opentelemetry-io-otel-exporters-stdout-stdoutmetric
-                      go-go-opentelemetry-io-otel-exporters-stdout-stdouttrace
-                      go-go-opentelemetry-io-otel-sdk
-                      go-go-opentelemetry-io-otel-sdk-metric
-                      go-go-opentelemetry-io-proto-otlp
-                      go-golang-org-x-sync
-                      go-golang-org-x-sys
-                      go-golang-org-x-term
-                      go-google-golang-org-grpc
-                      go-google-golang-org-protobuf
-                      go-github-com-johanneskaufmann-dom
-                      go-github-com-johanneskaufmann-html-to-markdown-v2
-                      go-gopkg-in-yaml-v3
-                      go-rsc-io-script))
-      (home-page "https://github.com/gastownhall/beads")
-      (synopsis "Graph-based issue tracker for AI coding agents")
-      (description
-       "@command{bd} (Beads) is a lightweight memory system for coding
+  (package
+    (name "beads-next")
+    (version "1.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/gastownhall/beads")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "04bwc7s61j6i72np35jac8p6zq372vm29khiykq91w8dzpzmblgr"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:go go-1.26
+      #:install-source? #f
+      #:import-path "github.com/steveyegge/beads/cmd/bd"
+      #:unpack-path "github.com/steveyegge/beads"
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'check
+            (lambda* (#:key tests? import-path #:allow-other-keys)
+              (when tests?
+                ;; Run only the setup tests which don't depend on
+                ;; testcontainers-go (Docker).  The other test packages
+                ;; import internal/testutil which pulls in testcontainers-go
+                ;; for Dolt container management, unavailable in the sandbox.
+                (invoke "go" "test" "-v"
+                        "github.com/steveyegge/beads/cmd/bd/setup"))))
+          (add-after 'unpack 'fix-embedded-symlinks
+            (lambda _
+              (use-modules (ice-9 ftw))
+              ;; Replace symlinked files with actual copies
+              ;; to work around Go embed limitation with Guix store.
+              (define (copy-symlink-targets dir)
+                (when (file-exists? dir)
+                  (for-each (lambda (file)
+                              (let ((path (string-append dir "/" file)))
+                                (when (symbolic-link? path)
+                                  (let ((target (readlink path)))
+                                    (delete-file path)
+                                    (copy-file target path)))))
+                            (scandir dir
+                                     (lambda (f)
+                                       (not (member f
+                                                    '("." ".."))))))))
+              ;; Fix chroma lexer and style embedded files.
+              (copy-symlink-targets
+               "src/github.com/alecthomas/chroma/v2/lexers/embedded")
+              (copy-symlink-targets
+               "src/github.com/alecthomas/chroma/v2/styles")
+              ;; Fix dolt embedded files (AGENT.md, weight maps).
+              (copy-symlink-targets (string-append
+                                     "src/github.com/dolthub/dolt/go"
+                                     "/libraries/doltcore/doltdb"))
+              (copy-symlink-targets (string-append
+                                     "src/github.com/dolthub/go-mysql-server"
+                                     "/sql/encodings"))))
+          (add-before 'build 'set-home
+            (lambda _
+              (setenv "HOME" "/tmp")))
+          (add-after 'install 'install-completions
+            (lambda* (#:key outputs #:allow-other-keys)
+              (let* ((out (assoc-ref outputs "out"))
+                     (bd (string-append out "/bin/bd"))
+                     (bash-dir (string-append out "/etc/bash_completion.d"))
+                     (zsh-dir (string-append out "/share/zsh/site-functions"))
+                     (fish-dir (string-append out
+                                "/share/fish/vendor_completions.d")))
+                (mkdir-p bash-dir)
+                (mkdir-p zsh-dir)
+                (mkdir-p fish-dir)
+                (with-output-to-file (string-append bash-dir "/bd")
+                  (lambda ()
+                    (system* bd "completion" "bash")))
+                (with-output-to-file (string-append zsh-dir "/_bd")
+                  (lambda ()
+                    (system* bd "completion" "zsh")))
+                (with-output-to-file (string-append fish-dir "/bd.fish")
+                  (lambda ()
+                    (system* bd "completion" "fish")))))))))
+    (native-inputs (list git
+                    icu4c
+                    ;; Updated charmbracelet/x packages must appear before
+                    ;; packages that propagate older versions, so they win
+                    ;; collision resolution in setup-go-environment.
+                    go-github-com-charmbracelet-colorprofile
+                    go-github-com-charmbracelet-ultraviolet
+                    go-github-com-charmbracelet-x-ansi
+                    go-github-com-charmbracelet-x-cellbuf
+                    go-github-com-charmbracelet-x-term
+                    go-github-com-charmbracelet-x-windows
+                    go-github-com-anthropics-anthropic-sdk-go
+                    go-github-com-burntsushi-toml
+                    go-github-com-cenkalti-backoff-v4
+                    go-github-com-cenkalti-backoff-v5
+                    go-charm-land-glamour-v2
+                    go-charm-land-huh-v2
+                    go-charm-land-lipgloss-v2
+                    go-github-com-charmbracelet-lipgloss
+                    go-github-com-dolthub-driver-v2
+                    go-github-com-dolthub-eventkit
+                    ;; Transitive dolt CLI dependencies needed for
+                    ;; compilation of the full dolt source tree.
+                    go-github-com-abiosoft-readline
+                    go-github-com-andreyvit-diff
+                    go-github-com-dolthub-ishell
+                    go-github-com-flynn-archive-go-shlex
+                    go-github-com-google-go-github-v57
+                    go-github-com-google-shlex
+                    go-github-com-pkg-profile
+                    go-github-com-skratchdot-open-golang
+                    go-github-com-tealeg-xlsx
+                    go-github-com-fsnotify-fsnotify
+                    go-github-com-go-sql-driver-mysql
+                    go-github-com-muesli-termenv
+                    go-github-com-olebedev-when
+                    go-github-com-spf13-cobra
+                    go-github-com-spf13-viper
+                    go-github-com-stretchr-testify
+                    go-go-opentelemetry-io-otel
+                    go-go-opentelemetry-io-otel-exporters-otlp-otlpmetric-otlpmetrichttp
+                    go-go-opentelemetry-io-otel-exporters-stdout-stdoutmetric
+                    go-go-opentelemetry-io-otel-exporters-stdout-stdouttrace
+                    go-go-opentelemetry-io-otel-sdk
+                    go-go-opentelemetry-io-otel-sdk-metric
+                    go-go-opentelemetry-io-proto-otlp
+                    go-golang-org-x-sync
+                    go-golang-org-x-sys
+                    go-golang-org-x-term
+                    go-google-golang-org-grpc
+                    go-google-golang-org-protobuf
+                    go-github-com-johanneskaufmann-dom
+                    go-github-com-johanneskaufmann-html-to-markdown-v2
+                    go-gopkg-in-yaml-v3
+                    go-rsc-io-script))
+    (home-page "https://github.com/gastownhall/beads")
+    (synopsis "Graph-based issue tracker for AI coding agents")
+    (description
+     "@command{bd} (Beads) is a lightweight memory system for coding
 agents, using a graph-based issue tracker.  Four kinds of dependencies
 work to chain issues together like beads, making them easy for agents
 to follow for long distances and reliably perform complex task streams
 in the right order.  It uses SQLite for fast local operations and
 JSONL files stored in git for distributed synchronization across
 machines.")
-      (license license:expat))))
+    (license license:expat)))
 
 (define-public go-github-com-steveyegge-beads
   (let ((commit "3a7a2e852a739f43e3c6c58ee36693dea8bac693")
