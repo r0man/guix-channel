@@ -21,7 +21,7 @@
 
 (define-public guix-sugar-light-sddm-theme
   (package
-    (inherit sugar-light-sddm-theme)
+    (inherit sugar-light-sddm-theme-qt5)
     (name "guix-sugar-light-sddm-theme")
     (arguments
      (list
