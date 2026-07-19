@@ -242,6 +242,21 @@ tracker for AI coding agents.  It includes the core types, storage interfaces,
 and utility functions needed to interact with Beads databases.")
       (license license:expat))))
 
+(define-public go-github-com-steveyegge-beads-next
+  ;; Library variant of beads 1.1.0, required by gascity-next 1.3.5+.  Kept
+  ;; separate from go-github-com-steveyegge-beads (pinned at 1.0.4), which is
+  ;; still used by gastown-next via the dolt v1 release line.
+  (package
+    (inherit go-github-com-steveyegge-beads)
+    (name "go-github-com-steveyegge-beads-next")
+    (version (package-version beads-next))
+    (source (package-source beads-next))
+    (propagated-inputs
+     (modify-inputs (package-propagated-inputs go-github-com-steveyegge-beads)
+       (delete "go-github-com-dolthub-driver")
+       (prepend go-github-com-dolthub-driver-v2
+                go-github-com-dolthub-eventkit)))))
+
 (define-public gastown-next
   (package
     (name "gastown-next")
@@ -436,7 +451,7 @@ through the Go module system instead of vendoring checked-in copies.")
 (define-public gascity-next
   (package
     (name "gascity-next")
-    (version "1.3.3")
+    (version "1.3.5")
     (source
      (origin
        (method git-fetch)
@@ -445,7 +460,7 @@ through the Go module system instead of vendoring checked-in copies.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1il1s0q5m39m3w5s7ykva5rpzap4sq8m7jk14sha7y1n8la06s46"))))
+        (base32 "1nln3y8b2n25jmg0a86rxmyb5nr0jaznqzf19pm7ldh36xhz8v1d"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -519,8 +534,8 @@ through the Go module system instead of vendoring checked-in copies.")
                     go-github-com-burntsushi-toml
                     go-github-com-cespare-xxhash-v2
                     go-github-com-danielgtaylor-huma-v2
-                    go-github-com-dolthub-dolt-go
-                    go-github-com-dolthub-driver
+                    go-github-com-dolthub-dolt-go-v2
+                    go-github-com-dolthub-driver-v2
                     ;; Transitive dolt CLI dependencies needed for compilation
                     ;; of the full dolt source tree (pulled in via the beads
                     ;; native Dolt store).
@@ -545,7 +560,7 @@ through the Go module system instead of vendoring checked-in copies.")
                     go-github-com-rogpeppe-go-internal
                     go-github-com-spf13-cobra
                     go-github-com-spf13-pflag
-                    go-github-com-steveyegge-beads
+                    go-github-com-steveyegge-beads-next
                     go-github-com-stretchr-testify
                     go-go-opentelemetry-io-auto-sdk
                     go-go-opentelemetry-io-otel
