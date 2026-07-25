@@ -451,7 +451,7 @@ through the Go module system instead of vendoring checked-in copies.")
 (define-public gascity-next
   (package
     (name "gascity-next")
-    (version "1.3.5")
+    (version "1.4.0")
     (source
      (origin
        (method git-fetch)
@@ -460,7 +460,7 @@ through the Go module system instead of vendoring checked-in copies.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1nln3y8b2n25jmg0a86rxmyb5nr0jaznqzf19pm7ldh36xhz8v1d"))))
+        (base32 "1fhwhr5vm5vfa28g52ia099sp9hw3zljjw7g5n12nr45zjxhxswy"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -481,8 +481,16 @@ through the Go module system instead of vendoring checked-in copies.")
       ;;   - gascity-packs      //go:embed all:gastown all:gascity
       ;;                        (.md .toml .sh .py .yaml .txt .tmpl .json)
       #:embed-files
-      #~(list ".*\\.md" ".*\\.bin" ".*\\.sql" ".*\\.toml" ".*\\.sh"
-              ".*\\.py" ".*\\.yaml" ".*\\.txt" ".*\\.tmpl" ".*\\.json")
+      #~(list ".*\\.md"
+              ".*\\.bin"
+              ".*\\.sql"
+              ".*\\.toml"
+              ".*\\.sh"
+              ".*\\.py"
+              ".*\\.yaml"
+              ".*\\.txt"
+              ".*\\.tmpl"
+              ".*\\.json")
       #:phases
       #~(modify-phases %standard-phases
           (delete 'check)
@@ -550,14 +558,17 @@ through the Go module system instead of vendoring checked-in copies.")
                     go-github-com-tealeg-xlsx
                     go-github-com-fsnotify-fsnotify
                     go-github-com-gastownhall-gascity-packs
+                    go-github-com-go-jose-go-jose-v4
                     go-github-com-go-logr-stdr
                     go-github-com-go-sql-driver-mysql
+                    go-github-com-golang-jwt-jwt-v5
                     go-github-com-google-uuid
                     go-github-com-gorilla-websocket
                     go-github-com-invopop-jsonschema
                     go-github-com-masterminds-semver-v3
                     go-github-com-oapi-codegen-runtime
                     go-github-com-rogpeppe-go-internal
+                    go-github-com-shirou-gopsutil-v4/fixed
                     go-github-com-spf13-cobra
                     go-github-com-spf13-pflag
                     go-github-com-steveyegge-beads-next
