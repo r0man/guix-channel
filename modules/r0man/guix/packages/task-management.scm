@@ -44,7 +44,7 @@
 (define-public beads-next
   (package
     (name "beads-next")
-    (version "1.1.0")
+    (version "1.1.2")
     (source
      (origin
        (method git-fetch)
@@ -53,7 +53,7 @@
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "04bwc7s61j6i72np35jac8p6zq372vm29khiykq91w8dzpzmblgr"))))
+        (base32 "0lhz76jqym60nhl18q7mwzvrk2k834nrifarqy5b67m7rgcci076"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -243,7 +243,7 @@ and utility functions needed to interact with Beads databases.")
       (license license:expat))))
 
 (define-public go-github-com-steveyegge-beads-next
-  ;; Library variant of beads 1.1.0, required by gascity-next 1.3.5+.  Kept
+  ;; Library variant of beads-next, required by gascity-next 1.3.5+.  Kept
   ;; separate from go-github-com-steveyegge-beads (pinned at 1.0.4), which is
   ;; still used by gastown-next via the dolt v1 release line.
   (package
