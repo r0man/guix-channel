@@ -28,6 +28,7 @@
   #:use-module (gnu packages icu4c)
   #:use-module (gnu packages linux)
   #:use-module (gnu packages lsof)
+  #:use-module (gnu packages python)
   #:use-module (gnu packages tmux)
   #:use-module (gnu packages web)
   #:use-module (gnu packages version-control)
@@ -600,6 +601,7 @@ through the Go module system instead of vendoring checked-in copies.")
                              jq
                              lsof
                              procps
+                             python
                              tmux
                              util-linux))
     (home-page "https://github.com/gastownhall/gascity")
