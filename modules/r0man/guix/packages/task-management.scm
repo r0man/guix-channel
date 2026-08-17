@@ -45,7 +45,7 @@
 (define-public beads-next
   (package
     (name "beads-next")
-    (version "1.1.2")
+    (version "1.2.2")
     (source
      (origin
        (method git-fetch)
@@ -54,7 +54,7 @@
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0lhz76jqym60nhl18q7mwzvrk2k834nrifarqy5b67m7rgcci076"))))
+        (base32 "0kb3n6chz0x3ap77kf41grvyajc97kdrrfk5lb7h07cshp7pa9hx"))))
     (build-system go-build-system)
     (arguments
      (list
