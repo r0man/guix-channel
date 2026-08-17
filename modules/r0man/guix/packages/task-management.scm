@@ -495,6 +495,17 @@ through the Go module system instead of vendoring checked-in copies.")
       #:phases
       #~(modify-phases %standard-phases
           (delete 'check)
+          (add-after 'unpack 'enable-go122-servemux-patterns
+            ;; The GOPATH-mode build ignores go.mod, so the toolchain bakes
+            ;; the legacy DefaultGODEBUG httpmuxgo121=1 into the binary,
+            ;; which disables Go 1.22 method patterns ("GET /v0/cities") on
+            ;; net/http.ServeMux — the supervisor then 404s its entire typed
+            ;; API while still serving the SPA.  A //go:debug directive in
+            ;; package main restores the modern mux semantics.
+            (lambda _
+              (substitute* "src/github.com/gastownhall/gascity/cmd/gc/main.go"
+                (("^package main")
+                 "//go:debug httpmuxgo121=0\npackage main"))))
           (add-before 'build 'set-home
             (lambda _
               (setenv "HOME" "/tmp")))
