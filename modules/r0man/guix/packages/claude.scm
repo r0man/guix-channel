@@ -3,7 +3,6 @@
   #:use-module (guix download)
   #:use-module (guix gexp)
   #:use-module (guix packages)
-  #:use-module (guix utils)
   #:use-module (nonguix build-system binary))
 
 ;; Starting with 2.1.119, upstream's npm distribution became a thin wrapper
@@ -12,29 +11,28 @@
 ;; package fetches the per-platform prebuilt binary from Anthropic's
 ;; GitHub release (the canonical, signed upstream source) and patchelfs
 ;; the native ELF to use Guix's glibc.
+
+(define %claude-code-version "2.1.227")
+
+(define (claude-code-binary arch hash)
+  (origin
+    (method url-fetch)
+    (uri (string-append
+          "https://github.com/anthropics/claude-code/releases/download/v"
+          %claude-code-version "/claude-linux-" arch ".tar.gz"))
+    (sha256 (base32 hash))))
+
 (define-public claude-code
   (package
     (name "claude-code")
-    (version "2.1.227")
+    (version %claude-code-version)
     (source
-     (origin
-       (method url-fetch)
-       (uri (string-append
-             "https://github.com/anthropics/claude-code/releases/download/v"
-             version "/claude-"
-             (cond
-               ((target-aarch64?)
-                "linux-arm64")
-               ((target-x86-64?)
-                "linux-x64")
-               (else "linux-x64")) ".tar.gz"))
-       (sha256
-        (base32 (cond
-                  ((target-aarch64?)
-                   "1cv8874pnsspjpdnwchqpjwjhsg225a0p7qkcszc5ir170bdz679")
-                  ((target-x86-64?)
-                   "0mgf24wdmd4wrlvs82gnqqak424398n1pb239mcpifal3j6n94gf")
-                  (else "0mgf24wdmd4wrlvs82gnqqak424398n1pb239mcpifal3j6n94gf"))))))
+     (let-system system
+       (if (string-prefix? "aarch64" system)
+           (claude-code-binary
+            "arm64" "1cv8874pnsspjpdnwchqpjwjhsg225a0p7qkcszc5ir170bdz679")
+           (claude-code-binary
+            "x64" "0mgf24wdmd4wrlvs82gnqqak424398n1pb239mcpifal3j6n94gf"))))
     (build-system binary-build-system)
     (arguments
      (list
