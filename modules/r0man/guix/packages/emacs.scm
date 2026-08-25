@@ -99,6 +99,42 @@ such as @code{ace-popup-menu}, @code{char-menu}, and @code{hasky-extensions}.
 It can also be used directly.")
       (license license:gpl3+))))
 
+(define-public emacs-beads
+  (let ((commit "7c72fc1c1827a68226024f5b8b8a0d8ed5a12e5a")
+        (revision "0"))
+    (package
+      (name "emacs-beads")
+      (version (git-version "0.1.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/r0man/beads.el")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1ik83bd7407nrmz3srjpz0sxxb25zqyj3zmzdxp0rhb4vyjqsjl2"))))
+      (build-system emacs-build-system)
+      (arguments
+       (list
+        ;; Tests require the bd CLI and a mock Beads workspace.
+        #:tests? #f
+        #:lisp-directory "lisp"))
+      (propagated-inputs (list emacs-sesman emacs-transient emacs-vui))
+      (home-page "https://github.com/r0man/beads.el")
+      (synopsis "Emacs interface for the Beads issue tracker")
+      (description
+       "This package provides an Emacs interface for the Beads
+issue tracker.  It offers a keyboard-driven, transient-based user interface
+for managing issues without leaving Emacs, including tabulated list views for
+browsing issues, a detailed issue view, transient menus for creating,
+updating, and closing issues, @code{project.el} integration with automatic
+@file{.beads} directory discovery, support for dependencies, labels, and
+issue graphs, as well as asynchronous process execution for a responsive
+user interface.  It requires the @command{bd} command line tool to be
+installed and available in @env{PATH}.")
+      (license license:gpl3+))))
+
 (define-public emacs-bnf-mode
   (let ((commit "1a7e177c282b8e07a2c33bd89232464b347dfc17")
         (revision "1"))
