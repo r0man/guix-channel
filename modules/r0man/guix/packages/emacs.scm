@@ -725,6 +725,45 @@ run @code{M-x flymd-flyit}, and the file is opened in your browser.  When
 finished, close the browser page and kill the markdown buffer.")
     (license license:gpl3+)))
 
+(define-public emacs-gascity
+  (let ((commit "f7f4124c15614295d2925e816bd6c8f7322a7b28")
+        (revision "0"))
+    (package
+      (name "emacs-gascity")
+      (version (git-version "0.1.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/r0man/gascity.el")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "0l8w1115mh7jj19sgqknrpaa68fg4cr48xdwc68qw2vd8ci03jkr"))))
+      (build-system emacs-build-system)
+      (arguments
+       (list
+        ;; Tests require the gc CLI and a Gas City workspace.
+        #:tests? #f
+        #:lisp-directory "lisp"
+        #:exclude #~(cons ".*-test\\.el$" %default-exclude)))
+      (propagated-inputs
+       (list emacs-beads emacs-sesman emacs-transient emacs-vui))
+      (home-page "https://github.com/r0man/gascity.el")
+      (synopsis "Magit-style Emacs porcelain for Gas City")
+      (description
+       "This package provides a keyboard-first, transient-based Emacs
+interface for the Gas City (@command{gc}) multi-agent workspace manager,
+inspired by Magit.  Every view is a function of @code{gc ... --json} output:
+gascity renders gc's state and dispatches its commands, the way Magit fronts
+git.  It offers a sectioned status dashboard, tabulated lists for rigs,
+agents, and sessions, detail views for rigs and sessions, and mutating
+command dispatch through transient menus.  It is built on beads.el's command
+infrastructure and the vui rendering layer, and delegates all bead UI to
+beads.el.  It requires the @command{gc} command line tool to be installed and
+available in @env{PATH}.")
+      (license license:gpl3+))))
+
 (define-public emacs-ghostel
   (package
     (name "emacs-ghostel")
