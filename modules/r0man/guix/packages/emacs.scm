@@ -750,13 +750,13 @@ finished, close the browser page and kill the markdown buffer.")
       (propagated-inputs
        (list emacs-beads emacs-sesman emacs-transient emacs-vui))
       (home-page "https://github.com/r0man/gascity.el")
-      (synopsis "Magit-style Emacs porcelain for Gas City")
+      (synopsis "Emacs porcelain for Gas City")
       (description
        "This package provides a keyboard-first, transient-based Emacs
-interface for the Gas City (@command{gc}) multi-agent workspace manager,
-inspired by Magit.  Every view is a function of @code{gc ... --json} output:
-gascity renders gc's state and dispatches its commands, the way Magit fronts
-git.  It offers a sectioned status dashboard, tabulated lists for rigs,
+interface for the Gas City (@command{gc}) multi-agent workspace manager.
+Every view is a function of @code{gc ... --json} output: gascity renders
+gc's state and dispatches its commands.  It offers a sectioned status
+dashboard, tabulated lists for rigs,
 agents, and sessions, detail views for rigs and sessions, and mutating
 command dispatch through transient menus.  It is built on beads.el's command
 infrastructure and the vui rendering layer, and delegates all bead UI to
