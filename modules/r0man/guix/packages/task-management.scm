@@ -25,18 +25,26 @@
                         go-github-com-charmbracelet-x-cellbuf
                         go-github-com-charmbracelet-x-term
                         go-github-com-charmbracelet-x-windows))
+  #:use-module ((gnu packages base)
+                #:select (coreutils grep))
+  #:use-module ((gnu packages bash)
+                #:select (bash-minimal))
   #:use-module (gnu packages icu4c)
   #:use-module (gnu packages linux)
   #:use-module (gnu packages lsof)
   #:use-module (gnu packages python)
+  #:use-module ((gnu packages python-xyz)
+                #:select (python-pyyaml))
   #:use-module (gnu packages tmux)
   #:use-module (gnu packages web)
   #:use-module (gnu packages version-control)
   #:use-module (gnu packages)
   #:use-module (guix build-system go)
+  #:use-module (guix build-system trivial)
   #:use-module (guix gexp)
   #:use-module (guix git-download)
   #:use-module (guix packages)
+  #:use-module (guix utils)
   #:use-module (r0man guix packages golang-charm)
   #:use-module (r0man guix packages golang-dolthub)
   #:use-module (r0man guix packages golang-web)
@@ -449,6 +457,74 @@ filesystems, so the @command{gc} binary can depend on released pack bytes
 through the Go module system instead of vendoring checked-in copies.")
     (license license:expat)))
 
+(define-public python-for-gascity
+  ;; Gas City's gate runner (internal/convergence/condition.go) executes
+  ;; check scripts under a hard environment whitelist: GUIX_PYTHONPATH never
+  ;; reaches them, so the profile's python cannot discover propagated Python
+  ;; libraries there.  This wrapper bakes the search path for the packages
+  ;; below into bin/python3 itself, so e.g. `python3 -c "import yaml"` works
+  ;; even under `env -i PATH=<profile>/bin`.  Add future gate-script
+  ;; dependencies to this list.
+  (let ((python-packages (list python-pyyaml)))
+    (package
+      (name "python-for-gascity")
+      (version (package-version python))
+      (source #f)
+      (build-system trivial-build-system)
+      (arguments
+       (list
+        #:builder
+        #~(begin
+            (use-modules (ice-9 ftw))
+            (let* ((out #$output)
+                   (bin (string-append out "/bin"))
+                   (python #$python)
+                   (pyversion #$(version-major+minor
+                                 (package-version python)))
+                   (interpreter (string-append "python" pyversion))
+                   (site (string-append "/lib/python" pyversion
+                                        "/site-packages"))
+                   (pythonpath (string-join
+                                (map (lambda (p) (string-append p site))
+                                     (list #$@python-packages))
+                                ":"))
+                   (wrapper (string-append bin "/" interpreter)))
+              (mkdir out)
+              (mkdir bin)
+              (call-with-output-file wrapper
+                (lambda (port)
+                  (display (string-append
+                            "#!" #$bash-minimal "/bin/bash\n"
+                            "export GUIX_PYTHONPATH=\"" pythonpath
+                            "${GUIX_PYTHONPATH:+:$GUIX_PYTHONPATH}\"\n"
+                            "exec \"" python "/bin/" interpreter
+                            "\" \"$@\"\n")
+                           port)))
+              (chmod wrapper #o555)
+              (symlink interpreter (string-append bin "/python3"))
+              ;; Pass the rest of python's bin/ through untouched.
+              (for-each
+               (lambda (file)
+                 (let ((target (string-append bin "/" file)))
+                   (unless (file-exists? target)
+                     (symlink (string-append python "/bin/" file)
+                              target))))
+               (scandir (string-append python "/bin")
+                        (lambda (file)
+                          (not (member file (list "." ".."))))))))))
+      (home-page "https://github.com/gastownhall/gascity")
+      (synopsis "Python with baked-in libraries for Gas City gate scripts")
+      (description
+       "This package wraps @code{python} so that @file{bin/python3} sets
+@env{GUIX_PYTHONPATH} to the site-packages of a fixed list of Python
+libraries (currently @code{python-pyyaml}) before exec'ing the real
+interpreter.  Gas City's convergence gates run check scripts under a hard
+environment whitelist that strips @env{GUIX_PYTHONPATH}, so a plain profile
+python cannot see propagated libraries there; this wrapper makes the pack's
+build-artifact and verdict validators work in that environment with no
+per-city state.")
+      (license (package-license python)))))
+
 (define-public gascity-next
   (package
     (name "gascity-next")
@@ -607,12 +683,21 @@ through the Go module system instead of vendoring checked-in copies.")
                     go-k8s-io-apimachinery
                     go-k8s-io-client-go
                     go-pgregory-net-rapid))
+    ;; The gate PATH of a Gas City convergence check is rebuilt from the
+    ;; directories of bd/gc/dolt/jq plus /usr/local/bin:/usr/bin:/bin (empty
+    ;; on Guix System), so every tool a bundled check script looks up on PATH
+    ;; must live in the same profile as gc itself: coreutils and grep cover
+    ;; tr/dirname/mktemp/grep, and python-for-gascity is a python3 whose
+    ;; baked-in GUIX_PYTHONPATH makes `import yaml` work under the gate's
+    ;; env whitelist.
     (propagated-inputs (list beads-next
+                             coreutils
                              dolt
+                             grep
                              jq
                              lsof
                              procps
-                             python
+                             python-for-gascity
                              tmux
                              util-linux))
     (home-page "https://github.com/gastownhall/gascity")
