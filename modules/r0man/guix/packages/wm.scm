@@ -1,5 +1,5 @@
 (define-module (r0man guix packages wm)
-  #:use-module (gnu packages wm)
+  #:use-module (gnu packages window-management)
   #:use-module (guix gexp)
   #:use-module (guix git-download)
   #:use-module (guix packages))
@@ -16,20 +16,15 @@
          (method git-fetch)
          (uri (git-reference
                (url "https://github.com/stumpwm/stumpwm")
-               (commit version)))
+               (commit commit)))
          (file-name (git-file-name "stumpwm" version))
          (sha256
-          (base32 "0akrkxwmlk2596b0kl3q0nfi81ypfrpyyyf65vw7px5x17gsnq5i"))))
+          (base32 "0b8h33raf0ffl2zv678sxqpvq5xhy6sa88sdm7krnwcd15q8gb85"))))
       (arguments
        (list
         #:asd-systems `'("stumpwm")
         #:phases
         #~(modify-phases %standard-phases
-            (add-after 'unpack 'fix-tests
-              (lambda _
-                (substitute* "stumpwm-tests.asd"
-                  (("\"ALL-TESTS\"")
-                   "\"RUN-PACKAGE-TESTS\" :package"))))
             (add-after 'create-asdf-configuration 'build-program
               (lambda* (#:key outputs #:allow-other-keys)
                 (build-program
@@ -60,7 +55,4 @@
                   (invoke "./autogen.sh")
                   (invoke "sh" "./configure" "SHELL=sh")
                   (apply invoke "make" "stumpwm.info" make-flags)
-                  (install-file "stumpwm.info" info))))
-            (add-after 'install-manual 'remove-temporary-cache
-              (lambda* (#:key outputs #:allow-other-keys)
-                (delete-file-recursively (string-append #$output "/.cache"))))))))))
+                  (install-file "stumpwm.info" info))))))))))
