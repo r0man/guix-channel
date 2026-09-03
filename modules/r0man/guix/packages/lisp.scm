@@ -5,7 +5,6 @@
   #:use-module (gnu packages lisp-xyz)
   #:use-module (guix build-system asdf)
   #:use-module ((guix licenses) #:prefix license:)
-  #:use-module (gnu packages wm)
   #:use-module (guix build-system)
   #:use-module (guix gexp)
   #:use-module (guix git-download)
