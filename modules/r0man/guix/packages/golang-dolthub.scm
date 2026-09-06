@@ -946,34 +946,34 @@ AI assistants to interact with Dolt version-controlled SQL databases.")
   (package
     (inherit go-github-com-dolthub-vitess)
     (name "go-github-com-dolthub-vitess-for-dolt")
-    (version "0.0.0-20260604210335-0893abc80542")
+    (version "0.0.0-20260901210329-5364bf844382")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
              (url "https://github.com/dolthub/vitess")
-             (commit "0893abc805429d8a31ea9fa395ff118fa95474da")))
+             (commit "5364bf844382521bd76e410cdf90ff563ce0336b")))
        (file-name (git-file-name "go-github-com-dolthub-vitess"
-                                 "0.0.0-20260604210335-0893abc80542"))
+                                 "0.0.0-20260901210329-5364bf844382"))
        (sha256
-        (base32 "0msmz4pjsdcp687nqhnpffjkc49asvgv8c6p4db4dwkcac0ndv02"))))))
+        (base32 "0psfwiz43zrdg4bwrd7ydc5mah2rdaqcq8jhlqmfdh6i1aidj6nh"))))))
 
 
 (define-public go-github-com-dolthub-go-mysql-server-for-dolt
   (package
     (inherit go-github-com-dolthub-go-mysql-server)
     (name "go-github-com-dolthub-go-mysql-server-for-dolt")
-    (version "0.20.1-0.20260605175459-433dbaebc97f")
+    (version "0.20.1-0.20260901230631-da4d8ec733de")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
              (url "https://github.com/dolthub/go-mysql-server")
-             (commit "433dbaebc97f8373496b6d47a6c38d58ea93c4c3")))
+             (commit "da4d8ec733de125e923e676416c2573b63c8204c")))
        (file-name (git-file-name "go-github-com-dolthub-go-mysql-server"
-                                 "0.20.1-0.20260605175459-433dbaebc97f"))
+                                 "0.20.1-0.20260901230631-da4d8ec733de"))
        (sha256
-        (base32 "1xvwwfx5k7fl6bhc583z7wydid3gnzgala9a9l35y5zixv4qjqrx"))))
+        (base32 "1ac6iapmybphn2dq9ha6s4dc8q320jn2cwm1jmshaykw80jpclsn"))))
     (propagated-inputs
      (modify-inputs (package-propagated-inputs
                      go-github-com-dolthub-go-mysql-server)
@@ -987,7 +987,7 @@ AI assistants to interact with Dolt version-controlled SQL databases.")
     (name "dolt")
     ;; Decoupled from go-github-com-dolthub-dolt-go (pinned at 1.88.1 for
     ;; beads): the standalone CLI tracks the dolt v2 release line.
-    (version "2.1.4")
+    (version "2.3.2")
     (source
      (origin
        (method git-fetch)
@@ -996,7 +996,7 @@ AI assistants to interact with Dolt version-controlled SQL databases.")
              (commit (string-append "v" version))))
        (file-name (git-file-name "dolt" version))
        (sha256
-        (base32 "0lxvqnz4nx3p9iqhrsbz001sx18hyihdphcxnwh37gffx30ql36h"))
+        (base32 "08w748ddsyqwmsy4k515lpgqfji43y3hcpz2brp32s0qdm3ayqgs"))
        (modules '((guix build utils)))
        (snippet
         ;; Replace google.golang.org/grpc/experimental/credentials
