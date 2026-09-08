@@ -1,34 +1,31 @@
 (define-module (r0man guix packages pi)
   #:use-module ((guix licenses) #:prefix license:)
-  #:use-module (guix gexp)
   #:use-module (guix download)
+  #:use-module (guix gexp)
   #:use-module (guix packages)
-  #:use-module (guix utils)
   #:use-module (nonguix build-system binary))
+
+(define %pi-coding-agent-version "0.85.1")
+
+(define (pi-coding-agent-binary arch hash)
+  (origin
+    (method url-fetch)
+    (uri (string-append
+          "https://github.com/earendil-works/pi/releases/download/v"
+          %pi-coding-agent-version "/pi-linux-" arch ".tar.gz"))
+    (sha256 (base32 hash))))
 
 (define-public pi-coding-agent
   (package
     (name "pi-coding-agent")
-    (version "0.75.3")
+    (version %pi-coding-agent-version)
     (source
-     (origin
-       (method url-fetch)
-       (uri (string-append
-             "https://github.com/earendil-works/pi/releases/download/v"
-             version "/pi-linux-"
-             (cond
-               ((target-aarch64?)
-                "arm64")
-               ((target-x86-64?)
-                "x64")
-               (else "x64")) ".tar.gz"))
-       (sha256
-        (base32 (cond
-                  ((target-aarch64?)
-                   "1kgfjwwb681cfbm19zc1lnbly0aywssf5i0lh4k4m9flkasqj4rl")
-                  ((target-x86-64?)
-                   "1hvqpb8q46l1w14z8bpfwfzbdmazdnyy3g0xrx57i2m9bgdlivw6")
-                  (else "1hvqpb8q46l1w14z8bpfwfzbdmazdnyy3g0xrx57i2m9bgdlivw6"))))))
+     (let-system system
+       (if (string-prefix? "aarch64" system)
+           (pi-coding-agent-binary
+            "arm64" "1m74x8qcb34h6x0dwi7vx6r7ghv2p6034pw10aqz7r2yi2p20b84")
+           (pi-coding-agent-binary
+            "x64" "0np23zma1b5xbfswlsd166ax98r1x6jzd1ik1gs22kfp8y7ljkj9"))))
     (build-system binary-build-system)
     (arguments
      (list
