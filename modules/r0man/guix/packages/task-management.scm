@@ -431,16 +431,16 @@ project spaces called Rigs.")
 (define-public go-github-com-gastownhall-gascity-packs
   (package
     (name "go-github-com-gastownhall-gascity-packs")
-    (version "0.4.1-0.20260905020445-2d35f4c6363c")
+    (version "0.4.1-0.20260909184258-e72252ec4936")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
              (url "https://github.com/gastownhall/gascity-packs")
-             (commit "2d35f4c6363c76b88ed19a6b7d60595debdcb835")))
+             (commit "e72252ec4936cb4b71abdcf5c8edb3f4e2975d6e")))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1x874ha202y6w0a35qir4c6wdrc9j5f1alqczklgv2xnmqz2ln2f"))))
+        (base32 "1d1cyrk9cwh1l078a7bplhshf7jqv74y3s3838blr7cyj7pkb9kd"))))
     (build-system go-build-system)
     (arguments
      (list
