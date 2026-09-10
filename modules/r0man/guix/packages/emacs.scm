@@ -767,7 +767,7 @@ available in @env{PATH}.")
 (define-public emacs-ghostel
   (package
     (name "emacs-ghostel")
-    (version "0.39.0")
+    (version "0.53.0")
     (source
      (origin
        (method git-fetch)
@@ -776,7 +776,7 @@ available in @env{PATH}.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1pik989dzzijmqkfqya8h188gk3n4jj5h5ikldzx046rfyrw7aw5"))))
+        (base32 "0ph1gjl3915wgf7qz2c389gnm64yn07q9jb69dyqy6r8fkzmyd37"))))
     (build-system emacs-build-system)
     (arguments
      (list
@@ -787,29 +787,32 @@ available in @env{PATH}.")
           ;; the module consumes ghostty-vt as a Zig *module* (@import),
           ;; not the libghostty-vt C ABI, so the whole VT engine is
           ;; compiled from source via upstream build.zig.  The build
-          ;; sandbox has no network, so we pre-seed zig's global package
-          ;; cache with the pinned ghostty checkout and every dependency
+          ;; sandbox has no network, so we pre-seed zig's package store
+          ;; with the pinned ghostty checkout and every dependency
           ;; `zig build' resolves, then build fully offline.
           ;;
-          ;; We populate $ZIG_GLOBAL_CACHE_DIR/p/<hash>/ and run plain
+          ;; Zig 0.16 unpacks fetched packages into the project-local
+          ;; zig-pkg/<hash>/ tree (the global cache only keeps the
+          ;; tarballs), so that is what we populate.  We run plain
           ;; `zig build' rather than `zig build --system': the latter
           ;; forces a single-threaded path through the uucode comptime
           ;; Unicode-table generation that is roughly 15x slower.
           (add-after 'unpack 'build-native-module
             (lambda* (#:key inputs #:allow-other-keys)
               (let ((zig (search-input-file inputs "/bin/zig"))
-                    (cache (string-append (getcwd) "/.zig-global-cache")))
-                (setenv "ZIG_GLOBAL_CACHE_DIR" cache)
+                    (pkg-dir (string-append (getcwd) "/zig-pkg")))
+                (setenv "ZIG_GLOBAL_CACHE_DIR"
+                        (string-append (getcwd) "/.zig-global-cache"))
                 (setenv "ZIG_LOCAL_CACHE_DIR"
                         (string-append (getcwd) "/.zig-local-cache"))
                 (for-each
                  (lambda (entry)
-                   ;; ENTRY is (cache-dir-name source); a git-fetch
+                   ;; ENTRY is (package-dir-name source); a git-fetch
                    ;; source lowers to a directory, every other to a
                    ;; tarball to unpack with a single top-level strip.
                    (let* ((dst (car entry))
                           (src (cadr entry))
-                          (dest (string-append cache "/p/" dst)))
+                          (dest (string-append pkg-dir "/" dst)))
                      (mkdir-p dest)
                      (if (file-is-directory? src)
                          (copy-recursively src dest)
@@ -818,35 +821,24 @@ available in @env{PATH}.")
                  `(;; The ghostty checkout pinned in ghostel's
                    ;; build.zig.zon; provides the ghostty-vt module and
                    ;; the vendored pkg/* C shims.
-                   ("ghostty-1.3.2-dev-5UdBC7zDFAUYSL6EmAqDQxvWQCma-1lZ9QTXws90lLV6"
+                   ("ghostty-1.3.2-dev-5UdBC-mtJAXcrDxuFuetC6X66XQXV8hw_7pevfmFcVKL"
                     (ungexp
                      (origin
                        (method url-fetch)
-                       (uri "https://github.com/ghostty-org/ghostty/archive/6246c288ae1087c8d67f75432a59da004b30bf25.tar.gz")
+                       (uri "https://github.com/ghostty-org/ghostty/archive/ab0b9da9e88fcb4b0533a1854e84628f663930af.tar.gz")
                        (sha256
                         (base32
-                         "0zf82ziicl5ciyhgbj691vmgdgcwdnqsjbgj2czwmdjgvfc01cyz")))))
+                         "02ymjk7qw8c9bbc5fn96xfc9kyvibysclky0m90vqq40x5kzl7v5")))))
                    ;; uucode drives the comptime Unicode-table generation
                    ;; the ghostty-vt module needs.
-                   ("uucode-0.2.0-ZZjBPqZVVABQepOqZHR7vV_NcaN-wats0IB6o-Exj6m9"
+                   ("uucode-0.2.0-ZZjBPlK5VADj7fdoq7G8LIHzD5o6FSkcBXXrRWr4jnrA"
                     (ungexp
                      (origin
                        (method url-fetch)
-                       (uri "https://deps.files.ghostty.org/uucode-0.2.0-ZZjBPqZVVABQepOqZHR7vV_NcaN-wats0IB6o-Exj6m9.tar.gz")
+                       (uri "https://deps.files.ghostty.org/uucode-2826a37a4562284fdacd8fa029d49509cc9bffcd.tar.gz")
                        (sha256
                         (base32
-                         "15az8qzp0rg5qj8ma0dam9j8jbf4wwb7wxsiq3iymmlb9w7yxayh")))))
-                   ("uucode-0.1.0-ZZjBPj96QADXyt5sqwBJUnhaDYs_qBeeKijZvlRa0eqM"
-                    (ungexp
-                     (origin
-                       (method git-fetch)
-                       (uri (git-reference
-                             (url "https://github.com/jacobsandlund/uucode")
-                             (commit "5f05f8f83a75caea201f12cc8ea32a2d82ea9732")))
-                       (file-name "uucode")
-                       (sha256
-                        (base32
-                         "1zrdyhnqs0v46qasxb2kwd7694j8r8z6w4zlnfp42x8j6kwy2wxh")))))
+                         "17mwjh2ha4yb9cdgxixz3a23kimqwnrvnd9bqllcfyhymdzzqxky")))))
                    ("N-V-__8AAGmZhABbsPJLfbqrh6JTHsXhY6qCaLAQyx25e0XE"
                     (ungexp
                      (origin
@@ -855,60 +847,78 @@ available in @env{PATH}.")
                        (sha256
                         (base32
                          "04m21b46h6c4x099r9qb720ql9llpzz8yq3k94i8zq7l7s4zim47")))))
+                   ;; Since zig 0.16, translate-c lives outside the compiler;
+                   ;; ghostty pulls it (and its aro C frontend) as packages.
+                   ("translate_c-0.0.0-Q_BUWj8_BwCr4na219OimiKKj4IVSq0aKtMXCQmIk4AB"
+                    (ungexp
+                     (origin
+                       (method url-fetch)
+                       (uri "https://deps.files.ghostty.org/translate_c-a916baf225a3cfc93a982225462db612604ae290.tar.gz")
+                       (sha256
+                        (base32
+                         "1zbad5ki5npq7k71llv06wc7gp38fndaam38x8mw4jdw3nra5ljg")))))
+                   ("aro-0.0.0-JSD1Qk8rOQDnuVcD4jAwMpHitA6pADRKzQ7M7hKRwxvD"
+                    (ungexp
+                     (origin
+                       (method url-fetch)
+                       (uri "https://github.com/vancluever/arocc/archive/ecbc5c799574e0da2758a961b12efa586007f03c.tar.gz")
+                       (sha256
+                        (base32
+                         "06mds39mzkrp4jflsbacbyj4qbyvvqjaiw2gfhvgms17sxxlhm5a")))))
                    ;; The remaining entries are ghostty's other build.zig
                    ;; dependencies.  ghostel builds only the ghostty-vt
                    ;; module, but ghostty's build() constructs its full
                    ;; graph, so every dependency it references must be in
-                   ;; the cache (a plain `zig build' would otherwise try
+                   ;; zig-pkg/ (a plain `zig build' would otherwise try
                    ;; to fetch the missing ones over the network).
-                   ("zigimg-0.1.0-8_eo2vHnEwCIVW34Q14Ec-xUlzIoVg86-7FU2ypPtxms"
+                   ("zigimg-0.1.0-8_eo2oyaFwBZwJpmqPkCfVXWBrHcqbYwmrp1I6bTD3lI"
                     (ungexp
                      (origin
                        (method url-fetch)
-                       (uri "https://github.com/ivanstepanovftw/zigimg/archive/d7b7ab0ba0899643831ef042bd73289510b39906.tar.gz")
+                       (uri "https://github.com/zigimg/zigimg/archive/d695acd97c02e57bb151e8f659d1280f5cd6ca70.tar.gz")
                        (sha256
                         (base32
-                         "0ly53dd3pj8hl3kkf3h8x4dw79yb7riwj9qc9da18mdkl9mxf7ic")))))
-                   ("vaxis-0.5.1-BWNV_LosCQAGmCCNOLljCIw6j6-yt53tji6n6rwJ2BhS"
+                         "0pald2swckpqygmyi4jv0z9ndx7j7v2x6q29gb8q10wayav98xs8")))))
+                   ("vaxis-0.6.0-BWNV_CrbCQCscGpzsAlR402rYQ_tV3aAl081c2iRRkka"
                     (ungexp
                      (origin
                        (method url-fetch)
-                       (uri "https://deps.files.ghostty.org/vaxis-7dbb9fd3122e4ffad262dd7c151d80d863b68558.tar.gz")
+                       (uri "https://deps.files.ghostty.org/vaxis-1dbbe575dff4586fe51e3217aa5c3fecdcbb6089.tar.gz")
                        (sha256
                         (base32
-                         "1xlf12dlzda0z4d3svq0qibvfgqzkrv4igg6qqg58nwwr0mk6wif")))))
-                   ("z2d-0.10.0-j5P_Hu-6FgBsZNgwphIqh17jDnj8_yPtD8yzjO6PpHRQ"
+                         "1a2gbqklca65ydfbrgvfmb0p9xgdsr0qxhd2l6y4cz480plm181y")))))
+                   ("z2d-0.11.0-j5P_HtLzDwBGyQt49DrT0v4BuVqI_SRs6CXsuj7eBVhR"
                     (ungexp
                      (origin
                        (method url-fetch)
-                       (uri "https://deps.files.ghostty.org/z2d-0.10.0-j5P_Hu-6FgBsZNgwphIqh17jDnj8_yPtD8yzjO6PpHRQ.tar.gz")
+                       (uri "https://deps.files.ghostty.org/z2d-0.11.0-j5P_HtLzDwBGyQt49DrT0v4BuVqI_SRs6CXsuj7eBVhR.tar.gz")
                        (sha256
                         (base32
-                         "1xwpcw2awxf2r1kz27m0j4pzpi5g92gd1i2mzqvhkvnmxyi1vwk9")))))
-                   ("zf-0.10.3-OIRy8RuJAACKA3Lohoumrt85nRbHwbpMcUaLES8vxDnh"
+                         "1d7wjacn28ijja7lmjlyp2pxqrhfi1qx26zkkcvwlrzp0xri32yl")))))
+                   ("zf-0.11.0-OIRy8X-RAAAwaRXHMYpj2uvBnuGTZWEE_3V7acqHQNtW"
                     (ungexp
                      (origin
                        (method url-fetch)
-                       (uri "https://deps.files.ghostty.org/zf-3c52637b7e937c5ae61fd679717da3e276765b23.tar.gz")
+                       (uri "https://deps.files.ghostty.org/zf-c35c421f84895193246db06c40683c1a30e616ef.tar.gz")
                        (sha256
                         (base32
-                         "0s25gjvp7rns1l52jvgbd7aakndlvfs5xh9b4wk9wkphia95s09v")))))
-                   ("libxev-0.0.0-86vtc4IcEwCqEYxEYoN_3KXmc6A9VLcm22aVImfvecYs"
+                         "0iw5ihhfjbmx58x4x8ql7ka4dhvqriwviggmwbdcx5wxzl4w2jya")))))
+                   ("libxev-0.0.0-86vtcwIRFADbH4hk-EjROXxlrKIRPQdA41XiTSytYO-F"
                     (ungexp
                      (origin
                        (method url-fetch)
-                       (uri "https://deps.files.ghostty.org/libxev-34fa50878aec6e5fa8f532867001ab3c36fae23e.tar.gz")
+                       (uri "https://deps.files.ghostty.org/libxev-9ce8e8e6ff89e583258a7f8e7adeeeaeae8611bf.tar.gz")
                        (sha256
                         (base32
-                         "1mvx91wn7499xfx76fxijq4x66x1g5yk4cpr52hii9g4jrmyl0v0")))))
-                   ("gobject-0.3.0-Skun7ANLnwDvEfIpVmohcppXgOvg_I6YOJFmPIsKfXk-"
+                         "1dq2vm0182p2aql66p41qikcwv0zlmwn9x5qmdb1243qrljb5fg2")))))
+                   ("gobject-0.3.1-Skun7E1KnwBGMX5nslHYG1yWHaSevywxQO8oM7tTOgIp"
                     (ungexp
                      (origin
                        (method url-fetch)
-                       (uri "https://deps.files.ghostty.org/gobject-2025-11-08-23-1.tar.zst")
+                       (uri "https://deps.files.ghostty.org/gobject-2026-04-23-26-1.tar.zst")
                        (sha256
                         (base32
-                         "0j0csvsyvp0193mpkdp25s14kargppmdyslbhi5qw788y0347gfr")))))
+                         "0iw0fijv7b1ap7nw1902rvlbng7pjzs4l7hnl9j09h246r5k4bk4")))))
                    ("N-V-__8AAAzZywE3s51XfsLbP9eyEw57ae9swYB9aGB6fCMs"
                     (ungexp
                      (origin
@@ -965,14 +975,14 @@ available in @env{PATH}.")
                        (sha256
                         (base32
                          "05b2kbccbkb5pkizwx2s170lcqvaj7iqjr5injsl5sry5sg0aa3c")))))
-                   ("N-V-__8AAGi9AwC7QV7hLqjN6iBkXA2y5dxw285nkSLlVB7I"
+                   ("N-V-__8AALZGBAAS5NLVH-c8eC-6VtCdcH-9nUvVfUSkWS__"
                     (ungexp
                      (origin
                        (method url-fetch)
-                       (uri "https://deps.files.ghostty.org/ghostty-themes-release-20260525-155808-7335c0a.tgz")
+                       (uri "https://deps.files.ghostty.org/ghostty-themes-release-20260713-155359-c3968b3.tgz")
                        (sha256
                         (base32
-                         "0ifyjw1xxap54h1j49di0mpnapwd4020mc3igx4danhxsi2s6sqw")))))
+                         "083zsvb18vcilg5hw7nxdl4v03xascbbswrraa1wp8v7xx5h9cql")))))
                    ("N-V-__8AAHjwMQDBXnLq3Q2QhaivE0kE2aD138vtX2Bq1g7c"
                     (ungexp
                      (origin
@@ -1043,7 +1053,8 @@ available in @env{PATH}.")
                 ;; source root.  Drop both next to ghostel.el so the
                 ;; elisp byte-compile can load the module and the
                 ;; install phase can pick them up.
-                (invoke zig "build" "-Doptimize=ReleaseFast" "-Dcpu=baseline")
+                (invoke zig "build" "--prefix" "."
+                        "-Doptimize=ReleaseFast" "-Dcpu=baseline")
                 (copy-file "ghostel-module.so" "lisp/ghostel-module.so")
                 (copy-file "ghostel-module.version"
                            "lisp/ghostel-module.version"))))
@@ -1081,7 +1092,7 @@ available in @env{PATH}.")
                 (install-file "ghostel-module.version" dest)
                 (copy-recursively "../etc"
                                   (string-append dest "/etc"))))))))
-    (native-inputs (list zig-0.15 zstd))
+    (native-inputs (list zig-0.16 zstd))
     (home-page "https://github.com/dakra/ghostel")
     (synopsis "Emacs terminal emulator using libghostty-vt")
     (description
