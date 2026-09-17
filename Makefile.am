@@ -108,8 +108,10 @@ check-system:
 	@if test -z "$(SYSTEM_TEST_FILES)"; then				\
 	  echo "make check-system: no system tests defined; skipping.";		\
 	else									\
-	  R0MAN_RUN_SYSTEM_TESTS=1 $(MAKE) check					\
-	    TESTS="$(SYSTEM_TEST_FILES)";					\
+	  $(top_builddir)/pre-inst-env $(GUILE) --no-auto-compile		\
+	    -L "$(top_srcdir)" -L "$(top_srcdir)/modules"			\
+	    "$(top_srcdir)/build-aux/run-system-tests.scm"			\
+	    $(SYSTEM_TEST_FILES);				\
 	fi
 .PHONY: check-system
 
