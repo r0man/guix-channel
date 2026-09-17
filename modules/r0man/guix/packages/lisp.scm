@@ -315,3 +315,129 @@ antialiased TrueType font rendering using CLX and XRender extension.")
 
 (define-public ecl-clx-truetype
   (sbcl-package->ecl-package sbcl-clx-truetype-stumpwm))
+
+(define-public sbcl-rove-next
+  ;; Guix's sbcl-rove is pinned to a 2023 snapshot that predates the
+  ;; ASSERTION-SOURCE-LOCATION reader, which cl-mcp's test runner requires.
+  (let ((commit "52b04eaa4a079d753fdf49e793a52d5fe1f61836")
+        (revision "2"))
+    (package
+      (inherit sbcl-rove)
+      (name "sbcl-rove-next")
+      (version (git-version "0.10.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/fukamachi/rove")
+               (commit commit)))
+         (file-name (git-file-name "cl-rove" version))
+         (sha256
+          (base32 "03km3ykp7h2skny76vqj48806cildv2f36gwqv6x1bbcyagirzgs"))))
+      ;; The system is still called "rove"; only the Guix package is renamed.
+      (arguments (list #:asd-systems ''("rove"))))))
+
+(define-public cl-rove-next
+  (sbcl-package->cl-source-package sbcl-rove-next))
+
+(define-public sbcl-cl-mcp
+  (package
+    (name "sbcl-cl-mcp")
+    (version "2.3.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/cl-ai-project/cl-mcp")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0ykjzkkx97wq5smhldbnwr1phqddyxk3lb73j4fx9i12svyrwvv5"))))
+    (build-system asdf-build-system/sbcl)
+    (arguments
+     (list #:asd-systems ''("cl-mcp")
+           #:phases
+           #~(modify-phases %standard-phases
+               (add-after 'unpack 'require-asdf-in-worker
+                 ;; Worker children are spawned with bare SBCL, whose image has
+                 ;; no ASDF, yet the very next argument is an ASDF form.
+                 ;; Upstream gets away with it because it runs under Roswell or
+                 ;; Quicklisp, both of which preload ASDF.
+                 (lambda _
+                   (substitute* "src/worker-client.lisp"
+                     (("\\(list \"--noinform\" \"--non-interactive\"")
+                      "(list \"--noinform\" \"--non-interactive\"
+           \"--eval\" \"(require :asdf)\""))))
+               (add-after 'unpack 'quote-yason-false
+                 ;; YASON:FALSE only became a variable after the 0.8.5 release;
+                 ;; the symbol itself is what the encoder dispatches on, so
+                 ;; quoting it works with both old and new YASON.
+                 (lambda _
+                   (substitute* "src/tools/helpers.lisp"
+                     (("\\(if value t yason:false\\)")
+                      "(if value t 'yason:false)"))))
+               (add-after 'unpack 'disable-store-specific-tests
+                 ;; Tests run against the installed copy of the sources, which
+                 ;; is in the read-only store.  Two tests cannot hold there:
+                 ;; LOAD-SYSTEM-WARNING-FIELDS expects reloading an already
+                 ;; loaded system to warn zero times, but with the compilation
+                 ;; output directory in the store ASDF:LOAD-SYSTEM recompiles
+                 ;; and reloads on every call, emitting hundreds of
+                 ;; redefinition warnings; and
+                 ;; SPAWN-WORKER-INCLUDES-CHILD-STDERR-IN-ERROR writes a stub
+                 ;; sbcl script into the project root before spawning it.
+                 (lambda _
+                   (substitute* "tests/system-loader-test.lisp"
+                     (("\\(deftest load-system-warning-fields")
+                      "#+(or) (deftest load-system-warning-fields"))
+                   (substitute* "tests/worker-test.lisp"
+                     (("\\(deftest spawn-worker-includes-child-stderr-in-error")
+                      "#+(or) (deftest spawn-worker-includes-child-stderr-in-error"))))
+               (add-after 'unpack 'relocate-throwaway-project-root
+                 ;; Tests use /var/tmp as a throwaway project root: it exists
+                 ;; on a normal system and, unlike /tmp, is not on cl-mcp's
+                 ;; deny list of overly broad roots.  The build container has
+                 ;; no /var/tmp and will not let us create one, so point those
+                 ;; tests at a directory inside the build tree instead.
+                 (lambda _
+                   (let ((root (string-append (getcwd) "/.test-project-root")))
+                     (mkdir-p root)
+                     (substitute* (list "tests/pool-test.lisp"
+                                        "tests/utils-paths-test.lisp"
+                                        "tests/worker-test.lisp")
+                       (("/var/tmp") root)))))
+               (add-after 'unpack 'fail-on-test-failure
+                 ;; The TEST-OP method drops ROVE:RUN's boolean result, so
+                 ;; ASDF:TEST-SYSTEM reports success even when tests fail.
+                 (lambda _
+                   (substitute* "tests.lisp"
+                     (("\\(rove:run test-packages\\)")
+                      "(unless (rove:run test-packages)
+      (error \"cl-mcp test suite failed\"))")))))))
+    (inputs
+     (list sbcl-alexandria
+           sbcl-bordeaux-threads
+           sbcl-cl-ppcre
+           sbcl-eclector
+           sbcl-hunchentoot
+           sbcl-usocket
+           sbcl-yason))
+    (native-inputs
+     (list sbcl-fiveam
+           sbcl-rove-next))
+    (home-page "https://github.com/cl-ai-project/cl-mcp")
+    (synopsis "Model Context Protocol server for Common Lisp")
+    (description
+     "This package provides a Model Context Protocol (MCP) server for Common
+Lisp, speaking JSON-RPC 2.0 over stdio, TCP and Streamable HTTP.  It lets AI
+agents drive a live Common Lisp environment through structured tools: REPL
+evaluation with object inspection and stack frame capture, sandboxed file
+operations restricted to the project root, structure-aware editing of
+top-level forms via Eclector concrete syntax trees with parinfer repair,
+symbol lookup and cross-references, HyperSpec lookup, and a structured test
+runner for Rove and FiveAM suites.  Evaluation happens in isolated child SBCL
+worker processes with crash recovery and per-session affinity.")
+    (license license:expat)))
+
+(define-public cl-mcp
+  (sbcl-package->cl-source-package sbcl-cl-mcp))
