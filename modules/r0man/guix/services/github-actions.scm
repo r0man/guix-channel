@@ -13,6 +13,17 @@
   #:use-module (srfi srfi-13)
   #:export (github-actions-runner-configuration
             github-actions-runner-configuration?
+            github-actions-runner-configuration-package
+            github-actions-runner-configuration-user
+            github-actions-runner-configuration-group
+            github-actions-runner-configuration-work-dir
+            github-actions-runner-configuration-url
+            github-actions-runner-configuration-token
+            github-actions-runner-configuration-name
+            github-actions-runner-configuration-labels
+            github-actions-runner-configuration-replace?
+            github-actions-runner-configuration-extra-registration-args
+            github-actions-runner-configuration-environment-variables
             github-actions-runner-start-script
             github-actions-runner-service-type))
 
