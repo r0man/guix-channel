@@ -46,6 +46,10 @@
                    (r0man guix packages emacs)
                    emacs-aider)
 
+(test-load-package "github-actions"
+                   (r0man guix packages github-actions)
+                   github-actions-runner)
+
 (test-load-package "golang-charm"
                    (r0man guix packages golang-charm)
                    go-github-com-clipperhouse-uax29-v2)

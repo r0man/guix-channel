@@ -12,27 +12,27 @@
   #:use-module (guix packages)
   #:use-module (nonguix build-system binary))
 
-(define %actions-runner-version "2.337.0")
+(define %github-actions-runner-version "2.337.0")
 
-(define (actions-runner-binary arch hash)
+(define (github-actions-runner-binary arch hash)
   (origin
     (method url-fetch)
     (uri (string-append
           "https://github.com/actions/runner/releases/download/v"
-          %actions-runner-version "/actions-runner-linux-" arch "-"
-          %actions-runner-version ".tar.gz"))
+          %github-actions-runner-version "/actions-runner-linux-" arch "-"
+          %github-actions-runner-version ".tar.gz"))
     (sha256 (base32 hash))))
 
-(define-public actions-runner
+(define-public github-actions-runner
   (package
     (name "actions-runner")
-    (version %actions-runner-version)
+    (version %github-actions-runner-version)
     (source
      (let-system system
        (if (string-prefix? "aarch64" system)
-           (actions-runner-binary
+           (github-actions-runner-binary
             "arm64" "14q37v0ylbxz3543yaillmfv3gln901cyrs7r7ijc9a24q3cf7cv")
-           (actions-runner-binary
+           (github-actions-runner-binary
             "x64" "04v6h5ih0787d2448lmb5ya1r726qsjvr0l6h4l47bgqlh8hi4kh"))))
     (build-system binary-build-system)
     (arguments

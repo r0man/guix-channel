@@ -36,6 +36,7 @@ NOCOMP_SOURCES = \
   modules/r0man/guix/files/gnu-head.svg
 
 SOURCES = \
+  modules/r0man/guix/home/services/github-actions.scm \
   modules/r0man/guix/packages/bootloader.scm \
   modules/r0man/guix/packages/claude.scm \
   modules/r0man/guix/packages/clojure.scm \
@@ -54,11 +55,13 @@ SOURCES = \
   modules/r0man/guix/packages/node.scm \
   modules/r0man/guix/packages/pi.scm \
   modules/r0man/guix/packages/task-management.scm \
-  modules/r0man/guix/packages/wm.scm
+  modules/r0man/guix/packages/wm.scm \
+  modules/r0man/guix/services/github-actions.scm
 
 # Regular, fast SRFI-64 tests — run by `make check`.
 UNIT_TESTS = \
-  tests/r0man/guix/packages/smoke.scm
+  tests/r0man/guix/packages/smoke.scm \
+  tests/r0man/guix/services/smoke.scm
 
 # VM-based tests — run by `make check-system`.  Empty for this channel:
 # guix-channel ships pure packages, no services or marionette tests.
