@@ -18,11 +18,26 @@ host-side namespace jails. The existing least-authority process jail remains
 available as the cheaper alternative for guix-only workflows; the two designs
 compose (the in-VM runner can still run hardened).
 
-Phased delivery: Phase 1 is a long-lived VM with docker inside and the store
-shared read-only via 9p (validated machinery — our system-test marionette VMs
-already boot this way on both x86_64 and aarch64). Phase 2 adds the ephemeral
-lifecycle (fresh registration per job, PAT-based token minting, boot-per-job).
-Phase 3 optimizes guix inside the VM with a LAN substitute server.
+Phased delivery: Phase 1 is the complete MVP — ephemeral VMs with docker
+inside, the store shared read-only via 9p (validated machinery — our
+system-test marionette VMs already boot this way on both x86_64 and
+aarch64), and the full PAT-based token lifecycle. Phase 2 is polish
+(secrets handling, optional long-lived mode). Phase 3 optimizes guix
+inside the VM with a LAN substitute server.
+
+Token minting implementation (decided): pure Guile, inside the service
+module. `(r0man guix services github-actions-vm)' exports
+`mint-registration-token', a procedure built on `(guix http-client)' and
+`json-string->scm' — both already shipped by Guix (verified: `http-request',
+guile-json parsing, and `Authorization' header plumbing all exist). The
+service type wraps it as a store program via `program-file' +
+`with-extensions (list guile-json-4)' + `with-imported-modules'.  This
+compiles into the channel's test suite (SRFI-64 unit test against a local
+mock HTTP server, following the runner-script test conventions), fails
+loudly on non-200 or missing token field, and needs no JSON-in-sed parsing
+or curl dependency.  The minted-token interface (pat-file + url → token
+file, 0600) is stable, so a later libsecret PAT backend is a drop-in
+swap.
 
 ## Problem Statement
 
@@ -147,6 +162,10 @@ dockerd (inside the VM).
 - **Docker inside the VM, rootful** — the VM is the boundary; we replicate
   GitHub's actual model instead of half-measures (no host socket ever).
 - **Credentials via 9p seed dir** (RO into VM), not image-baked.
+- **Token minting in pure Guile** (decided): `mint-registration-token` lives
+  in the service module on `(guix http-client)` + guile-json — compiled,
+  unit-tested against a mock API server in `make check`, no curl/sed JSON
+  parsing. Wrapped for the store via `program-file' + `with-extensions`.
 
 ### Open Questions
 All four resolved 2026:
@@ -180,18 +199,29 @@ All four resolved 2026:
 ## Implementation Plan
 
 ### Phase 1: MVP (proves the model)
-1. `modules/r0man/guix/services/github-actions-vm.scm`: inner-OS constructor +
+1. **Token machinery first** (proves the riskiest new behavior before any VM
+   plumbing): implement `mint-registration-token` in
+   `(r0man guix services github-actions-vm)` on `(guix http-client)` +
+   guile-json, with a SRFI-64 unit test that runs a local mock API server,
+   asserting the request path, Bearer auth header, and token extraction —
+   wired into `make check` like the existing runner-script tests.
+2. `modules/r0man/guix/services/github-actions-vm.scm`: inner-OS constructor +
    host service type. Ephemeral lifecycle from the start: token minting via
-   PAT, `--ephemeral` runner registration, VM power-off on job end, respawn
-   on the next queued job. 9p store, shared host daemon, slirp networking,
-   docker inside.
-2. System test: extend the existing marionette harness — boot the *VM service*
+   PAT (step 1), `--ephemeral` runner registration, VM power-off on job end,
+   respawn on the next queued job. 9p store, shared host daemon, slirp
+   networking, docker inside. Pool of `parallel-instances` (default 2) VMs,
+   each with its own seed dir and per-boot minted token.
+3. System test: extend the existing marionette harness — boot the *VM service*
    inside the test VM (nested, KVM-less) is too deep; instead test that the
    service derives a runnable `qemu` script and that the inner OS builds
    (`guix system vm`-style build check), plus a smoke marionette boot of the
    inner OS asserting dockerd + runner services come up.
-3. Manual E2E on burningswell: run its CI workflow verbatim; confirm
+4. Manual E2E on burningswell: run its CI workflow verbatim; confirm
    `services: postgres` green.
+
+**Prerequisite (user)**: a GitHub fine-grained PAT with `administration:write`
+scope on the target repo(s)/org, stored at the configured `pat-file` (0600,
+root-owned).
 
 ### Phase 2: Polish
 Secrets hardening for the PAT (libsecret or strict file handling),
