@@ -88,18 +88,23 @@ than any socket, namespace, or capability arrangement on the host.
      (ephemeral? #f)                 ; Phase 2: boot-per-job
      (pat-file #f))                  ; Phase 2: for token minting
    ```
-4. **Credential lifecycle** (the real hard problem, deferred to Phase 2):
-   registration tokens expire after 1 h, so boot-per-job requires minting a
-   fresh token per boot: a host-side program using a GitHub PAT
+4. **Credential lifecycle** (decided: ephemeral per job, day one):
+   registration tokens expire after 1 h, and each VM boot registers a fresh
+   ephemeral runner, so every boot needs a freshly minted token: a host-side
+   program using a GitHub PAT
    (`POST /orgs/{org}/actions/runners/registration-token`), writing it into
-   the seed dir before each QEMU start. PAT stored as a plain file or via
-   `libsecret`; the VM never sees the PAT, only the minted token.
-5. **Guix strategy inside the VM** (decision, see Trade-offs):
-   store shared 9p **read-only**; `GUIX_DAEMON_SOCKET` → host daemon over TCP
-   (`socat`/`guix publish`-style forwarder on a loopback-only port) — same
-   daemon-sharing boundary we already accepted in the jail design; docker
-   inside the VM handles everything docker-shaped. VM-local `guix-daemon`
-   remains the fully-isolated alternative, selectable per instance.
+   the seed dir before each QEMU start. PAT stored as a plain file (0700,
+   root-owned) or via `libsecret`; the VM never sees the PAT, only the
+   minted token.
+5. **Guix strategy inside the VM** (decided: shared host daemon):
+   store shared 9p **read-only**; the VM's `guix` client reaches the host
+   daemon over TCP (a loopback-only `socat`/forwarder started by the host
+   service, exposed into the VM via user-mode networking's host-gateway).
+   Builds execute on the host and land in the shared store — zero rebuilds,
+   same daemon-sharing trust surface the jail runner already has. Docker
+   inside the VM handles everything docker-shaped. The VM-local daemon plus
+   a `guix publish` cache server remains the fully-isolated alternative,
+   selectable per instance as a future option.
 
 ### Interface
 
@@ -124,6 +129,15 @@ dockerd (inside the VM).
 ## Trade-offs and Decisions
 
 ### Decisions Made
+- **Guix in the VM**: shared host daemon over TCP (decision 1). No rebuilds;
+  the host store is the cache. The workflow's build submissions reach the
+  host daemon — accepted, same surface as the jail runner.
+- **Ephemeral per job, day one** (decision 2): PAT token minting and
+  `--ephemeral` registration are Phase 1, not deferred.
+- **Fixed pool of N VMs** (decision 3): `parallel-instances` config field,
+  default 2, each an independent ephemeral VM.
+- **User-mode (slirp) networking** (decision 4): outbound-only, no host
+  network configuration, no inbound.
 - **Reuse, don't fork, the existing service**: the inner VM runs our
   `github-actions-runner-service-type` verbatim; the VM service is a *host
   manager* for QEMU, not a second runner implementation.
@@ -134,19 +148,12 @@ dockerd (inside the VM).
   GitHub's actual model instead of half-measures (no host socket ever).
 - **Credentials via 9p seed dir** (RO into VM), not image-baked.
 
-### Open Questions (need human input)
-1. **Daemon sharing**: host-daemon-over-TCP (fast, same daemon abuse surface as
-   today) vs VM-own-daemon (max isolation, custom packages rebuilt in-VM). For
-   burningswell's nonguix/custom SBCL packages this is a real cost either way;
-   `guix publish` on the LAN (Phase 3) mitigates. Which trade do you want?
-2. **Ephemeral semantics**: one job per VM boot (cleanest, matches GitHub
-   hosted; costs a boot + substitute warm-up per job, needs PAT minting) vs
-   long-lived VM with periodically recycled runner. Boot cost on this Asahi
-   host is ~1–2 min with KVM.
-3. **Concurrency**: N VMs = N × (memory, smp). Default 1 VM; scaling policy
-   later.
-4. **Networking mode**: slirp user-mode (default, zero host config, no inbound)
-   vs tap bridge (only if a workflow must *receive* connections).
+### Open Questions
+All four resolved 2026:
+1. Daemon sharing → shared host daemon over TCP.
+2. Ephemeral semantics → ephemeral per job, day one (PAT minting in Phase 1).
+3. Concurrency → fixed pool of N VMs (`parallel-instances`, default 2).
+4. Networking → QEMU user-mode (slirp), outbound-only.
 
 ### Trade-offs
 - **vs. in-process least-authority runner**: +VM-grade isolation, unmodified
@@ -174,8 +181,10 @@ dockerd (inside the VM).
 
 ### Phase 1: MVP (proves the model)
 1. `modules/r0man/guix/services/github-actions-vm.scm`: inner-OS constructor +
-   host service type (long-lived VM, static token via seed dir, 9p store,
-   slirp networking, docker inside).
+   host service type. Ephemeral lifecycle from the start: token minting via
+   PAT, `--ephemeral` runner registration, VM power-off on job end, respawn
+   on the next queued job. 9p store, shared host daemon, slirp networking,
+   docker inside.
 2. System test: extend the existing marionette harness — boot the *VM service*
    inside the test VM (nested, KVM-less) is too deep; instead test that the
    service derives a runnable `qemu` script and that the inner OS builds
@@ -184,9 +193,10 @@ dockerd (inside the VM).
 3. Manual E2E on burningswell: run its CI workflow verbatim; confirm
    `services: postgres` green.
 
-### Phase 2: Ephemeral lifecycle
-PAT-based registration-token minting, `--ephemeral`, VM power-off on job end,
-respawn policy, secrets handling for the PAT, per-job scratch cleanup.
+### Phase 2: Polish
+Secrets hardening for the PAT (libsecret or strict file handling),
+per-job scratch cleanup, optional long-lived (non-ephemeral) VM mode as a
+configuration option, host-side wall-clock supervision.
 
 ### Phase 3: Guix inside the VM
 `guix publish` host service + VM substitute config; optional VM-local daemon;
