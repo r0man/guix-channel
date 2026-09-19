@@ -36,6 +36,7 @@ NOCOMP_SOURCES = \
   modules/r0man/guix/files/gnu-head.svg
 
 SOURCES = \
+  modules/r0man/guix/home/services/github-actions.scm \
   modules/r0man/guix/packages/bootloader.scm \
   modules/r0man/guix/packages/claude.scm \
   modules/r0man/guix/packages/clojure.scm \
@@ -54,15 +55,20 @@ SOURCES = \
   modules/r0man/guix/packages/node.scm \
   modules/r0man/guix/packages/pi.scm \
   modules/r0man/guix/packages/task-management.scm \
-  modules/r0man/guix/packages/wm.scm
+  modules/r0man/guix/packages/wm.scm \
+  modules/r0man/guix/services/github-actions.scm
 
 # Regular, fast SRFI-64 tests — run by `make check`.
 UNIT_TESTS = \
-  tests/r0man/guix/packages/smoke.scm
+  tests/r0man/guix/packages/smoke.scm \
+  tests/r0man/guix/services/runner-script.scm \
+  tests/r0man/guix/services/smoke.scm
 
-# VM-based tests — run by `make check-system`.  Empty for this channel:
-# guix-channel ships pure packages, no services or marionette tests.
-SYSTEM_TEST_FILES =
+# VM-based tests — run by `make check-system`.  Each file is loaded by
+# build-aux/run-system-tests.scm, and every `system-test' object it
+# defines is built and run.
+SYSTEM_TEST_FILES = \
+  tests/r0man/guix/services/github-actions-system.scm
 
 TESTS = $(UNIT_TESTS)
 
@@ -96,13 +102,16 @@ EXTRA_DIST =					\
   $(UNIT_TESTS)					\
   $(SYSTEM_TEST_FILES)
 
-# No-op for this channel: no system tests yet.  The recipe is kept so
-# the target exists and matches the convention used in other channels.
+# No-op when no system tests are defined.  The recipe is kept so the
+# target exists and matches the convention used in other channels.
 check-system:
 	@if test -z "$(SYSTEM_TEST_FILES)"; then				\
 	  echo "make check-system: no system tests defined; skipping.";		\
 	else									\
-	  $(MAKE) check TESTS="$(SYSTEM_TEST_FILES)";				\
+	  $(top_builddir)/pre-inst-env $(GUILE) --no-auto-compile		\
+	    -L "$(top_srcdir)" -L "$(top_srcdir)/modules"			\
+	    "$(top_srcdir)/build-aux/run-system-tests.scm"			\
+	    $(SYSTEM_TEST_FILES);				\
 	fi
 .PHONY: check-system
 
