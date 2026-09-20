@@ -3,7 +3,9 @@
   #:use-module (gnu packages libffi)
   #:use-module (gnu packages lisp-check)
   #:use-module (gnu packages lisp-xyz)
+  #:use-module (gnu packages zig)
   #:use-module (guix build-system asdf)
+  #:use-module (guix build-system zig)
   #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix build-system)
   #:use-module (guix gexp)
@@ -441,3 +443,40 @@ worker processes with crash recovery and per-session affinity.")
 
 (define-public cl-mcp
   (sbcl-package->cl-source-package sbcl-cl-mcp))
+
+(define-public parenmedic
+  (let ((revision "0")
+        (commit "e24884e50837d5c7a85c89997b49daee52003345"))
+    (package
+      (name "parenmedic")
+      (version (git-version "0.1.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/shcv/parenmedic")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "03kjh94d1k9hw6rdrgrw6p4s27hknlq1a4kdaawvs0ax4l34pzv4"))))
+      (build-system zig-build-system)
+      (arguments
+       (list
+        #:zig zig-0.14
+        #:zig-release-type "safe"
+        #:install-source? #f))
+      (home-page "https://github.com/shcv/parenmedic")
+      (synopsis "Diagnose and fix parenthesis issues in Lisp code")
+      (description
+       "Parenmedic is a command-line tool that uses indentation as a guide to
+locate and repair structural problems in Lisp source files: missing closing
+parentheses, extra closing delimiters and mismatched delimiter types such as
+@samp{]} where @samp{)} is expected.  Issues can be reported or fixed in
+place, with a diff, or on standard output, and Common Lisp, Scheme, Clojure,
+Emacs Lisp, Janet and Racket are recognized from the file extension.
+Diagnostics are available as colored context, one line per issue, in a
+@command{gcc}-compatible form for editors, as JSON, or as Language Server
+Protocol data.  Parenmedic can also run as a stdio @acronym{MCP, Model Context
+Protocol} server so that language models can call its @code{diagnose} and
+@code{repair} tools.")
+      (license license:cc0))))
