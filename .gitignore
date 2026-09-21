@@ -31,3 +31,6 @@ test-suite.log
 # Distribution tarballs
 *.tar.gz
 *.tar.xz
+
+# Beads / Dolt files (added by bd init)
+.beads/proxieddb/
