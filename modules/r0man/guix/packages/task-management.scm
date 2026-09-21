@@ -53,7 +53,7 @@
 (define-public beads-next
   (package
     (name "beads-next")
-    (version "1.2.2")
+    (version "1.3.0")
     (source
      (origin
        (method git-fetch)
@@ -62,7 +62,7 @@
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0kb3n6chz0x3ap77kf41grvyajc97kdrrfk5lb7h07cshp7pa9hx"))))
+        (base32 "09wbrbc0d3641k99qm8rgbc4qvr5is35lq7myykdawrqmnf99g22"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -145,6 +145,8 @@
                     go-github-com-charmbracelet-x-term
                     go-github-com-charmbracelet-x-windows
                     go-github-com-anthropics-anthropic-sdk-go
+                    go-github-com-invopop-jsonschema
+                    go-github-com-mattn-go-sqlite3
                     go-github-com-burntsushi-toml
                     go-github-com-cenkalti-backoff-v4
                     go-github-com-cenkalti-backoff-v5
