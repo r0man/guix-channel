@@ -1,0 +1,34 @@
+# Minimal E2E test for the VM-backed GitHub Actions runner
+# (github-actions-runner-vm-service-type, feature/actions-runner).
+#
+# The VM runner registers with labels: docker, vm (plus the default
+# self-hosted labels).  Trigger with:
+#
+#   gh workflow run runner-vm-e2e.yml --ref feature/actions-runner
+# or the API equivalent (Actions: write).
+name: runner-vm-e2e
+'on':
+  workflow_dispatch: {}
+jobs:
+  vm-runner:
+    name: VM runner E2E
+    runs-on: [self-hosted, docker]
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+    steps:
+      - name: Runner environment
+        run: |
+          uname -a
+          id
+          docker version
+      - name: Docker in the VM
+        run: docker run --rm hello-world
+      - name: Postgres service container is up
+        run: |
+          docker run --rm --network host postgres:15-alpine \
+            pg_isready -h 127.0.0.1 -p 5432
