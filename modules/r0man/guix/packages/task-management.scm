@@ -530,7 +530,7 @@ per-city state.")
 (define-public gascity-next
   (package
     (name "gascity-next")
-    (version "1.4.1")
+    (version "1.4.2")
     (source
      (origin
        (method git-fetch)
@@ -539,7 +539,7 @@ per-city state.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "007pzqh9n3gxh7gjl2zvg38qvriib1hxw80iwd39m2mfxgdvl4j2"))))
+        (base32 "0yqk179kv7jhykcqqa9a4krpfq1wk0xa35qhbv8kin6x1gps6wkh"))))
     (build-system go-build-system)
     (arguments
      (list
