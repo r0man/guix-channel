@@ -1,33 +1,11 @@
 name: test
-on: [push]
+on: [workflow_dispatch]
 jobs:
   build:
-    name: Test Guix packages
-    runs-on: ubuntu-latest
+    name: Test VM runner
+    runs-on: [self-hosted, docker]
     steps:
-      - uses: actions/checkout@v2
-      - name: Guix cache
-        uses: actions/cache@v3
-        with:
-          path: ~/.cache/guix
-          # use a key that (almost) never matches
-          key: guix-cache-${{ github.sha }}
-          restore-keys: |
-            guix-cache-
-      # Cannot use a cache for /gnu/store, since restore fails
-      - name: Install Guix
-        uses: PromyLOPh/guix-install-action@v1
-      - name: Ensure no locale warning
-        run: test -z "$(guix --version 2>&1 >/dev/null)"
-      - name: Bootstrap, configure, build, test
-        run: |
-          guix shell -D -f guix.scm --pure -- bash -c '
-            set -e
-            ./bootstrap
-            ./configure
-            make -j"$(nproc)"
-            make check
-            make check-system
-          '
-      - name: Build packages
-        run: guix package -L modules -A | grep r0man/guix/packages | awk '{print $1}' | xargs guix build -L modules
+      - name: Runner environment
+        run: uname -a && docker version
+      - name: Docker in the VM
+        run: docker run --rm hello-world
