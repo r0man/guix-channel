@@ -1,0 +1,148 @@
+#!/bin/sh
+# End-to-end test for the VM-backed GitHub Actions runner: the real
+# token lifecycle against the real GitHub API, and a real workflow
+# executed inside the runner VM.
+#
+# Unlike scripts/github-actions-vm-smoke-test (which runs without
+# credentials), this script needs:
+#
+#   GITHUB_PAT_FILE  file holding a fine-grained PAT with
+#                    administration:write (repo) or administration
+#                    (org) access, mode 0600
+#   GITHUB_REPO_URL  the runner's repository or organization URL,
+#                    e.g. https://github.com/r0man/burningswell
+#
+# Optionally set STATE_DIR (default /tmp/github-actions-vm-e2e) and
+# BOOT_TIMEOUT (seconds to wait for the job to finish, default 3600).
+#
+# Stages:
+#   1. mint a registration token with the PAT (the real API call)
+#   2. boot the runner VM; it registers with GitHub as an ephemeral
+#      runner named github-actions-vm-1 and writes the "registered"
+#      marker into the feedback dir
+#   3. trigger a workflow targeting runs-on: [self-hosted, docker]
+#      (manually, or by pushing); the script just waits
+#   4. when the job is done the runner exits, the VM powers itself
+#      off, and GitHub removes the ephemeral runner
+#   5. verify removal via the remove program (exit 1 = gone)
+#
+# Exit code 0 means all stages passed.
+
+set -eu
+
+STATE_DIR=${STATE_DIR:-/tmp/github-actions-vm-e2e}
+BOOT_TIMEOUT=${BOOT_TIMEOUT:-3600}
+MODULES="$(dirname "$0")/../modules"
+NONGUIX=$(ls -d "$HOME/.cache/guix/checkouts/"* 2>/dev/null | while read d; do \
+           test -d "$d/nonguix" && echo "$d" && break; done)
+
+if [ -z "${GITHUB_PAT_FILE:-}" ] || [ -z "${GITHUB_REPO_URL:-}" ]; then
+    echo "usage: GITHUB_PAT_FILE=... GITHUB_REPO_URL=... \\
+            $0" >&2
+    exit 2
+fi
+
+# The compiled Go files under modules/ are build artifacts of 'make';
+# when they were produced by a different Guix than the 'guix' CLI used
+# here, record ABI mismatches abort the build.  Remove them; 'make'
+# regenerates them when needed.
+find "$(dirname "$0")/../modules" -name '*.go' -path '*r0man*' -delete 2>/dev/null || true
+
+fail () {
+    echo "FAIL: $1"
+    exit 1
+}
+
+build () {
+    guix build --no-grafts \
+         -L "$MODULES" ${NONGUIX:+-L "$NONGUIX"} \
+         -e "$1"
+}
+
+echo "building the store programs and the boot script..."
+MINT_PROGRAM=$(build '(begin (use-modules (r0man guix services github-actions-vm))
+                              (github-actions-runner-vm-mint-program))')
+REMOVE_PROGRAM=$(build '(begin (use-modules (r0man guix services github-actions-vm))
+                                (github-actions-vm-remove-runner-program))')
+BOOT_SCRIPT=$(build "(begin (use-modules (r0man guix services github-actions-vm))
+                             (github-actions-runner-vm-boot-script
+                              (github-actions-runner-vm-configuration
+                               (url \"$GITHUB_REPO_URL\")
+                               (state-directory \"$STATE_DIR\"))
+                              #:index 1))")
+echo "mint program:    $MINT_PROGRAM"
+echo "remove program:  $REMOVE_PROGRAM"
+echo "boot script:     $BOOT_SCRIPT"
+
+RUNNER_NAME=github-actions-vm-1
+mkdir -p "$STATE_DIR/1/seed" "$STATE_DIR/1/feedback"
+chmod 0755 "$STATE_DIR/1/seed"
+chmod 0777 "$STATE_DIR/1/feedback"
+rm -f "$STATE_DIR/1/scratch.qcow2" "$STATE_DIR/serial.log" \
+      "$STATE_DIR/1/feedback/registered"
+
+# Stage 1: mint the registration token (the real GitHub API).
+echo
+echo "stage 1: minting registration token..."
+"$MINT_PROGRAM" "$GITHUB_PAT_FILE" "$GITHUB_REPO_URL" \
+                "$STATE_DIR/1/seed/token" \
+    || fail "token minting failed"
+chmod 0600 "$STATE_DIR/1/seed/token"
+echo "PASS: token minted into $STATE_DIR/1/seed/token"
+
+# Stage 2: boot the VM; wait for the guest to register.
+echo
+echo "stage 2: booting the runner VM (serial: $STATE_DIR/serial.log)..."
+QEMU_BIN=$(grep -o '/gnu/store/[^ ]*qemu-minimal[^ ]*/bin/qemu-system-[^ ]*' \
+              "$BOOT_SCRIPT" | head -1)
+"$(dirname "$QEMU_BIN")/qemu-img" create -f qcow2 \
+    "$STATE_DIR/1/scratch.qcow2" 34359738368
+"$BOOT_SCRIPT" > "$STATE_DIR/serial.log" 2>&1 &
+QEMU_PID=$!
+
+REGISTERED=""
+for i in $(seq 1 240); do
+    if [ -f "$STATE_DIR/1/feedback/registered" ]; then
+        REGISTERED=yes
+        break
+    fi
+    if ! kill -0 $QEMU_PID 2>/dev/null; then
+        fail "QEMU exited before the runner registered; see $STATE_DIR/serial.log"
+    fi
+    sleep 2
+done
+[ -n "$REGISTERED" ] || fail "runner did not register within 8 minutes"
+# Shrink the token's exposure window, exactly like the host service.
+rm -f "$STATE_DIR/1/seed/token"
+echo "PASS: runner '$RUNNER_NAME' registered with GitHub (token deleted)"
+
+echo
+echo "stage 3: waiting for a workflow job (up to $BOOT_TIMEOUT seconds)"
+echo "  trigger a workflow with runs-on: [self-hosted, docker] now;"
+echo "  the VM powers itself off when the job is done."
+for i in $(seq 1 $((BOOT_TIMEOUT / 5))); do
+    if ! kill -0 $QEMU_PID 2>/dev/null; then
+        break
+    fi
+    sleep 5
+done
+if kill -0 $QEMU_PID 2>/dev/null; then
+    echo "FAIL: the VM is still running after $BOOT_TIMEOUT seconds"
+    kill $QEMU_PID
+    exit 1
+fi
+echo "PASS: QEMU exited (the runner finished its job and powered the VM off)"
+
+# Stage 4: verify the ephemeral runner was removed from GitHub.  The
+# remove program exits 1 when no runner by that name is registered.
+echo
+echo "stage 4: verifying runner removal..."
+if "$REMOVE_PROGRAM" "$GITHUB_PAT_FILE" "$GITHUB_REPO_URL" "$RUNNER_NAME"; then
+    echo "FAIL: runner '$RUNNER_NAME' is still registered on GitHub"
+    exit 1
+else
+    echo "PASS: ephemeral runner '$RUNNER_NAME' is gone from GitHub"
+fi
+
+echo
+echo "E2E OK: the runner VM registered, ran a job, powered off, and was removed."

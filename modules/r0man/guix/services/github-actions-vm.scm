@@ -85,8 +85,16 @@
             github-actions-runner-vm-configuration-use-host-daemon?
             github-actions-runner-vm-configuration-guix-daemon-port
             github-actions-runner-vm-configuration-state-directory
+            github-actions-runner-vm-configuration-registry?
+            github-actions-runner-vm-configuration-registry-port
+            github-actions-runner-vm-configuration-registry-remote-url
+            github-actions-runner-vm-configuration-registry-cache-directory
+            github-actions-runner-vm-registry-service
+            vm-guest-registry-config-file
+            vm-guest-dockerd-config-file
             github-actions-runner-vm-operating-system
             github-actions-runner-vm-boot-script
+            github-actions-runner-vm-shepherd-services
             github-actions-runner-vm-service-type))
 
 ;;;
@@ -101,7 +109,8 @@ TOKEN-FILE (mode 0600).  GITHUB_API_BASE overrides the API base URL for
 testing."
   (program-file "github-actions-vm-mint-registration-token"
                 (with-extensions (list guile-json-4)
-                  #~(begin
+                  (with-imported-modules '((r0man guix services github-actions-vm-mint))
+                    #~(begin
                       (use-modules (ice-9 match)
                                    (ice-9 textual-ports)
                                    (r0man guix services github-actions-vm-mint))
@@ -120,7 +129,7 @@ testing."
                          (format (current-error-port)
                                  "github-actions-runner-vm: usage: ~a PAT-FILE URL TOKEN-FILE~%"
                                  "github-actions-vm-mint-registration-token")
-                         (exit 2)))))))
+                         (exit 2))))))))
 
 (define (github-actions-vm-remove-runner-program)
   "Return a store program that removes a registered runner: it takes a
@@ -128,7 +137,8 @@ PAT-FILE, a repository/organization URL, and a runner NAME as
 arguments, and removes the runner (best effort)."
   (program-file "github-actions-vm-remove-runner"
                 (with-extensions (list guile-json-4)
-                  #~(begin
+                  (with-imported-modules '((r0man guix services github-actions-vm-mint))
+                    #~(begin
                       (use-modules (ice-9 match)
                                    (r0man guix services github-actions-vm-mint))
                       (match (program-arguments)
@@ -148,7 +158,7 @@ arguments, and removes the runner (best effort)."
                          (format (current-error-port)
                                  "github-actions-runner-vm: usage: ~a PAT-FILE URL NAME~%"
                                  "github-actions-vm-remove-runner")
-                         (exit 2)))))))
+                         (exit 2))))))))
 
 ;;;
 ;;; Guest OS.
@@ -198,13 +208,88 @@ arguments, and removes the runner (best effort)."
                        (default 17447))
   (state-directory
    github-actions-runner-vm-configuration-state-directory
-   (default "/var/lib/github-actions-runner-vm")))
+   (default "/var/lib/github-actions-runner-vm"))
+  (registry?          github-actions-runner-vm-configuration-registry?
+                      (default #t))
+  (registry-port      github-actions-runner-vm-configuration-registry-port
+                      (default 5000))
+  (registry-remote-url
+   github-actions-runner-vm-configuration-registry-remote-url
+   (default "https://registry-1.docker.io"))
+  (registry-cache-directory
+   github-actions-runner-vm-configuration-registry-cache-directory
+   (default "/var/cache/github-actions-runner-vm/registry")))
 
-(define (vm-guest-dockerd-config-file)
+(define* (vm-guest-dockerd-config-file #:key (registry-port #f))
   "Return a dockerd daemon.json that keeps all docker state on the
-per-boot scratch disk."
+per-boot scratch disk.  When REGISTRY-PORT is set, the host's
+pull-through registry cache (reachable from the guest at QEMU slirp's
+gateway address 10.0.2.2) is configured as a registry mirror, so that
+images pulled from Docker Hub are cached on the host and are not
+re-downloaded for every job."
   (plain-file "dockerd-github-actions-vm.json"
-              "{\"data-root\": \"/scratch/docker\"}\n"))
+              (string-append
+               "{\"data-root\": \"/scratch/docker\""
+               (if registry-port
+                   (string-append
+                    ",\"registry-mirrors\": [\"http://10.0.2.2:"
+                    (number->string registry-port) "\"]"
+                    ",\"insecure-registries\": [\"10.0.2.2:"
+                    (number->string registry-port) "\"]")
+                   "")
+               "}\n")))
+
+(define (vm-guest-registry-config-file config)
+  "Return the configuration file of the host's pull-through registry
+cache: a Docker registry v2 in proxy mode that caches images pulled
+from Docker Hub under REGISTRY-CACHE-DIRECTORY."
+  (plain-file "docker-registry-github-actions-vm.yml"
+              (string-append
+               "version: 0.1\n"
+               "log:\n"
+               "  level: info\n"
+               "storage:\n"
+               "  filesystem:\n"
+               "    rootdirectory: "
+               (github-actions-runner-vm-configuration-registry-cache-directory
+                config)
+               "\n"
+               "  delete:\n"
+               "    enabled: false\n"
+               "http:\n"
+               "  addr: 127.0.0.1:"
+               (number->string
+                (github-actions-runner-vm-configuration-registry-port
+                 config))
+               "\n"
+               "proxy:\n"
+               "  remoteurl: "
+               (github-actions-runner-vm-configuration-registry-remote-url
+                config)
+               "\n")))
+
+(define (github-actions-runner-vm-registry-service config)
+  "Return the shepherd service running the host's pull-through
+registry cache, or '() when it is disabled.  The registry stores
+upstream images on the host's disk, keyed by manifest digest, so the
+guest dockerd's per-job pulls are served from the local cache instead
+of being re-downloaded from Docker Hub."
+  (if (github-actions-runner-vm-configuration-registry? config)
+      (list (shepherd-service
+             (documentation
+              "Docker registry v2 in pull-through proxy mode, caching
+images pulled from Docker Hub for the runner VMs.")
+             (provision '(github-actions-runner-vm-registry))
+             (requirement '(user-processes networking))
+             (respawn? #t)
+             (start #~(make-forkexec-constructor
+                       (list #$(file-append docker-registry "/bin/registry")
+                             "serve"
+                             #$(vm-guest-registry-config-file config))
+                       #:log-file
+                       "/var/log/github-actions-runner-vm-registry.log"))
+             (stop #~(make-kill-destructor))))
+      '()))
 
 (define (vm-guest-dockerd-shepherd-service config-file)
   "Return a dockerd shepherd service whose requirements include the
@@ -373,7 +458,12 @@ scratch disk mounted at /scratch."
        (simple-service 'github-actions-runner-vm-dockerd
                        shepherd-root-service-type
                        (vm-guest-dockerd-shepherd-service
-                        (vm-guest-dockerd-config-file)))
+                        (vm-guest-dockerd-config-file
+                         #:registry-port
+                         (and (github-actions-runner-vm-configuration-registry?
+                               config)
+                              (github-actions-runner-vm-configuration-registry-port
+                               config)))))
        (simple-service 'github-actions-runner-vm-profile
                        profile-service-type
                        (list docker
@@ -530,6 +620,10 @@ when stopped."
                      ,@(if (github-actions-runner-vm-configuration-use-host-daemon?
                             config)
                            '(github-actions-runner-vm-guix-daemon)
+                           '())
+                     ,@(if (github-actions-runner-vm-configuration-registry?
+                            config)
+                           '(github-actions-runner-vm-registry)
                            '())))
    (respawn? #t)
    (start
@@ -615,6 +709,7 @@ forwarder, one shepherd service per VM instance, and a pool alias."
            config)
           1))
   (append
+   (github-actions-runner-vm-registry-service config)
    (if (github-actions-runner-vm-configuration-use-host-daemon? config)
        (list (github-actions-runner-vm-guix-daemon-service
               (github-actions-runner-vm-configuration-guix-daemon-port

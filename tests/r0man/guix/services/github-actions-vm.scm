@@ -205,6 +205,21 @@ with a thunk returning the requests seen so far, oldest first."
        (remove-github-actions-runner
         "PAT-XYZ" "https://github.com/owner/repo" "github-actions-vm-1")))))
 
+(test-group "registry cache"
+  (let ((config (github-actions-runner-vm-configuration)))
+    (test-equal "registry enabled by default" #t
+      (github-actions-runner-vm-configuration-registry? config))
+    (test-equal "registry port default" 5000
+      (github-actions-runner-vm-configuration-registry-port config)))
+  (let ((config (github-actions-runner-vm-configuration
+                 (registry? #f))))
+    (test-equal "registry can be disabled" '()
+      (github-actions-runner-vm-registry-service config)))
+  (test-assert "registry proxy service is generated"
+    (let* ((config (github-actions-runner-vm-configuration))
+           (services (github-actions-runner-vm-registry-service config)))
+      (= 1 (length services)))))
+
 (test-group "store programs"
   (test-assert "mint program mints and stores tokens"
     (let ((program (call-with-input-file

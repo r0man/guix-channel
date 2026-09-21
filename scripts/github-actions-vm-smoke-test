@@ -26,6 +26,12 @@ set -eu
 # a directory under /tmp so that no root privileges are needed; set
 # STATE_DIR=/var/lib/github-actions-runner-vm to use the production
 # paths (root required).
+# The compiled Go files under modules/ are build artifacts of 'make';
+# when they were produced by a different Guix than the 'guix' CLI used
+# here, record ABI mismatches abort the build.  Remove them; 'make'
+# regenerates them when needed.
+find "$(dirname "$0")/../modules" -name '*.go' -path '*r0man*' -delete 2>/dev/null || true
+
 STATE_DIR=${STATE_DIR:-/tmp/github-actions-vm-smoke}
 LOG=$STATE_DIR/serial.log
 SCRIPT=${1:-}
@@ -41,7 +47,10 @@ if [ -z "$SCRIPT" ]; then
              -e "(begin (use-modules (r0man guix services github-actions-vm))\
                         (github-actions-runner-vm-boot-script\
                          (github-actions-runner-vm-configuration\
-                          (state-directory \"$STATE_DIR\")) #:index 1))")
+                          (state-directory \"$STATE_DIR\")\
+                          ;; No host registry cache runs in the smoke
+                          ;; test scenario; use upstream pulls.
+                          (registry? #f)) #:index 1))")
 fi
 
 echo "boot script: $SCRIPT"
