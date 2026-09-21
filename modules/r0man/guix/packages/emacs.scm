@@ -439,7 +439,7 @@ with consult, such as vertico.")
          (sha256
           (base32 "1f2gxzg9vz6pwzaygqq99z5ii3ccpcv3031qnm03mql7zdwm29ba"))))
       (build-system emacs-build-system)
-      (propagated-inputs (list emacs-dash emacs-f emacs-editorconfig emacs-jsonrpc emacs-s))
+      (propagated-inputs (list emacs-dash emacs-f emacs-jsonrpc emacs-s))
       (home-page "https://github.com/copilot-emacs/copilot.el")
       (synopsis "Unofficial Github Copilot mode for Emacs")
       (description "An unofficial Emacs mode for Github Copilot.")
