@@ -26,7 +26,12 @@
                github-actions-runner-configuration-labels
                github-actions-runner-configuration-replace?
                github-actions-runner-configuration-extra-registration-args
-               github-actions-runner-configuration-environment-variables))
+               github-actions-runner-configuration-environment-variables
+               github-actions-runner-configuration-supplementary-groups
+               github-actions-runner-configuration-ephemeral?
+               github-actions-runner-configuration-requirements
+               github-actions-runner-configuration-shutdown-file
+               github-actions-runner-configuration-registration-marker))
 
 (define (home-github-actions-runner-log-file config)
   ;; Path of the runner log file under $XDG_STATE_HOME.

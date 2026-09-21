@@ -1,4 +1,6 @@
 bin_SCRIPTS =
+noinst_SCRIPTS = \
+  scripts/github-actions-vm-smoke-test
 
 # Handle substitution of fully-expanded Autoconf variables.
 do_subst = $(SED)					\
@@ -56,11 +58,14 @@ SOURCES = \
   modules/r0man/guix/packages/pi.scm \
   modules/r0man/guix/packages/task-management.scm \
   modules/r0man/guix/packages/wm.scm \
-  modules/r0man/guix/services/github-actions.scm
+  modules/r0man/guix/services/github-actions.scm \
+  modules/r0man/guix/services/github-actions-vm.scm \
+  modules/r0man/guix/services/github-actions-vm-mint.scm
 
 # Regular, fast SRFI-64 tests — run by `make check`.
 UNIT_TESTS = \
   tests/r0man/guix/packages/smoke.scm \
+  tests/r0man/guix/services/github-actions-vm.scm \
   tests/r0man/guix/services/runner-script.scm \
   tests/r0man/guix/services/smoke.scm
 
@@ -68,7 +73,8 @@ UNIT_TESTS = \
 # build-aux/run-system-tests.scm, and every `system-test' object it
 # defines is built and run.
 SYSTEM_TEST_FILES = \
-  tests/r0man/guix/services/github-actions-system.scm
+  tests/r0man/guix/services/github-actions-system.scm \
+  tests/r0man/guix/services/github-actions-vm-system.scm
 
 TESTS = $(UNIT_TESTS)
 
@@ -90,6 +96,7 @@ ACLOCAL_AMFLAGS = -I m4
 
 EXTRA_DIST =					\
   bootstrap					\
+  scripts/github-actions-vm-smoke-test		\
   pre-inst-env.in				\
   build-aux/test-driver.scm			\
   m4/guile.m4					\
