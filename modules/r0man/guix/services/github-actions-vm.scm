@@ -104,43 +104,12 @@
 ;;;
 
 (define (github-actions-runner-vm-mint-program)
-  "Return a store program that mints a runner registration token: it
-takes a PAT-FILE, a repository/organization URL, and a TOKEN-FILE as
-arguments, minting a fresh token when needed and writing it to
-TOKEN-FILE (mode 0600).  GITHUB_API_BASE overrides the API base URL for
-testing."
-  ;; Note: guile-gnutls must be among the extensions and its foreign
-  ;; library directory exported as GUILE_EXTENSIONS_PATH: shepherd runs
-  ;; programs with a clean environment, where the ambient
-  ;; GUILE_EXTENSIONS_PATH (which is how the (gnutls) module is normally
-  ;; found) is absent, and (web client) HTTPS calls would fail with
-  ;; gnutls-not-available.
-  (program-file "github-actions-vm-mint-registration-token"
-                (with-extensions (list guile-json-4 guile-gnutls)
-                  (with-imported-modules '((r0man guix services github-actions-vm-mint))
-                    #~(begin
-                      (use-modules (ice-9 match)
-                                   (ice-9 textual-ports)
-                                   (r0man guix services github-actions-vm-mint))
-                      (setenv "GUILE_EXTENSIONS_PATH"
-                              #$(file-append guile-gnutls
-                                             "/lib/guile/3.0/extensions"))
-                      (match (cdr (command-line))
-                        ((pat-file url token-file)
-                         (catch #t
-                           (lambda ()
-                             (mint-and-store-registration-token
-                              (read-pat-file pat-file) url token-file))
-                           (lambda args
-                             (format (current-error-port)
-                                     "github-actions-runner-vm: token minting failed: ~a~%"
-                                     args)
-                             (exit 1))))
-                        (args
-                         (format (current-error-port)
-                                 "github-actions-runner-vm: usage: ~a PAT-FILE URL TOKEN-FILE~%"
-                                 "github-actions-vm-mint-registration-token")
-                         (exit 2))))))))
+  "Return the store program minting runner registration tokens, an
+alias of `github-actions-runner-mint-program' (r0man guix services
+github-actions): the VM service predates the general one-shot service
+type and keeps its own program name for compatibility with its tests
+and smoke scripts."
+  (github-actions-runner-mint-program))
 
 (define (github-actions-vm-remove-runner-program)
   "Return a store program that removes a registered runner: it takes a
