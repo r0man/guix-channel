@@ -700,6 +700,7 @@ logarithmic-time removal of both minimum and maximum elements.")
                         go-github-com-pkg-errors
                         go-github-com-pmezard-go-difflib
                         go-github-com-prometheus-procfs
+                        go-github-com-rivo-uniseg
                         go-github-com-sergi-go-diff
                         go-github-com-shopspring-decimal
                         go-github-com-silvasur-buzhash
@@ -1124,6 +1125,7 @@ AI assistants to interact with Dolt version-controlled SQL databases.")
                     go-github-com-google-shlex
                     go-github-com-pkg-profile
                     go-github-com-prometheus-client-golang
+                    go-github-com-rivo-uniseg
                     go-github-com-shirou-gopsutil-v4/fixed
                     go-github-com-skratchdot-open-golang
                     go-github-com-tealeg-xlsx
