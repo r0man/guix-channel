@@ -32,6 +32,7 @@
   #:use-module (gnu packages linux)
   #:use-module (gnu packages package-management)
   #:use-module (gnu packages networking)
+  #:use-module (gnu packages tls)
   #:use-module (gnu packages version-control)
   #:use-module (gnu packages virtualization)
   #:use-module (gnu services)
@@ -108,13 +109,22 @@ takes a PAT-FILE, a repository/organization URL, and a TOKEN-FILE as
 arguments, minting a fresh token when needed and writing it to
 TOKEN-FILE (mode 0600).  GITHUB_API_BASE overrides the API base URL for
 testing."
+  ;; Note: guile-gnutls must be among the extensions and its foreign
+  ;; library directory exported as GUILE_EXTENSIONS_PATH: shepherd runs
+  ;; programs with a clean environment, where the ambient
+  ;; GUILE_EXTENSIONS_PATH (which is how the (gnutls) module is normally
+  ;; found) is absent, and (web client) HTTPS calls would fail with
+  ;; gnutls-not-available.
   (program-file "github-actions-vm-mint-registration-token"
-                (with-extensions (list guile-json-4)
+                (with-extensions (list guile-json-4 guile-gnutls)
                   (with-imported-modules '((r0man guix services github-actions-vm-mint))
                     #~(begin
                       (use-modules (ice-9 match)
                                    (ice-9 textual-ports)
                                    (r0man guix services github-actions-vm-mint))
+                      (setenv "GUILE_EXTENSIONS_PATH"
+                              #$(file-append guile-gnutls
+                                             "/lib/guile/3.0/extensions"))
                       (match (cdr (command-line))
                         ((pat-file url token-file)
                          (catch #t
@@ -137,11 +147,14 @@ testing."
 PAT-FILE, a repository/organization URL, and a runner NAME as
 arguments, and removes the runner (best effort)."
   (program-file "github-actions-vm-remove-runner"
-                (with-extensions (list guile-json-4)
+                (with-extensions (list guile-json-4 guile-gnutls)
                   (with-imported-modules '((r0man guix services github-actions-vm-mint))
                     #~(begin
                       (use-modules (ice-9 match)
                                    (r0man guix services github-actions-vm-mint))
+                      (setenv "GUILE_EXTENSIONS_PATH"
+                              #$(file-append guile-gnutls
+                                             "/lib/guile/3.0/extensions"))
                       ;; Note: 'exit' must be called outside the
                       ;; catch; quit is itself catchable, so exiting
                       ;; from inside the protected thunk would run the
@@ -176,11 +189,14 @@ as arguments.  Subcommands:
 
 GITHUB_API_BASE overrides the API base URL for testing."
   (program-file "github-actions-vm-workflow"
-                (with-extensions (list guile-json-4)
+                (with-extensions (list guile-json-4 guile-gnutls)
                   (with-imported-modules '((r0man guix services github-actions-vm-mint))
                     #~(begin
                       (use-modules (ice-9 match)
                                    (r0man guix services github-actions-vm-mint))
+                      (setenv "GUILE_EXTENSIONS_PATH"
+                              #$(file-append guile-gnutls
+                                             "/lib/guile/3.0/extensions"))
                       (match (cdr (command-line))
                         (("dispatch" pat-file url workflow ref)
                          (let ((dispatched
