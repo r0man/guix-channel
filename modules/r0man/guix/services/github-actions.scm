@@ -29,6 +29,7 @@
             github-actions-runner-configuration-requirements
             github-actions-runner-configuration-shutdown-file
             github-actions-runner-configuration-registration-marker
+            github-actions-runner-configuration-log-file
             github-actions-runner-start-script
             github-actions-runner-service-type))
 
@@ -85,7 +86,10 @@ script."
    (default #f))                                ;string path or #f
   (registration-marker
    github-actions-runner-configuration-registration-marker
-   (default #f)))                               ;string path or #f
+   (default #f))                                ;string path or #f
+  (log-file
+   github-actions-runner-configuration-log-file
+   (default "/var/log/github-actions-runner.log")))
 
 (define* (github-actions-runner-start-script
           #:key
@@ -228,7 +232,7 @@ and the accounts extensions, not by the start script)."
                 "    fi\n"
                 "    if [ -n \"$REGISTRATION_MARKER\" ]; then\n"
                 "        mkdir -p \"$(dirname \"$REGISTRATION_MARKER\")\"\n"
-                "        touch \"$REGISTRATION_MARKER\"\n"
+                "        touch \"$REGISTRATION_MARKER\" || true\n"
                 "    fi\n"
                 "fi\n")
           (if ephemeral?
@@ -254,7 +258,7 @@ and the accounts extensions, not by the start script)."
     (package user group work-dir url token name labels replace?
              extra-registration-args environment-variables
              supplementary-groups ephemeral? requirements
-             shutdown-file registration-marker)
+             shutdown-file registration-marker log-file)
     (let ((script
            (github-actions-runner-start-script
             #:package package
@@ -274,12 +278,21 @@ and the accounts extensions, not by the start script)."
              (provision '(github-actions-runner))
              (requirement `(user-processes networking ,@requirements))
              (respawn? (not ephemeral?))
+             ;; shepherd's exec-command clears the supplementary
+             ;; groups of the process ('setgroups'), so the groups
+             ;; configured for the runner account (e.g. "docker" for
+             ;; access to /var/run/docker.sock) must be passed
+             ;; explicitly; the account's groups alone are not enough.
              (start #~(make-forkexec-constructor
                        (list #$(file-append bash-minimal "/bin/bash")
                              #$script)
                        #:user #$user
                        #:group #$group
-                       #:log-file "/var/log/github-actions-runner.log"))
+                       ;; Note the quote: a plain list value must not
+                       ;; be unquoted into the gexp, or its elements
+                       ;; end up in evaluated position.
+                       #:supplementary-groups '#$supplementary-groups
+                       #:log-file #$log-file))
              (stop #~(make-kill-destructor)))))))
 
 (define (github-actions-runner-accounts config)

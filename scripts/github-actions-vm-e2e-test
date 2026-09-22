@@ -12,8 +12,14 @@
 #   GITHUB_REPO_URL  the runner's repository or organization URL,
 #                    e.g. https://github.com/r0man/burningswell
 #
-# Optionally set STATE_DIR (default /tmp/github-actions-vm-e2e) and
-# BOOT_TIMEOUT (seconds to wait for the job to finish, default 3600).
+# Optionally set STATE_DIR (default /tmp/github-actions-vm-e2e),
+# BOOT_TIMEOUT (seconds to wait for the job to finish, default 3600),
+# GITHUB_WORKFLOW_FILE (workflow to dispatch once the runner has
+# registered, default .github/workflows/test.yml), and
+# GITHUB_WORKFLOW_REF (the ref to dispatch it for, default main).  The
+# workflow must exist on the default branch for GitHub to accept the
+# dispatch.  Stale queued runs of that workflow are cancelled first, so
+# that the freshly registered runner is not hijacked by an old job.
 #
 # Stages:
 #   1. mint a registration token with the PAT (the real API call)
@@ -32,6 +38,8 @@ set -eu
 
 STATE_DIR=${STATE_DIR:-/tmp/github-actions-vm-e2e}
 BOOT_TIMEOUT=${BOOT_TIMEOUT:-3600}
+GITHUB_WORKFLOW_FILE=${GITHUB_WORKFLOW_FILE:-.github/workflows/test.yml}
+GITHUB_WORKFLOW_REF=${GITHUB_WORKFLOW_REF:-main}
 MODULES="$(dirname "$0")/../modules"
 NONGUIX=$(ls -d "$HOME/.cache/guix/checkouts/"* 2>/dev/null | while read d; do \
            test -d "$d/nonguix" && echo "$d" && break; done)
@@ -64,6 +72,8 @@ MINT_PROGRAM=$(build '(begin (use-modules (r0man guix services github-actions-vm
                               (github-actions-runner-vm-mint-program))')
 REMOVE_PROGRAM=$(build '(begin (use-modules (r0man guix services github-actions-vm))
                                 (github-actions-vm-remove-runner-program))')
+WORKFLOW_PROGRAM=$(build '(begin (use-modules (r0man guix services github-actions-vm))
+                                 (github-actions-vm-workflow-program))')
 BOOT_SCRIPT=$(build "(begin (use-modules (r0man guix services github-actions-vm))
                              (github-actions-runner-vm-boot-script
                               (github-actions-runner-vm-configuration
@@ -72,6 +82,7 @@ BOOT_SCRIPT=$(build "(begin (use-modules (r0man guix services github-actions-vm)
                               #:index 1))")
 echo "mint program:    $MINT_PROGRAM"
 echo "remove program:  $REMOVE_PROGRAM"
+echo "workflow program: $WORKFLOW_PROGRAM"
 echo "boot script:     $BOOT_SCRIPT"
 
 RUNNER_NAME=github-actions-vm-1
@@ -81,13 +92,28 @@ chmod 0777 "$STATE_DIR/1/feedback"
 rm -f "$STATE_DIR/1/scratch.qcow2" "$STATE_DIR/serial.log" \
       "$STATE_DIR/1/feedback/registered"
 
-# Stage 1: mint the registration token (the real GitHub API).
+# A self-hosted runner pool runs the oldest queued job when the runner
+# registers; stale queued dispatches of the workflow (from earlier
+# failed E2E attempts) would hijack it and burn the runner's one job.
+echo
+echo "stage 0: cancelling stale queued runs of $GITHUB_WORKFLOW_FILE..."
+"$WORKFLOW_PROGRAM" cancel-queued "$GITHUB_PAT_FILE" "$GITHUB_REPO_URL" \
+                    "$GITHUB_WORKFLOW_FILE" \
+    || fail "cancelling stale queued runs failed"
+
+# Stage 1: mint a fresh registration token (the real GitHub API).
 echo
 echo "stage 1: minting registration token..."
+# Delete any token left over by a previous run: the mint program
+# reuses a token file younger than 55 minutes, which hides the case
+# the E2E must exercise (minting).
+rm -f "$STATE_DIR/1/seed/token"
 "$MINT_PROGRAM" "$GITHUB_PAT_FILE" "$GITHUB_REPO_URL" \
                 "$STATE_DIR/1/seed/token" \
     || fail "token minting failed"
-chmod 0600 "$STATE_DIR/1/seed/token"
+# The guest runner reads the token through 9p (security_model=none);
+# it needs at least group/other read access on the file itself.
+chmod 0644 "$STATE_DIR/1/seed/token"
 echo "PASS: token minted into $STATE_DIR/1/seed/token"
 
 # Stage 2: boot the VM; wait for the guest to register.
@@ -117,9 +143,11 @@ rm -f "$STATE_DIR/1/seed/token"
 echo "PASS: runner '$RUNNER_NAME' registered with GitHub (token deleted)"
 
 echo
-echo "stage 3: waiting for a workflow job (up to $BOOT_TIMEOUT seconds)"
-echo "  trigger a workflow with runs-on: [self-hosted, docker] now;"
-echo "  the VM powers itself off when the job is done."
+echo "stage 3: dispatching $GITHUB_WORKFLOW_FILE@$GITHUB_WORKFLOW_REF"
+"$WORKFLOW_PROGRAM" dispatch "$GITHUB_PAT_FILE" "$GITHUB_REPO_URL" \
+                    "$GITHUB_WORKFLOW_FILE" "$GITHUB_WORKFLOW_REF" \
+    || fail "workflow dispatch failed"
+echo "PASS: workflow dispatched; waiting for the job (up to $BOOT_TIMEOUT seconds)"
 for i in $(seq 1 $((BOOT_TIMEOUT / 5))); do
     if ! kill -0 $QEMU_PID 2>/dev/null; then
         break

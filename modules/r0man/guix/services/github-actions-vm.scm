@@ -95,7 +95,8 @@
             github-actions-runner-vm-operating-system
             github-actions-runner-vm-boot-script
             github-actions-runner-vm-shepherd-services
-            github-actions-runner-vm-service-type))
+            github-actions-runner-vm-service-type
+            github-actions-vm-workflow-program))
 
 ;;;
 ;;; Store programs for the host-side credential lifecycle.
@@ -114,7 +115,7 @@ testing."
                       (use-modules (ice-9 match)
                                    (ice-9 textual-ports)
                                    (r0man guix services github-actions-vm-mint))
-                      (match (program-arguments)
+                      (match (cdr (command-line))
                         ((pat-file url token-file)
                          (catch #t
                            (lambda ()
@@ -141,23 +142,74 @@ arguments, and removes the runner (best effort)."
                     #~(begin
                       (use-modules (ice-9 match)
                                    (r0man guix services github-actions-vm-mint))
-                      (match (program-arguments)
+                      ;; Note: 'exit' must be called outside the
+                      ;; catch; quit is itself catchable, so exiting
+                      ;; from inside the protected thunk would run the
+                      ;; handler instead of exiting.
+                      (match (cdr (command-line))
                         ((pat-file url name)
-                         (catch #t
-                           (lambda ()
-                             (exit
-                              (if (remove-github-actions-runner
-                                   (read-pat-file pat-file) url name)
-                                  0 1)))
-                           (lambda args
-                             (format (current-error-port)
-                                     "github-actions-runner-vm: runner removal failed: ~a~%"
-                                     args)
-                             (exit 1))))
+                         (let ((removed
+                                (catch #t
+                                  (lambda ()
+                                    (remove-github-actions-runner
+                                     (read-pat-file pat-file) url name))
+                                  (lambda args
+                                    (format (current-error-port)
+                                            "github-actions-runner-vm: runner removal failed: ~a~%"
+                                            args)
+                                    (exit 1)))))
+                           (exit (if removed 0 1))))
                         (args
                          (format (current-error-port)
                                  "github-actions-runner-vm: usage: ~a PAT-FILE URL NAME~%"
                                  "github-actions-vm-remove-runner")
+                         (exit 2))))))))
+
+(define (github-actions-vm-workflow-program)
+  "Return a store program for dispatching and cancelling GitHub
+Actions workflow runs: it takes a subcommand and a PAT-FILE, a
+repository/organization URL, and a workflow file path (or numeric ID)
+as arguments.  Subcommands:
+
+  dispatch PAT-FILE URL WORKFLOW REF   dispatch WORKFLOW for REF
+  cancel-queued PAT-FILE URL WORKFLOW  cancel queued runs of WORKFLOW
+
+GITHUB_API_BASE overrides the API base URL for testing."
+  (program-file "github-actions-vm-workflow"
+                (with-extensions (list guile-json-4)
+                  (with-imported-modules '((r0man guix services github-actions-vm-mint))
+                    #~(begin
+                      (use-modules (ice-9 match)
+                                   (r0man guix services github-actions-vm-mint))
+                      (match (cdr (command-line))
+                        (("dispatch" pat-file url workflow ref)
+                         (let ((dispatched
+                                (catch #t
+                                  (lambda ()
+                                    (dispatch-workflow-file
+                                     (read-pat-file pat-file) url workflow ref))
+                                  (lambda args
+                                    (format (current-error-port)
+                                            "github-actions-runner-vm: dispatching ~a failed: ~a~%"
+                                            workflow args)
+                                    (exit 1)))))
+                           (exit (if dispatched 0 1))))
+                        (("cancel-queued" pat-file url workflow)
+                         (let ((count
+                                (catch #t
+                                  (lambda ()
+                                    (cancel-queued-workflow-runs
+                                     (read-pat-file pat-file) url workflow))
+                                  (lambda args
+                                    (format (current-error-port)
+                                            "github-actions-runner-vm: cancelling queued runs of ~a failed: ~a~%"
+                                            workflow args)
+                                    (exit 1)))))
+                           (exit 0)))
+                        (args
+                         (format (current-error-port)
+                                 "github-actions-vm: usage: ~a dispatch|cancel-queued PAT-FILE URL WORKFLOW [REF]~%"
+                                 "github-actions-vm-workflow")
                          (exit 2))))))))
 
 ;;;
@@ -406,20 +458,25 @@ scratch disk mounted at /scratch."
      (replace? #t)
      (extra-registration-args '("--ephemeral"))
      (environment-variables
-      (if (github-actions-runner-vm-configuration-use-host-daemon? config)
-          (list (string-append
-                 "GUIX_DAEMON_SOCKET=guix://10.0.2.2:"
-                 (number->string
-                  (github-actions-runner-vm-configuration-guix-daemon-port
-                   config))))
-          '()))
+      (append
+       (list "PATH=/run/current-system/profile/bin:/run/current-system/profile/sbin:/usr/local/bin:/usr/bin:/bin")
+       (if (github-actions-runner-vm-configuration-use-host-daemon? config)
+           (list (string-append
+                  "GUIX_DAEMON_SOCKET=guix://10.0.2.2:"
+                  (number->string
+                   (github-actions-runner-vm-configuration-guix-daemon-port
+                    config))))
+           '())))
      (supplementary-groups '("docker"))
      (ephemeral? #t)
-     (requirements '(scratch-disk dockerd networking
+     (requirements '(scratch-disk virtio-net-module dockerd networking
                     github-actions-vm-shutdown))
      (shutdown-file %shutdown-file)
      (registration-marker
-      (string-append %feedback-mount-point "/registered"))))
+      (string-append %feedback-mount-point "/registered"))
+     ;; Log the runner's output to the serial console so that E2E tests
+     ;; can see what the runner is doing.
+     (log-file "/dev/console")))
   (operating-system
     (host-name runner-name)
     (timezone "UTC")
@@ -467,6 +524,7 @@ scratch disk mounted at /scratch."
        (simple-service 'github-actions-runner-vm-profile
                        profile-service-type
                        (list docker
+                             docker-cli
                              git
                              guix
                              iptables
@@ -474,6 +532,18 @@ scratch disk mounted at /scratch."
                              nss-certs
                              e2fsprogs
                              util-linux))
+       (simple-service 'github-actions-runner-vm-network
+                       shepherd-root-service-type
+                       (list (shepherd-service
+                              (documentation "Load the virtio_net kernel module.")
+                              (provision '(virtio-net-module))
+                              (requirement '(file-systems))
+                              (one-shot? #t)
+                              (start #~(lambda ()
+                                         (system* #$(file-append kmod "/bin/modprobe")
+                                                  "virtio_net")
+                                         #t))
+                              (stop #~(const #f)))))
        (simple-service 'github-actions-runner-vm-scratch
                        shepherd-root-service-type
                        (list (vm-guest-scratch-disk-service
@@ -481,6 +551,22 @@ scratch disk mounted at /scratch."
        (simple-service 'github-actions-runner-vm-shutdown
                        shepherd-root-service-type
                        (list (vm-guest-shutdown-watcher-service)))
+       (simple-service 'github-actions-runner-vm-log
+                       shepherd-root-service-type
+                       (list (shepherd-service
+                              (documentation "Tail the runner log to the serial console.")
+                              (provision '(runner-log-tail))
+                              (requirement '(github-actions-runner))
+                              (start #~(make-forkexec-constructor
+                                        (list #$(file-append bash-minimal "/bin/bash") "-c"
+                                              (string-append
+                                               ;; -F, not -f: the log file
+                                               ;; does not exist yet when
+                                               ;; the service starts.
+                                               "tail -F /var/log/github-actions-runner.log"
+                                               " > /dev/console 2>&1"))
+                                        #:log-file "/dev/null"))
+                              (stop #~(make-kill-destructor)))))
        (service github-actions-runner-service-type runner-config))))))
 
 ;;;
@@ -641,7 +727,11 @@ when stopped."
         (let mint-loop ((attempt 0))
           (cond
            ((zero? (system* #$mint-program #$pat-file #$url #$token-file))
-            ;; Fresh, empty scratch disk for this boot.
+            ;; The guest runner reads the seed token through 9p
+        ;; (security_model=none), so it must be readable on the
+        ;; host.  The state directory restricts access.
+        (chmod (string-append #$seed-dir "/token") #o644)
+        ;; Fresh, empty scratch disk for this boot.
             (false-if-exception (delete-file #$scratch-file))
             (if (zero? (system* #$(file-append
                                  (github-actions-runner-vm-configuration-qemu

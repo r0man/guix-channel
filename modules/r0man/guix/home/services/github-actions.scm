@@ -31,7 +31,8 @@
                github-actions-runner-configuration-ephemeral?
                github-actions-runner-configuration-requirements
                github-actions-runner-configuration-shutdown-file
-               github-actions-runner-configuration-registration-marker))
+               github-actions-runner-configuration-registration-marker
+               github-actions-runner-configuration-log-file))
 
 (define (home-github-actions-runner-log-file config)
   ;; Path of the runner log file under $XDG_STATE_HOME.
