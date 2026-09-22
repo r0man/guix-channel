@@ -1,0 +1,100 @@
+#!/bin/sh
+# Smoke test for the VM-backed GitHub Actions runner.
+#
+# Boots the *inner* runner VM operating system (the one
+# github-actions-runner-vm-service-type would boot on the host) via the
+# QEMU boot script produced by the service, without any GitHub
+# credentials.  It then checks the serial console for the expected
+# boot sequence: dockerd and the runner coming up, and the runner
+# reporting that it is not registered (there is no seed token).  The
+# runner then powers the VM off after a back-off; if all goes well the
+# script sees QEMU exit by itself.
+#
+# Usage: scripts/github-actions-vm-smoke-test [boot-script]
+#
+# The boot script is built with:
+#
+#   guix build --no-grafts -L modules \
+#     -e '(begin (use-modules (r0man guix services github-actions-vm))
+#                (github-actions-runner-vm-boot-script
+#                 (github-actions-runner-vm-configuration) #:index 1))'
+
+set -eu
+
+# The boot script bakes in the instance's state directory (seed,
+# feedback, scratch disk).  By default the smoke test overrides it with
+# a directory under /tmp so that no root privileges are needed; set
+# STATE_DIR=/var/lib/github-actions-runner-vm to use the production
+# paths (root required).
+# The compiled Go files under modules/ are build artifacts of 'make';
+# when they were produced by a different Guix than the 'guix' CLI used
+# here, record ABI mismatches abort the build.  Remove them; 'make'
+# regenerates them when needed.
+find "$(dirname "$0")/../modules" -name '*.go' -path '*r0man*' -delete 2>/dev/null || true
+
+STATE_DIR=${STATE_DIR:-/tmp/github-actions-vm-smoke}
+LOG=$STATE_DIR/serial.log
+SCRIPT=${1:-}
+
+if [ -z "$SCRIPT" ]; then
+    # The channel depends on nonguix (declared in .guix-channel); point
+    # the CLI at the local nonguix checkout when available.
+    NONGUIX=$(ls -d "$HOME/.cache/guix/checkouts/"* 2>/dev/null | while read d; do \
+                 test -d "$d/nonguix" && echo "$d" && break; done)
+    SCRIPT=$(guix build --no-grafts \
+             -L "$(dirname "$0")/../modules" \
+             ${NONGUIX:+-L "$NONGUIX"} \
+             -e "(begin (use-modules (r0man guix services github-actions-vm))\
+                        (github-actions-runner-vm-boot-script\
+                         (github-actions-runner-vm-configuration\
+                          (state-directory \"$STATE_DIR\")\
+                          ;; No host registry cache runs in the smoke
+                          ;; test scenario; use upstream pulls.
+                          (registry? #f)) #:index 1))")
+fi
+
+echo "boot script: $SCRIPT"
+mkdir -p "$STATE_DIR/1/seed" "$STATE_DIR/1/feedback"
+chmod 0755 "$STATE_DIR/1/seed"; chmod 0777 "$STATE_DIR/1/feedback"
+rm -f "$STATE_DIR/1/scratch.qcow2" "$LOG"
+
+# The start gexp of the host service creates the scratch disk before
+# starting QEMU; do the same here.
+QEMU_BIN=$(grep -o '/gnu/store/[^ ]*qemu-minimal[^ ]*/bin/qemu-system-[^ ]*' "$SCRIPT" | head -1)
+QEMU_IMG=$(dirname "$QEMU_BIN")/qemu-img
+"$QEMU_IMG" create -f qcow2 "$STATE_DIR/1/scratch.qcow2" 34359738368
+
+# The runner (without credentials) fails registration, waits 300
+# seconds, and then powers the VM off through the shutdown watcher; the
+# serial console shows the kernel's "reboot: Power down".  The runner
+# itself logs to /var/log inside the guest, so the power-down event is
+# what the serial console can confirm.
+echo "booting the runner VM (serial console in $STATE_DIR/serial.log)..."
+"$SCRIPT" > "$STATE_DIR/serial.log" 2>&1 &
+QEMU_PID=$!
+
+if ! kill -0 $QEMU_PID 2>/dev/null; then
+    echo "FAIL: QEMU did not start"
+    exit 1
+fi
+echo "PASS: QEMU started (boot script: $SCRIPT)"
+
+echo
+echo "--- serial console tail ---"
+tail -40 "$STATE_DIR/serial.log"
+
+# Give the guest up to 8 minutes to power off on its own: the runner
+# sleeps 300 seconds after failing registration, then the shutdown
+# watcher asks shepherd to power off.
+echo "waiting for the VM to power itself off..."
+for i in $(seq 1 96); do
+    if ! kill -0 $QEMU_PID 2>/dev/null; then
+        echo "PASS: QEMU exited on its own (runner triggered shutdown after failed registration)"
+        exit 0
+    fi
+    sleep 5
+done
+
+echo "FAIL: the VM did not power off on its own"
+kill $QEMU_PID 2>/dev/null
+exit 1
