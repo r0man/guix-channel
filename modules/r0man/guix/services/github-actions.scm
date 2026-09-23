@@ -207,7 +207,10 @@ and the accounts extensions, not by the start script)."
              (list "export \"" var "\"\n"))
            environment-variables)
           (list "\n"
-                "mkdir -p \"$RUNNER_DIR\"\n"
+                ;; Full store paths throughout: shepherd runs the
+                ;; script with a clean environment, where a bare
+                ;; `mkdir' resolves to nothing.
+                (file-append coreutils "/bin/mkdir") " -p \"$RUNNER_DIR\"\n"
                 "cd \"$RUNNER_DIR\"\n"
                 "\n"
                 "URL=" (shell-quote (or url "")) "\n"
@@ -246,7 +249,9 @@ and the accounts extensions, not by the start script)."
                 "        exit 1\n"
                 "    fi\n"
                 "    if [ -n \"$REGISTRATION_MARKER\" ]; then\n"
-                "        mkdir -p \"$(dirname \"$REGISTRATION_MARKER\")\"\n"
+                "        " (file-append coreutils "/bin/mkdir")
+                " -p \"$(" (file-append coreutils "/bin/dirname")
+                " \"$REGISTRATION_MARKER\")\"\n"
                 "        touch \"$REGISTRATION_MARKER\" || true\n"
                 "    fi\n"
                 "fi\n")
@@ -477,8 +482,15 @@ to the runner's USER and GROUP."
                    "\n"
                    "TOKEN_FILE=" (shell-quote token-file) "\n"
                    "\n"
-                   "mkdir -p \"$(dirname \"$RUNNER_CONFIG\")\"\n"
-                   "mkdir -p \"$(dirname \"$TOKEN_FILE\")\"\n"
+                   ;; Full store paths: shepherd runs the script with
+                   ;; a clean environment, where bare `mkdir' and
+                   ;; `dirname' resolve to nothing.
+                   (file-append coreutils "/bin/mkdir")
+                   " -p \"$(" (file-append coreutils "/bin/dirname")
+                   " \"$RUNNER_CONFIG\")\"\n"
+                   (file-append coreutils "/bin/mkdir")
+                   " -p \"$(" (file-append coreutils "/bin/dirname")
+                   " \"$TOKEN_FILE\")\"\n"
                    ;; The runner's registered credentials do not
                    ;; expire, so once it is registered there is nothing
                    ;; to mint.

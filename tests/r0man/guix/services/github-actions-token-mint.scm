@@ -69,11 +69,19 @@ its store path."
 (define (run-script script work-dir)
   "Run the mint script SCRIPT; its output goes to WORK-DIR.  Return #t
 if the script exited with zero."
-  (zero? (system* (string-append %bash "/bin/bash") "-c"
-                  (string-append "exec \"" %bash
-                                 "/bin/bash\" \"$1\" >\""
-                                 work-dir "/output.log\" 2>&1")
-                  script script)))
+  ;; Empty PATH, as shepherd runs the script with a clean environment
+  ;; on a Guix System — any bare `mkdir' or `dirname' in the script
+  ;; must fail.
+  (let ((parent-path (getenv "PATH")))
+    (dynamic-wind
+      (lambda () (setenv "PATH" "/nonexistent"))
+      (lambda ()
+        (zero? (system* (string-append %bash "/bin/bash") "-c"
+                        (string-append "exec \"" %bash
+                                       "/bin/bash\" \"$1\" >\""
+                                       work-dir "/output.log\" 2>&1")
+                        script script)))
+      (lambda () (setenv "PATH" parent-path)))))
 
 (define (read-file file)
   (call-with-input-file file get-string-all))

@@ -80,11 +80,18 @@ store path."
 output and the fake runner log are written into WORK-DIR.  Return #t if
 the script exited with zero."
   (setenv "FAKE_LOG" (string-append work-dir "/fake.log"))
-  (zero? (system* (string-append %bash "/bin/bash") "-c"
-                  (string-append "exec \"" %bash
+  ;; Empty PATH, as shepherd runs the script with a clean environment
+  ;; on a Guix System — any bare `mkdir' in the script must fail.
+  (let ((parent-path (getenv "PATH")))
+    (dynamic-wind
+      (lambda () (setenv "PATH" "/nonexistent"))
+      (lambda ()
+        (zero? (system* (string-append %bash "/bin/bash") "-c"
+                        (string-append "exec \"" %bash
                                  "/bin/bash\" \"$1\" >\""
                                  work-dir "/output.log\" 2>&1")
                   script script)))
+      (lambda () (setenv "PATH" parent-path)))))
 
 (test-begin "github-actions-runner-start-script")
 
