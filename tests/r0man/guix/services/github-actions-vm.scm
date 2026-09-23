@@ -238,17 +238,16 @@ with a thunk returning the requests seen so far, oldest first."
     (let ((script (build-script #:ephemeral? #t
                                 #:shutdown-file "/run/shut"
                                 #:registration-marker "/run/mark")))
-      (and (script-contains? script "SHUTDOWN_FILE=\"/run/shut\"")
-           (script-contains? script "touch \"$SHUTDOWN_FILE\"")
-           (script-contains? script "REGISTRATION_MARKER=\"/run/mark\"")
-           (script-contains? script "touch \"$REGISTRATION_MARKER\"")
-           ;; The runner is run, not exec'd.
-           (script-contains? script "\n\"$RUN\"\n"))))
+      ;; The behaviour itself is exercised by runner-script.scm, which
+      ;; executes the program.
+      (and (script-contains? script "(define shutdown-file \"/run/shut\")")
+           (script-contains? script
+                             "(define registration-marker \"/run/mark\")"))))
 
-  (test-assert "plain script execs the runner"
+  (test-assert "plain script touches no marker file"
     (let ((script (build-script)))
-      (and (script-contains? script "exec \"$RUN\"")
-           (not (script-contains? script "SHUTDOWN_FILE=\"/run/shut\"")))))
+      (and (script-contains? script "(define shutdown-file #f)")
+           (script-contains? script "(define registration-marker #f)"))))
 
   (test-assert "token read from an absolute path"
     (let ((script (build-script #:token "/run/github-actions-seed/token")))

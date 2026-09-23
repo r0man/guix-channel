@@ -1,7 +1,6 @@
 (define-module (r0man guix services github-actions)
   #:use-module (gnu packages admin)
   #:use-module (gnu packages base)
-  #:use-module (gnu packages bash)
   #:use-module (gnu packages guile)
   #:use-module (gnu packages tls)
   #:use-module (gnu services)
@@ -48,19 +47,6 @@
             github-actions-runner-token-mint-script
             github-actions-runner-token-mint-service-type))
 
-(define (shell-quote str)
-  "Quote STR as a single word for interpolation into a POSIX shell
-script."
-  (string-append
-   "\""
-   (string-concatenate
-    (map (lambda (ch)
-           (if (memv ch '(#\" #\$ #\` #\\))
-               (string #\\ ch)
-               (string ch)))
-         (string->list str)))
-   "\""))
-
 (define-record-type* <github-actions-runner-configuration>
   github-actions-runner-configuration
   make-github-actions-runner-configuration
@@ -106,10 +92,18 @@ script."
    github-actions-runner-configuration-log-file
    (default "/var/log/github-actions-runner.log")))
 
+(define %runner-child-path-packages
+  ;; Packages whose bin directories head the PATH the runner's launchers
+  ;; inherit.  Shepherd starts services with a clean environment, and the
+  ;; launchers of the actions-runner package, as well as GitHub's own
+  ;; config.sh and run.sh behind them, call bare commands such as mkdir,
+  ;; cp, chmod, grep, and sed.
+  (list coreutils grep sed findutils))
+
 (define* (github-actions-runner-start-script
           #:key
           (package github-actions-runner)
-          (work-dir "${XDG_DATA_HOME:-$HOME/.local/share}/actions-runner")
+          (work-dir #f)
           (url #f)
           (token #f)
           (name #f)
@@ -120,158 +114,163 @@ script."
           (ephemeral? #f)
           (shutdown-file #f)
           (registration-marker #f))
-  "Return a file-like object holding a Bash script that prepares the
+  "Return a Guile program, as a file-like object, that prepares the
 writable runner work directory WORK-DIR (populated on first use by the
 launchers of the actions-runner package), registers the runner with
 GitHub unless it has been registered before, and finally execs the
 runner.
 
-TOKEN is either a registration token string, a file-like object holding
-the token, an absolute file path holding the token, or #f.  WORK-DIR
-and the values of ENVIRONMENT-VARIABLES are interpolated as-is into the
-generated script, so they may contain shell variable references, but
-must not contain double quotes or newlines.
+The program depends on no ambient environment: it refers to every
+external program by its store file name, and sets a PATH made of
+coreutils, grep, sed, and findutils in front of the inherited one (if
+any) before it runs the launchers of PACKAGE, which is what Shepherd's
+clean service environment requires.  HOME and ACTIONS_RUNNER_DIR are
+set to WORK-DIR.
 
-When EPHEMERAL? is true, the script runs the runner without exec'ing it
-(its exit status matters) and, when SHUTDOWN-FILE is set, touches that
-file once the runner has exited, so that an external supervisor can
-tear down the machine the runner lived in.  On failure (missing
-credentials, or a failed registration), the script waits for 300
-seconds before touching the shutdown file, which backs off respawning a
-broken runner.  When REGISTRATION-MARKER is set, the script touches it
-after a successful registration, which lets an external supervisor
-expire credentials that are no longer needed.  All three fields exist
-for the VM-backed runner service; the default values keep the ordinary
-behavior: exec the runner and never touch any marker file.
+WORK-DIR is a literal directory name, or #f for
+@file{$XDG_DATA_HOME/actions-runner}, falling back to
+@file{$HOME/.local/share/actions-runner}, resolved when the program
+starts (the default of the actions-runner launchers).
+
+TOKEN is either a registration token string, a file-like object holding
+the token, an absolute file name holding the token (read when the
+program starts, with carriage returns and newlines removed), or #f.
+
+ENVIRONMENT-VARIABLES is a list of literal \"NAME=value\" strings, set
+after HOME, ACTIONS_RUNNER_DIR, and PATH, so they may override any of
+them.  No shell expansion takes place.
+
+When EPHEMERAL? is true, the program runs the runner without exec'ing
+it (its exit status matters) and, when SHUTDOWN-FILE is set, touches
+that file once the runner has exited, so that an external supervisor
+can tear down the machine the runner lived in.  On failure (missing
+credentials, a failed registration, or a runner exiting with a non-zero
+status), the program waits for 300 seconds before touching the shutdown
+file, which backs off respawning a broken runner.  When
+REGISTRATION-MARKER is set, the program touches it after a successful
+registration, which lets an external supervisor expire credentials that
+are no longer needed.  All three exist for the VM-backed runner
+service; the default values keep the ordinary behavior: exec the runner
+and never touch any marker file.
 
 SUPPLEMENTARY-GROUPS makes the runner account join additional groups
-such as @code{docker}, and REQUIREMENTS adds shepherd services to the runner
-service's requirement list (both are consumed by the shepherd service
-and the accounts extensions, not by the start script)."
+such as @code{docker}, and REQUIREMENTS adds shepherd services to the
+runner service's requirement list (both are consumed by the shepherd
+service and the accounts extensions, not by the start program)."
+  (define token-file
+    (cond ((file-like? token) token)
+          ((and (string? token) (string-prefix? "/" token)) token)
+          (else #f)))
+
+  (define token-string
+    (and (string? token) (not token-file) token))
+
   (define registration-args
-    (string-append
-     "--unattended --url \"$URL\" --token \"$TOKEN\""
-     (if name
-         (string-append " --name " (shell-quote name))
-         "")
-     (if (null? labels)
-         ""
-         (string-append " --labels "
-                        (shell-quote (string-join labels ","))))
-     (if replace?
-         " --replace"
-         "")
-     (if (null? extra-registration-args)
-         ""
-         (string-append " "
-                        (string-join
-                         (map shell-quote extra-registration-args)
-                         " ")))))
+    (append (if name (list "--name" name) '())
+            (if (null? labels) '() (list "--labels" (string-join labels ",")))
+            (if replace? (list "--replace") '())
+            extra-registration-args))
 
-  (define token-lines
-    (cond ((not token)
-           (list "TOKEN=\"\"\n"))
-          ((file-like? token)
-           (list "TOKEN=\"\"\n"
-                 "if [ -f " token " ]; then\n"
-                 "    TOKEN=\"$("
-                 (file-append coreutils "/bin/tr")
-                 " -d '\\r\\n' < " token ")\"\n"
-                 "fi\n"))
-          ((and (string? token) (string-prefix? "/" token))
-           ;; An absolute file path holding the token, read at start
-           ;; time.  Used by the VM-backed service, which mounts a seed
-           ;; directory with a minted token into the runner VM.
-           (list "TOKEN=\"\"\n"
-                 "if [ -f " token " ]; then\n"
-                 "    TOKEN=\"$("
-                 (file-append coreutils "/bin/tr")
-                 " -d '\\r\\n' < " token ")\"\n"
-                 "fi\n"))
-          (else
-           (list "TOKEN=" (shell-quote token) "\n"))))
+  (program-file
+   "github-actions-runner-start"
+   (with-imported-modules '((guix build utils))
+     #~(begin
+         (use-modules (guix build utils)
+                      (ice-9 textual-ports))
 
-  (apply mixed-text-file
-         "github-actions-runner-start"
-         (append
-          (list "#!" (file-append bash-minimal "/bin/bash") "\n"
-                ;; Generated by (r0man guix services github-actions).
-                ;; Do not edit.
-                "set -eu\n"
-                "\n"
-                "RUNNER_DIR=\"" work-dir "\"\n"
-                "export ACTIONS_RUNNER_DIR=\"$RUNNER_DIR\"\n"
-                "export HOME=\"$RUNNER_DIR\"\n")
-          (append-map
-           (lambda (var)
-             (list "export \"" var "\"\n"))
-           environment-variables)
-          (list "\n"
-                ;; Full store paths throughout: shepherd runs the
-                ;; script with a clean environment, where a bare
-                ;; `mkdir' resolves to nothing.
-                (file-append coreutils "/bin/mkdir") " -p \"$RUNNER_DIR\"\n"
-                "cd \"$RUNNER_DIR\"\n"
-                "\n"
-                "URL=" (shell-quote (or url "")) "\n"
-                "SHUTDOWN_FILE=" (shell-quote (or shutdown-file "")) "\n"
-                "REGISTRATION_MARKER="
-                (shell-quote (or registration-marker "")) "\n")
-          token-lines
-          (list "\n"
-                "CONFIG="
-                (file-append package "/bin/actions-runner-config")
-                "\n"
-                "RUN="
-                (file-append package "/bin/actions-runner")
-                "\n"
-                "\n"
-                "if [ ! -f \"$RUNNER_DIR/.runner\" ]; then\n"
-                "    if [ -z \"$URL\" ] || [ -z \"$TOKEN\" ]; then\n"
-                "        echo \"github-actions-runner: $RUNNER_DIR is not registered with GitHub, and no\" >&2\n"
-                "        echo \"github-actions-runner: URL or registration token was provided.\" >&2\n"
-                "        echo \"github-actions-runner: Either set the 'url' and 'token' fields of\" >&2\n"
-                "        echo \"github-actions-runner: github-actions-runner-configuration, or register the\" >&2\n"
-                "        echo \"github-actions-runner: runner manually by running: $CONFIG\" >&2\n"
-                "        if [ -n \"$SHUTDOWN_FILE\" ]; then\n"
-                "            sleep 300\n"
-                "            touch \"$SHUTDOWN_FILE\" || true\n"
-                "        fi\n"
-                "        exit 1\n"
-                "    fi\n"
-                "    echo \"github-actions-runner: registering runner in $RUNNER_DIR\"\n"
-                "    if ! \"$CONFIG\" " registration-args "; then\n"
-                "        echo \"github-actions-runner: registration failed\" >&2\n"
-                "        if [ -n \"$SHUTDOWN_FILE\" ]; then\n"
-                "            sleep 300\n"
-                "            touch \"$SHUTDOWN_FILE\" || true\n"
-                "        fi\n"
-                "        exit 1\n"
-                "    fi\n"
-                "    if [ -n \"$REGISTRATION_MARKER\" ]; then\n"
-                "        " (file-append coreutils "/bin/mkdir")
-                " -p \"$(" (file-append coreutils "/bin/dirname")
-                " \"$REGISTRATION_MARKER\")\"\n"
-                "        touch \"$REGISTRATION_MARKER\" || true\n"
-                "    fi\n"
-                "fi\n")
-          (if ephemeral?
-              (list
-               "\n"
-               "set +e\n"
-               "\"$RUN\"\n"
-               "status=$?\n"
-               "set -e\n"
-               "echo \"github-actions-runner: runner exited with status $status\"\n"
-               "if [ -n \"$SHUTDOWN_FILE\" ]; then\n"
-               "    if [ \"$status\" -ne 0 ]; then\n"
-               "        sleep 300\n"
-               "    fi\n"
-               "    touch \"$SHUTDOWN_FILE\" || true\n"
-               "fi\n"
-               "exit \"$status\"\n")
-              (list "\n"
-                    "exec \"$RUN\"\n")))))
+         (define (log fmt . args)
+           (apply format (current-error-port)
+                  (string-append "github-actions-runner: " fmt "~%")
+                  args))
+
+         (define (touch file)
+           (close-port (open-file file "a"))
+           (utime file))
+
+         (define runner-dir
+           (or #$work-dir
+               (string-append
+                (or (getenv "XDG_DATA_HOME")
+                    (string-append (or (getenv "HOME")
+                                       (begin
+                                         (log "neither XDG_DATA_HOME nor HOME is set")
+                                         (exit 1)))
+                                   "/.local/share"))
+                "/actions-runner")))
+
+         (define url #$url)
+         (define shutdown-file #$shutdown-file)
+         (define registration-marker #$registration-marker)
+         (define config #$(file-append package "/bin/actions-runner-config"))
+         (define run #$(file-append package "/bin/actions-runner"))
+
+         (define (read-token)
+           (let ((file #$token-file))
+             (if file
+                 (and (file-exists? file)
+                      (list->string
+                       (filter (lambda (ch)
+                                 (not (memv ch '(#\return #\newline))))
+                               (string->list
+                                (call-with-input-file file get-string-all)))))
+                 #$token-string)))
+
+         (define (fail fmt . args)
+           (apply log fmt args)
+           (when shutdown-file
+             (sleep 300)
+             (false-if-exception (touch shutdown-file)))
+           (exit 1))
+
+         (setenv "ACTIONS_RUNNER_DIR" runner-dir)
+         (setenv "HOME" runner-dir)
+         (setenv "PATH"
+                 (string-join
+                  (append (list #$@(map (lambda (p) (file-append p "/bin"))
+                                        %runner-child-path-packages))
+                          (let ((path (getenv "PATH")))
+                            (if path (list path) '())))
+                  ":"))
+         (for-each (lambda (var)
+                     (let ((index (string-index var #\=)))
+                       (setenv (substring var 0 index)
+                               (substring var (+ index 1)))))
+                   '#$environment-variables)
+
+         (mkdir-p runner-dir)
+         (chdir runner-dir)
+
+         (unless (file-exists? (string-append runner-dir "/.runner"))
+           (let ((token (read-token)))
+             (when (or (not url) (string-null? url)
+                       (not token) (string-null? token))
+               (fail "~a is not registered with GitHub, and no URL or \
+registration token was provided.  Either set the 'url' and 'token' fields \
+of github-actions-runner-configuration, or register the runner manually \
+by running: ~a"
+                     runner-dir config))
+             (log "registering runner in ~a" runner-dir)
+             (unless (zero? (apply system* config
+                                   "--unattended" "--url" url
+                                   "--token" token
+                                   '#$registration-args))
+               (fail "registration failed"))
+             (when registration-marker
+               (false-if-exception
+                (begin
+                  (mkdir-p (dirname registration-marker))
+                  (touch registration-marker))))))
+
+         (if #$ephemeral?
+             (let* ((status (system* run))
+                    (code (or (status:exit-val status) 1)))
+               (log "runner exited with status ~a" code)
+               (when shutdown-file
+                 (unless (zero? code)
+                   (sleep 300))
+                 (false-if-exception (touch shutdown-file)))
+               (exit code))
+             (execl run run))))))
 
 (define (github-actions-runner-shepherd-service config)
   (match-record config <github-actions-runner-configuration>
@@ -304,8 +303,7 @@ and the accounts extensions, not by the start script)."
              ;; access to /var/run/docker.sock) must be passed
              ;; explicitly; the account's groups alone are not enough.
              (start #~(make-forkexec-constructor
-                       (list #$(file-append bash-minimal "/bin/bash")
-                             #$script)
+                       (list #$script)
                        #:user #$user
                        #:group #$group
                        ;; Note the quote: a plain list value must not
@@ -459,64 +457,60 @@ overrides the API base URL for testing."
   )
 
 (define (github-actions-runner-token-mint-script config)
-  "Return a file-like object holding the Bash script of the token
-minting one-shot: exit when the runner is already registered, mint a
-fresh registration token from the PAT file with
-`github-actions-runner-mint-program' otherwise, and hand the token file
-to the runner's USER and GROUP."
-  (define token-file
-    (github-actions-runner-token-configuration-token-file config))
-  (mixed-text-file "github-actions-runner-token-mint"
-                   "#!" (file-append bash-minimal "/bin/bash") "\n"
-                   "set -eu\n"
-                   "\n"
-                   "RUNNER_CONFIG="
-                   (shell-quote
-                    (github-actions-runner-token-configuration-runner-config-file
-                     config))
-                   "\n"
-                   "PAT_FILE="
-                   (shell-quote
-                    (github-actions-runner-token-configuration-pat-file
-                     config))
-                   "\n"
-                   "TOKEN_FILE=" (shell-quote token-file) "\n"
-                   "\n"
-                   ;; Full store paths: shepherd runs the script with
-                   ;; a clean environment, where bare `mkdir' and
-                   ;; `dirname' resolve to nothing.
-                   (file-append coreutils "/bin/mkdir")
-                   " -p \"$(" (file-append coreutils "/bin/dirname")
-                   " \"$RUNNER_CONFIG\")\"\n"
-                   (file-append coreutils "/bin/mkdir")
-                   " -p \"$(" (file-append coreutils "/bin/dirname")
-                   " \"$TOKEN_FILE\")\"\n"
-                   ;; The runner's registered credentials do not
-                   ;; expire, so once it is registered there is nothing
-                   ;; to mint.
-                   "if [ -f \"$RUNNER_CONFIG\" ]; then\n"
-                   "    echo \"github-actions-runner: registered; not minting\" >&2\n"
-                   "    exit 0\n"
-                   "fi\n"
-                   "if [ ! -r \"$PAT_FILE\" ]; then\n"
-                   "    echo \"github-actions-runner: PAT file $PAT_FILE is not readable\" >&2\n"
-                   "    exit 1\n"
-                   "fi\n"
-                   ;; The token expires one hour after minting, so it
-                   ;; is minted only when the runner is about to
-                   ;; register, and kept out of everyone's reach but
-                   ;; the runner account's.
-                   (github-actions-runner-mint-program)
-                   " \"$PAT_FILE\" "
-                   (shell-quote
-                    (github-actions-runner-token-configuration-url config))
-                   " \"$TOKEN_FILE\"\n"
-                   (file-append coreutils "/bin/chown")
-                   " "
-                   (github-actions-runner-token-configuration-user config)
-                   ":"
-                   (github-actions-runner-token-configuration-group config)
-                   " \"$TOKEN_FILE\"\n"))
+  "Return a Guile program, as a file-like object, that is the token
+minting one-shot of CONFIG: exit successfully when the runner is
+already registered, mint a fresh registration token from the PAT file
+otherwise (reusing one younger than 55 minutes, see
+`github-actions-runner-mint-program'), and hand the token file to the
+runner's USER and GROUP.  The program depends on no ambient
+environment, as Shepherd's clean service environment requires."
+  (match-record config <github-actions-runner-token-configuration>
+    (url pat-file token-file runner-config-file user group)
+    ;; See `github-actions-runner-mint-program' for why guile-gnutls is
+    ;; an extension and GUILE_EXTENSIONS_PATH is set explicitly.
+    (program-file
+     "github-actions-runner-token-mint"
+     (with-extensions (list guile-json-4 guile-gnutls)
+       (with-imported-modules '((guix build utils)
+                                (r0man guix services github-actions-vm-mint))
+         #~(begin
+             (use-modules (guix build utils)
+                          (r0man guix services github-actions-vm-mint))
+
+             (define (log fmt . args)
+               (apply format (current-error-port)
+                      (string-append "github-actions-runner: " fmt "~%")
+                      args))
+
+             (setenv "GUILE_EXTENSIONS_PATH"
+                     #$(file-append guile-gnutls
+                                    "/lib/guile/3.0/extensions"))
+
+             (mkdir-p (dirname #$runner-config-file))
+             (mkdir-p (dirname #$token-file))
+
+             ;; The runner's registered credentials do not expire, so
+             ;; once it is registered there is nothing to mint.
+             (when (file-exists? #$runner-config-file)
+               (log "registered; not minting")
+               (exit 0))
+             (unless (access? #$pat-file R_OK)
+               (log "PAT file ~a is not readable" #$pat-file)
+               (exit 1))
+
+             ;; The token expires one hour after minting, so it is
+             ;; minted only when the runner is about to register, and
+             ;; kept out of everyone's reach but the runner account's.
+             (catch #t
+               (lambda ()
+                 (mint-and-store-registration-token
+                  (read-pat-file #$pat-file) #$url #$token-file))
+               (lambda args
+                 (log "token minting failed: ~a" args)
+                 (exit 1)))
+             (chown #$token-file
+                    (passwd:uid (getpwnam #$user))
+                    (group:gid (getgrnam #$group)))))))))
 
 (define (github-actions-runner-token-shepherd-service config)
   "Return the one-shot Shepherd service of CONFIG: mint a registration
@@ -535,8 +529,7 @@ token, once per boot, unless the runner is already registered."
    (one-shot? #t)
    (start #~(lambda args
               (zero? (spawn-command
-                      (list #$(file-append bash-minimal "/bin/bash")
-                            #$(github-actions-runner-token-mint-script
+                      (list #$(github-actions-runner-token-mint-script
                                config))))))
    (stop #~(const #f))))
 

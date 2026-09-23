@@ -8,7 +8,6 @@
 (define-module (r0man guix home services github-actions)
   #:use-module (gnu home services)
   #:use-module (gnu home services shepherd)
-  #:use-module (gnu packages bash)
   #:use-module (gnu services)
   #:use-module (gnu services shepherd)
   #:use-module (guix gexp)
@@ -72,8 +71,7 @@
            (provision '(github-actions-runner))
            (respawn? #t)
            (start #~(make-forkexec-constructor
-                     (list #$(file-append bash-minimal "/bin/bash")
-                           #$script)
+                     (list #$script)
                      #:log-file
                      #$(home-github-actions-runner-log-file config)))
            (stop #~(make-kill-destructor))))))
@@ -115,7 +113,8 @@
        ;; are shared between manual and service runs.  The 'user' and
        ;; 'group' fields of the configuration are ignored: the runner
        ;; runs as the user that owns the Home environment.
-       (work-dir "${XDG_DATA_HOME:-$HOME/.local/share}/actions-runner"))))
+       ;; #f: the start program resolves it from XDG_DATA_HOME or HOME.
+       (work-dir #f))))
    (description
     "Run a self-hosted GitHub Actions runner as a user-level Shepherd
 service.  This is the Home counterpart of

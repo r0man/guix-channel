@@ -1,8 +1,8 @@
-;;; Unit tests for github-actions-runner-start-script.  The script, plus
+;;; Unit tests for github-actions-runner-start-script.  The program, plus
 ;;; a fake runner package standing in for the actions-runner package, is
-;;; lowered to the store and actually executed, so that the registration
-;;; invocation, idempotency, shell quoting, and error handling are
-;;; exercised for real.
+;;; lowered to the store and actually executed with an empty PATH, so
+;;; that the registration invocation, idempotency, argument passing, the
+;;; launchers' environment, and error handling are exercised for real.
 
 (define-module (test-r0man-guix-services-runner-script)
   #:use-module (gnu packages bash)
@@ -43,14 +43,19 @@
                (format port "#!~a\n~a" bash body)))
            (chmod file #o555)))
        (mkdir-p (string-append #$output "/bin"))
+       ;; The bare mkdir is what the real launcher's init block runs
+       ;; before it sets a PATH of its own.
        (fake "actions-runner-config"
              "echo config \"$@\" >> \"$FAKE_LOG\"
 printf '[%s]' \"$@\" >> \"$FAKE_LOG\"
 echo >> \"$FAKE_LOG\"
 echo env \"$FOO\" >> \"$FAKE_LOG\"
+echo home \"$HOME\" >> \"$FAKE_LOG\"
+mkdir -p \"$HOME/probe\" && echo mkdir-ok >> \"$FAKE_LOG\"
 ")
        (fake "actions-runner"
              "echo run \"$@\" >> \"$FAKE_LOG\"
+exit \"${FAKE_RUN_STATUS:-0}\"
 ")))))
 
 (define %bash (build bash-minimal))
@@ -76,22 +81,28 @@ store path."
           kwargs)))
 
 (define (run-script script work-dir)
-  "Run the start script SCRIPT with work directory WORK-DIR.  Its
-output and the fake runner log are written into WORK-DIR.  Return #t if
-the script exited with zero."
+  "Run the start program SCRIPT with work directory WORK-DIR.  Its
+output and the fake runner log are written into WORK-DIR.  Return the
+exit status of the program."
   (setenv "FAKE_LOG" (string-append work-dir "/fake.log"))
-  ;; Empty PATH, as shepherd runs the script with a clean environment
-  ;; on a Guix System — any bare `mkdir' in the script must fail.
+  ;; Empty PATH, as shepherd runs the program with a clean environment
+  ;; on a Guix System: the program, and the launchers it runs, must not
+  ;; depend on the caller's PATH.  Bash only redirects the output; the
+  ;; program is executed by its own file name.
   (let ((parent-path (getenv "PATH")))
     (dynamic-wind
       (lambda () (setenv "PATH" "/nonexistent"))
       (lambda ()
-        (zero? (system* (string-append %bash "/bin/bash") "-c"
-                        (string-append "exec \"" %bash
-                                 "/bin/bash\" \"$1\" >\""
+        (status:exit-val
+         (system* (string-append %bash "/bin/bash") "-c"
+                  (string-append "exec \"$1\" >\""
                                  work-dir "/output.log\" 2>&1")
                   script script)))
       (lambda () (setenv "PATH" parent-path)))))
+
+(define (run-script-ok? script work-dir)
+  "Run SCRIPT like `run-script' and return #t if it exited with zero."
+  (eqv? 0 (run-script script work-dir)))
 
 (test-begin "github-actions-runner-start-script")
 
@@ -106,7 +117,7 @@ the script exited with zero."
                      #:token "tok1en\"with$special"
                      #:name "ci-box"
                      #:labels '("linux" "x64")))
-            (ok (run-script script work-dir))
+            (ok (run-script-ok? script work-dir))
             (log (read-file (string-append work-dir "/fake.log"))))
        (and ok
             (string-contains
@@ -127,7 +138,7 @@ the script exited with zero."
                      #:token "abc123"))
             (_ (call-with-output-file (string-append work-dir "/.runner")
                  (lambda (port) (display "{}" port))))
-            (ok (run-script script work-dir))
+            (ok (run-script-ok? script work-dir))
             (log (read-file (string-append work-dir "/fake.log"))))
        (and ok
             (string-contains log "run")
@@ -140,7 +151,7 @@ the script exited with zero."
      (let* ((script (build-script
                      work-dir
                      #:url "https://github.com/example/example"))
-            (ok (run-script script work-dir))
+            (ok (run-script-ok? script work-dir))
             (output (read-file (string-append work-dir "/output.log"))))
        (and (not ok)
             (not (file-exists? (string-append work-dir "/fake.log")))
@@ -155,7 +166,7 @@ the script exited with zero."
                      #:url "https://github.com/example/example"
                      #:token (plain-file "test-runner-token"
                                          "file-tok\n")))
-            (ok (run-script script work-dir))
+            (ok (run-script-ok? script work-dir))
             (log (read-file (string-append work-dir "/fake.log"))))
        (and ok
             ;; The bracket delimiters prove that the newline in the
@@ -172,7 +183,7 @@ the script exited with zero."
                      #:url "https://github.com/example/example"
                      #:token "abc123"
                      #:environment-variables '("FOO=bar baz")))
-            (ok (run-script script work-dir))
+            (ok (run-script-ok? script work-dir))
             (log (read-file (string-append work-dir "/fake.log"))))
        (and ok (string-contains log "env bar baz") #t)))))
 
@@ -184,8 +195,77 @@ the script exited with zero."
                      #:url "https://github.com/example/example"
                      #:token "abc123"
                      #:replace? #t))
-            (ok (run-script script work-dir))
+            (ok (run-script-ok? script work-dir))
             (log (read-file (string-append work-dir "/fake.log"))))
        (and ok (string-contains log "--replace") #t)))))
+
+(call-with-work-dir
+ (lambda (work-dir)
+   (test-assert "the launchers inherit a PATH with coreutils"
+     (let* ((script (build-script
+                     work-dir
+                     #:url "https://github.com/example/example"
+                     #:token "abc123"))
+            (ok (run-script-ok? script work-dir))
+            (log (read-file (string-append work-dir "/fake.log"))))
+       (and ok
+            (string-contains log (string-append "home " work-dir "\n"))
+            (string-contains log "mkdir-ok")
+            (file-exists? (string-append work-dir "/probe"))
+            #t)))))
+
+(call-with-work-dir
+ (lambda (work-dir)
+   (test-assert "ephemeral runs touch the marker and the shutdown file"
+     (let* ((marker (string-append work-dir "/feedback/registered"))
+            (shutdown (string-append work-dir "/shutdown"))
+            (script (build-script
+                     work-dir
+                     #:url "https://github.com/example/example"
+                     #:token "abc123"
+                     #:ephemeral? #t
+                     #:shutdown-file shutdown
+                     #:registration-marker marker))
+            ;; The runner succeeds: a failing one would wait 300
+            ;; seconds before touching the shutdown file.
+            (status (run-script script work-dir))
+            (output (read-file (string-append work-dir "/output.log"))))
+       (and (eqv? 0 status)
+            (file-exists? marker)
+            (file-exists? shutdown)
+            (string-contains output "runner exited with status 0")
+            #t)))))
+
+(call-with-work-dir
+ (lambda (work-dir)
+   (test-assert "ephemeral runs return the runner's exit status"
+     (let* ((script (build-script
+                     work-dir
+                     #:url "https://github.com/example/example"
+                     #:token "abc123"
+                     #:ephemeral? #t))
+            (status (dynamic-wind
+                      (lambda () (setenv "FAKE_RUN_STATUS" "3"))
+                      (lambda () (run-script script work-dir))
+                      (lambda () (unsetenv "FAKE_RUN_STATUS")))))
+       (eqv? 3 status)))))
+
+(call-with-work-dir
+ (lambda (work-dir)
+   (test-assert "defaults the work directory to XDG_DATA_HOME"
+     (let* ((script (build (github-actions-runner-start-script
+                            #:package %fake-runner
+                            #:url "https://github.com/example/example"
+                            #:token "abc123")))
+            (runner-dir (string-append work-dir "/actions-runner"))
+            (ok (dynamic-wind
+                  (lambda () (setenv "XDG_DATA_HOME" work-dir))
+                  (lambda () (run-script-ok? script work-dir))
+                  (lambda () (unsetenv "XDG_DATA_HOME"))))
+            (log (read-file (string-append work-dir "/fake.log"))))
+       (and ok
+            (string-contains log (string-append "home " runner-dir "\n"))
+            (eq? (quote directory) (stat:type (stat runner-dir)))
+            #t)))))
 
 (test-end "github-actions-runner-start-script")
