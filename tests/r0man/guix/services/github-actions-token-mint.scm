@@ -52,17 +52,19 @@ running the test."
       (lambda () (proc work-dir))
       (lambda () (delete-file-recursively work-dir)))))
 
-(define (build-mint-script work-dir url pat-file)
+(define* (build-mint-script work-dir url pat-file
+                            #:key (runner-dirs (list work-dir)))
   "Build the mint script of a token configuration pointed at the
-work-directory WORK-DIR (for its .runner and token files) and return
-its store path."
+work-directory WORK-DIR (for its token file) and the .runner files of
+RUNNER-DIRS (WORK-DIR itself by default), and return its store path."
   (build
    (github-actions-runner-token-mint-script
     (github-actions-runner-token-configuration
      (url url)
      (pat-file pat-file)
      (token-file (string-append work-dir "/registration-token"))
-     (runner-config-file (string-append work-dir "/.runner"))
+     (runner-config-files
+      (map (lambda (dir) (string-append dir "/.runner")) runner-dirs))
      (user (current-user-name))
      (group (current-group-name))))))
 
@@ -150,6 +152,46 @@ PROC with a thunk returning the requests seen so far, oldest first."
                                            pat-file))
                 (_ (call-with-output-file (string-append work-dir "/.runner")
                      (lambda (port) (display "{}" port))))
+                (ok (run-script script work-dir)))
+           (and ok
+                (not (file-exists?
+                      (string-append work-dir "/registration-token")))
+                (string-contains (read-file (string-append work-dir
+                                                           "/output.log"))
+                                 "registered; not minting")))))))
+
+  (call-with-work-dir
+   (lambda (work-dir)
+     (let ((pat-file (string-append work-dir "/pat"))
+           (runner-a (string-append work-dir "/a"))
+           (runner-b (string-append work-dir "/b")))
+       (call-with-output-file pat-file (lambda (port) (display "PAT-XYZ" port)))
+       (mkdir runner-a)
+       (mkdir runner-b)
+       (call-with-output-file (string-append runner-a "/.runner")
+         (lambda (port) (display "{}" port)))
+       (test-assert "mints while one of several runners is unregistered"
+         (let* ((script (build-mint-script work-dir
+                                           "https://github.com/example/example"
+                                           "/does/not/exist"
+                                           #:runner-dirs (list runner-a
+                                                               runner-b)))
+                (ok (run-script script work-dir)))
+           ;; Only runner A is registered, so the script goes on to
+           ;; mint, which fails here on the unreadable PAT: that
+           ;; failure proves the registered check did not short-cut.
+           (and (not ok)
+                (string-contains (read-file (string-append work-dir
+                                                           "/output.log"))
+                                 "not readable"))))
+       (call-with-output-file (string-append runner-b "/.runner")
+         (lambda (port) (display "{}" port)))
+       (test-assert "skips minting when every runner is registered"
+         (let* ((script (build-mint-script work-dir
+                                           "https://github.com/example/example"
+                                           pat-file
+                                           #:runner-dirs (list runner-a
+                                                               runner-b)))
                 (ok (run-script script work-dir)))
            (and ok
                 (not (file-exists?

@@ -268,4 +268,69 @@ exit status of the program."
             (eq? (quote directory) (stat:type (stat runner-dir)))
             #t)))))
 
+(call-with-work-dir
+ (lambda (work-dir)
+   (test-assert "suffixes the default work directory with the id"
+     (let* ((script (build (github-actions-runner-start-script
+                            #:package %fake-runner
+                            #:id "ci-2"
+                            #:url "https://github.com/example/example"
+                            #:token "abc123")))
+            (runner-dir (string-append work-dir "/actions-runner-ci-2"))
+            (ok (dynamic-wind
+                  (lambda () (setenv "XDG_DATA_HOME" work-dir))
+                  (lambda () (run-script-ok? script work-dir))
+                  (lambda () (unsetenv "XDG_DATA_HOME"))))
+            (log (read-file (string-append work-dir "/fake.log"))))
+       (and ok
+            (string-contains log (string-append "home " runner-dir "\n"))
+            (eq? (quote directory) (stat:type (stat runner-dir)))
+            #t)))))
+
+(call-with-work-dir
+ (lambda (work-dir)
+   (test-assert "derives the runner name from the host name and the id"
+     (let* ((script (build-script
+                     work-dir
+                     #:id "ci-2"
+                     #:url "https://github.com/example/example"
+                     #:token "abc123"))
+            (ok (run-script-ok? script work-dir))
+            (log (read-file (string-append work-dir "/fake.log"))))
+       (and ok
+            ;; The program runs on this host, so it derives the same
+            ;; name the test can predict.
+            (string-contains log (string-append "[--name][" (gethostname)
+                                                "-ci-2]"))
+            #t)))))
+
+(call-with-work-dir
+ (lambda (work-dir)
+   (test-assert "an explicit name wins over the derived one"
+     (let* ((script (build-script
+                     work-dir
+                     #:id "ci-2"
+                     #:name "ci-box"
+                     #:url "https://github.com/example/example"
+                     #:token "abc123"))
+            (ok (run-script-ok? script work-dir))
+            (log (read-file (string-append work-dir "/fake.log"))))
+       (and ok
+            (string-contains log "[--name][ci-box]")
+            (not (string-contains log (gethostname)))
+            #t)))))
+
+(call-with-work-dir
+ (lambda (work-dir)
+   (test-assert "passes no name without an id"
+     (let* ((script (build-script
+                     work-dir
+                     #:url "https://github.com/example/example"
+                     #:token "abc123"))
+            (ok (run-script-ok? script work-dir))
+            (log (read-file (string-append work-dir "/fake.log"))))
+       (and ok
+            (not (string-contains log "--name"))
+            #t)))))
+
 (test-end "github-actions-runner-start-script")

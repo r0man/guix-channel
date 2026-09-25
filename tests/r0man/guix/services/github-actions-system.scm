@@ -65,9 +65,16 @@
      (simple-operating-system
       (service static-networking-service-type
                (list %qemu-static-networking))
+      ;; Two instances, sharing the runner account: one declared on its
+      ;; own, one as a group of instances.
       (service github-actions-runner-service-type
-               (github-actions-runner-configuration
-                (url "https://github.com/example/example")))))
+               (list (github-actions-runner-configuration
+                      (id "a")
+                      (url "https://github.com/example/example"))
+                     (github-actions-runner-configuration
+                      (id "b")
+                      (instances 1)
+                      (url "https://github.com/example/example"))))))
     ;; Make sure the virtio NIC driver is loaded before shepherd starts
     ;; the networking service; on aarch64 -M virt the NIC is
     ;; virtio-net-pci.
@@ -105,47 +112,73 @@ service running without registration credentials."
             (marionette-eval '(zero? (system* "id" "github-actions-runner"))
                              marionette))
 
-          (test-assert "work directory exists"
+          (test-equal "the account's home is the state directory"
+            "/var/lib/github-actions-runner"
             (marionette-eval
-             '(file-exists? "/var/lib/github-actions-runner")
+             '(passwd:dir (getpwnam "github-actions-runner"))
              marionette))
 
-          (test-assert "_work directory exists"
+          (test-assert "state directory is owned by the runner account"
             (marionette-eval
-             '(file-exists? "/var/lib/github-actions-runner/_work")
+             '(= (stat:uid (stat "/var/lib/github-actions-runner"))
+                 (passwd:uid (getpwnam "github-actions-runner")))
              marionette))
 
-          (test-assert "shepherd service is running"
+          (test-assert "work directories of both instances exist"
             (marionette-eval
-             '(zero? (system* "herd" "status" "github-actions-runner"))
+             '(and (file-exists? "/var/lib/github-actions-runner/a")
+                   (file-exists? "/var/lib/github-actions-runner/b"))
              marionette))
 
-          (test-assert "start script reports missing registration"
+          (test-assert "_work directories of both instances exist"
+            (marionette-eval
+             '(and (file-exists? "/var/lib/github-actions-runner/a/_work")
+                   (file-exists? "/var/lib/github-actions-runner/b/_work"))
+             marionette))
+
+          (test-assert "shepherd services of both instances exist"
+            (marionette-eval
+             '(and (zero? (system* "herd" "status" "github-actions-runner-a"))
+                   (zero? (system* "herd" "status" "github-actions-runner-b")))
+             marionette))
+
+          (test-assert "no shepherd service without id exists"
+            (marionette-eval
+             '(not (zero? (system* "herd" "status" "github-actions-runner")))
+             marionette))
+
+          (test-assert "start scripts of both instances report missing registration"
             (let ((result
                    (marionette-eval
                     ;; Note: this code runs in the guest REPL, so it
                     ;; must import its own modules.
                     '(begin
                        (use-modules (ice-9 textual-ports))
-                       (let ((log "/var/log/github-actions-runner.log"))
-                         (let loop ((attempt 0))
-                           (or (and (file-exists? log)
-                                    (string-contains
-                                     (call-with-input-file log get-string-all)
-                                     "not registered with GitHub"))
-                               (>= attempt 60)
-                               (begin (sleep 1) (loop (+ attempt 1)))))))
+                       (define (reports-missing-registration? log)
+                         (and (file-exists? log)
+                              (string-contains
+                               (call-with-input-file log get-string-all)
+                               "not registered with GitHub")))
+                       (let loop ((attempt 0))
+                         (or (and (reports-missing-registration?
+                                   "/var/log/github-actions-runner-a.log")
+                                  (reports-missing-registration?
+                                   "/var/log/github-actions-runner-b.log"))
+                             (>= attempt 60)
+                             (begin (sleep 1) (loop (+ attempt 1))))))
                     marionette)))
               (unless result
                 (format (current-error-port)
-                        "guest log: ~s~%"
+                        "guest logs: ~s~%"
                         (marionette-eval
                          '(begin
                             (use-modules (ice-9 textual-ports))
-                            (false-if-exception
-                             (call-with-input-file
-                                 "/var/log/github-actions-runner.log"
-                               get-string-all)))
+                            (map (lambda (log)
+                                   (false-if-exception
+                                    (call-with-input-file log
+                                      get-string-all)))
+                                 '("/var/log/github-actions-runner-a.log"
+                                   "/var/log/github-actions-runner-b.log")))
                          marionette)))
               result))
 

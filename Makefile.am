@@ -68,6 +68,7 @@ UNIT_TESTS = \
   tests/r0man/guix/services/github-actions-vm.scm \
   tests/r0man/guix/services/runner-script.scm \
   tests/r0man/guix/services/github-actions-token-mint.scm \
+  tests/r0man/guix/services/github-actions.scm \
   tests/r0man/guix/services/smoke.scm
 
 # VM-based tests — run by `make check-system`.  Each file is loaded by

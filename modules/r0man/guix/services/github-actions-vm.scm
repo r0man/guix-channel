@@ -552,7 +552,7 @@ scratch disk mounted at /scratch."
                                                " > /dev/console 2>&1"))
                                         #:log-file "/dev/null"))
                               (stop #~(make-kill-destructor)))))
-       (service github-actions-runner-service-type runner-config))))))
+       (service github-actions-runner-service-type (list runner-config)))))))
 
 ;;;
 ;;; Boot script (one QEMU invocation per instance).
