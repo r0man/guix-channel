@@ -7,6 +7,7 @@
   #:use-module (gnu packages icu4c)
   #:use-module (gnu packages nss)
   #:use-module (gnu packages tls)
+  #:use-module (gnu packages version-control)
   #:use-module (guix download)
   #:use-module (guix gexp)
   #:use-module (guix packages)
@@ -100,11 +101,13 @@
               (let* ((out (assoc-ref outputs "out"))
                      (bin (string-append out "/bin"))
                      (template (string-append out "/lib/actions-runner"))
+                     ;; git: actions/checkout falls back to a tarball
+                     ;; without .git when it finds none on PATH.
                      (path-prefix
                       (string-join
                        (map input->bin
                             '("coreutils" "glibc" "grep"
-                              "findutils" "which"))
+                              "findutils" "which" "git-minimal"))
                        ":"))
                      (glibc-sbin (input->dir "glibc" "sbin"))
                      (ld-path
@@ -165,6 +168,7 @@
            grep
            findutils
            which
+           git-minimal
            nss-certs
            (list gcc "lib")
            icu4c
@@ -185,5 +189,6 @@ copy the runner into a writable work directory (under
 @file{$XDG_DATA_HOME/actions-runner} or
 @file{$HOME/.local/share/actions-runner}, overridable with the
 @env{ACTIONS_RUNNER_DIR} environment variable) on first use, then run
-@command{run.sh} and @command{config.sh} from there.")
+@command{run.sh} and @command{config.sh} from there, with coreutils,
+grep, findutils, which, and git on the PATH the jobs inherit.")
     (license license:expat)))
