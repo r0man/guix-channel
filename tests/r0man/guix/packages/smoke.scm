@@ -70,6 +70,10 @@
                    (r0man guix packages golang-xyz)
                    go-github-com-aleksi-pointer)
 
+(test-load-package "herdr"
+                   (r0man guix packages herdr)
+                   herdr)
+
 (test-load-package "java"
                    (r0man guix packages java)
                    graalvm-ce-21)

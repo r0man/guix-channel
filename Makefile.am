@@ -52,6 +52,7 @@ SOURCES = \
   modules/r0man/guix/packages/golang-maths.scm \
   modules/r0man/guix/packages/golang-web.scm \
   modules/r0man/guix/packages/golang-xyz.scm \
+  modules/r0man/guix/packages/herdr.scm \
   modules/r0man/guix/packages/java.scm \
   modules/r0man/guix/packages/lisp.scm \
   modules/r0man/guix/packages/node.scm \
