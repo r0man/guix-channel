@@ -20,3 +20,10 @@ Add this channel to =~/.config/guix/channels.scm=
              "D226 A339 D8DF 4481 5DDE  0CA0 3DDA 5252 7D2A C199"))))
          %default-channels)
 #+end_src
+
+* Services
+
+- [[file:docs/gascity-service.org][Gas City service]] --- run one or more
+  Gas City supervisors (=gc supervisor run=) as system or home services, with
+  the =city.toml=/=pack.toml= record surface, escape hatches and secrets
+  wiring.

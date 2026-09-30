@@ -38,6 +38,7 @@ NOCOMP_SOURCES = \
   modules/r0man/guix/files/gnu-head.svg
 
 SOURCES = \
+  modules/r0man/guix/home/services/gascity.scm \
   modules/r0man/guix/home/services/github-actions.scm \
   modules/r0man/guix/packages/bootloader.scm \
   modules/r0man/guix/packages/claude.scm \
@@ -59,9 +60,12 @@ SOURCES = \
   modules/r0man/guix/packages/pi.scm \
   modules/r0man/guix/packages/task-management.scm \
   modules/r0man/guix/packages/wm.scm \
+  modules/r0man/guix/services/gascity.scm \
+  modules/r0man/guix/services/gascity/records.scm \
   modules/r0man/guix/services/github-actions.scm \
   modules/r0man/guix/services/github-actions-vm.scm \
-  modules/r0man/guix/services/github-actions-vm-mint.scm
+  modules/r0man/guix/services/github-actions-vm-mint.scm \
+  modules/r0man/guix/toml.scm
 
 # Regular, fast SRFI-64 tests — run by `make check`.
 UNIT_TESTS = \
@@ -70,12 +74,17 @@ UNIT_TESTS = \
   tests/r0man/guix/services/runner-script.scm \
   tests/r0man/guix/services/github-actions-token-mint.scm \
   tests/r0man/guix/services/github-actions.scm \
+  tests/r0man/guix/services/gascity.scm \
+  tests/r0man/guix/services/gascity-home.scm \
+  tests/r0man/guix/services/gascity-records.scm \
+  tests/r0man/guix/services/gascity-toml.scm \
   tests/r0man/guix/services/smoke.scm
 
 # VM-based tests — run by `make check-system`.  Each file is loaded by
 # build-aux/run-system-tests.scm, and every `system-test' object it
 # defines is built and run.
 SYSTEM_TEST_FILES = \
+  tests/r0man/guix/services/gascity-system.scm \
   tests/r0man/guix/services/github-actions-system.scm \
   tests/r0man/guix/services/github-actions-vm-system.scm
 
@@ -100,6 +109,10 @@ ACLOCAL_AMFLAGS = -I m4
 EXTRA_DIST =					\
   bootstrap					\
   scripts/github-actions-vm-smoke-test		\
+  scripts/generate-gascity-records.scm		\
+  docs/gascity-service.org				\
+  docs/reference/schema/city-schema.json		\
+  docs/reference/schema/pack-schema.json		\
   pre-inst-env.in				\
   build-aux/test-driver.scm			\
   m4/guile.m4					\
@@ -124,6 +137,29 @@ check-system:
 	    $(SYSTEM_TEST_FILES);				\
 	fi
 .PHONY: check-system
+
+# Regenerate the committed module of Gas City leaf records from the JSON
+# schemas under docs/reference/schema/.  The generator resolves its own
+# location, so the default output is the committed module in the source tree.
+generate-gascity-records:
+	$(AM_V_GEN)$(GUILE) --no-auto-compile \
+	  "$(top_srcdir)/scripts/generate-gascity-records.scm"
+.PHONY: generate-gascity-records
+
+# CI regeneration check: regenerate to a temporary file and fail when the
+# committed module has drifted from the schemas.
+check-gascity-records:
+	$(AM_V_GEN)tmp="$$(mktemp)";					\
+	trap 'rm -f "$$tmp"' EXIT;					\
+	$(GUILE) --no-auto-compile					\
+	  "$(top_srcdir)/scripts/generate-gascity-records.scm" "$$tmp";	\
+	if diff -u "$(top_srcdir)/modules/r0man/guix/services/gascity/records.scm" "$$tmp"; then \
+	  echo "check-gascity-records: committed module is up to date";	\
+	else									\
+	  echo "check-gascity-records: DRIFT; run 'make generate-gascity-records'";\
+	  exit 1;							\
+	fi
+.PHONY: check-gascity-records
 
 clean-go:
 	-$(RM) $(GOBJECTS)
