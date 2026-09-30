@@ -1,0 +1,877 @@
+#+title: The Gas City service
+#+options: toc:2
+
+This manual documents the Gas City service shipped by the =r0man= Guix
+channel: the system service =gascity-service-type=, the derived home service
+=home-gascity-service-type=, and the Guix record surface that compiles to Gas
+City's =city.toml=, =pack.toml= and =supervisor.toml=.  Gas City itself is
+documented at <https://github.com/gastownhall/gascity>.
+
+The service layers:
+
+- =gascity-service-type= (=r0man guix services gascity=) — runs one or more
+  machine-wide Gas City supervisors (=gc supervisor run=) as daemons, each in
+  its own =GC_HOME=.
+- =home-gascity-service-type= (=r0man guix home services gascity=) — the user
+  counterpart, running supervisors under =$HOME/.gc= as the user who owns the
+  Home environment.  It re-exports every record and accessor of the system
+  module, so a Home configuration needs only the home module import.
+- =r0man guix toml= — the TOML intermediate representation and emitter the
+  serializers build on, and the constructors the =extra-config= escape hatch
+  uses.
+- =r0man guix services gascity records= — the *generated* leaf-record surface,
+  produced from the committed Gas City JSON schemas.  See [[#generated-records]].
+
+* Overview
+
+** The service value is a list of supervisors
+
+The value of =gascity-service-type= is a =list= of
+=<gascity-supervisor-configuration>= records, one per supervisor process (the
+same shape as =github-actions-runner-service-type=).  A single-element list is
+the common case; =gascity-service-config= builds it for you:
+
+#+begin_src scheme
+(service gascity-service-type
+         (gascity-service-config
+          (cities (list (gascity-city-configuration
+                         (name "swarm"))))))
+#+end_src
+
+Pass a plain =list= when you want more than one supervisor.  Each record may
+also carry a list of cities; =gascity-service-config= is just sugar for a
+one-element list.
+
+** GC_HOME isolation
+
+Gas City isolates supervisors by =GC_HOME=: the registry (=cities.toml=), the
+settings (=supervisor.toml=), the control socket, the instance lock and the
+runtime/events state all live under it.  The service pins =GC_HOME= *and*
+=XDG_RUNTIME_DIR= to each instance's =gc-home=, so an isolated supervisor never
+touches the host supervisor's socket or lock.
+
+| Concern | Path | Isolated by |
+|---------+------+-------------|
+| city registry | =$GC_HOME/cities.toml= | =gc-home= |
+| supervisor settings | =$GC_HOME/supervisor.toml= | =gc-home= |
+| control socket / lock | =$GC_HOME/supervisor.{sock,lock}= | =gc-home= |
+| API listener | =bind=:=port= | =port= (must be distinct) |
+| per-city tmux server | =tmux -L <city-name>= | city name / =[session].socket= |
+| per-city Dolt | port hashed from the city path | city path |
+
+Two instances that share a =gc-home= or a =(bind, port)= fail closed at
+evaluation.  A lone instance defaults to port =8372=; every instance of a
+multi-instance service must set =port= explicitly.  A system supervisor and a
+home supervisor on the same host share the network namespace, so they too need
+distinct ports.
+
+** Multiple cities
+
+One supervisor manages a list of cities.  Each city owns a directory, its
+generated =city.toml=/=pack.toml=, its =files=, and its registration in the
+instance's =cities.toml=.  City names must be unique per supervisor (they become
+the tmux socket names); distinct supervisors may manage disjoint or disjointly
+named cities.
+
+#+begin_src scheme
+(service gascity-service-type
+         (gascity-service-config
+          (cities (list (gascity-city-configuration
+                         (name "burningswell")
+                         (directory "/var/lib/gascity/burningswell"))
+                        (gascity-city-configuration
+                         (name "sandbox")
+                         (directory "/var/lib/gascity/sandbox"))))))
+#+end_src
+
+* Gas City docs -> Guix records
+
+Every record's accessor is named =gascity-<record>-<field>=, and the field is
+the TOML key with =_= replaced by =-=.  Declaration order in the record is
+emission order in the generated TOML.
+
+** Field-type conventions
+
+| Convention | Scheme type | Emission |
+|------------+-------------+----------|
+| optional scalar | ='unset= | nothing |
+| optional string | string or ='unset= | =key = "value"= |
+| maybe-string-or-gexp | string, gexp or ='unset= | =key = "..."=, gexp spliced verbatim between the quotes |
+| tri-state boolean | ='unset=, =#t= or =#f= | nothing, =true= or =false= |
+| maybe boolean | ='unset=, =#t= or =#f= | nothing, =true= or =false= |
+| integer / real | exact / inexact number or ='unset= | decimal |
+| list of strings | Scheme list, default ='()= | =key = ["a", "b"]= |
+| string map | alist ='(("K" . "v") ...)= | =key = { K = "v", ... }= |
+
+- ='unset= is the absent marker; an absent field emits nothing, so Gas City
+  applies its own default.  This is what makes tri-state booleans and
+  presence-aware patches work.
+- Predicates =gascity-tri-state?=, =gascity-maybe-string?= and
+  =gascity-maybe-string-or-gexp?= test these shapes.
+- Strings that may embed a store path (commands, scripts) are typed
+  =maybe-string-or-gexp=: a gexp is a first-class TOML value kind and is spliced
+  verbatim between the surrounding quotes.  Only literal fragments are escaped
+  at build time; a spliced gexp must not need further escaping.
+- Array tables that Gas City spells in the singular (=[[agent]]=,
+  =[[named_session]]=, =[[rigs]]=) get a *plural* record field (=agents=,
+  =named-sessions=, =rigs=); the TOML key is unchanged.
+- Maps keyed by a name (=providers=, =upstreams=, =imports=, and the pack's
+  =runtimes=) are alists of =(name . record)=, e.g.
+  =(providers (list (cons "claude" (gascity-provider-configuration ...))))=.
+
+** Service and identity records
+
+The supervisor instance (=gascity-supervisor-configuration=) is *service*
+configuration, not a TOML document: it drives the Shepherd service, the
+account, the directories and the paths.  Its =settings= field owns the
+=supervisor.toml= document.
+
+| Field | Accessor | Role |
+|-------+----------+------|
+| =id= | =gascity-supervisor-configuration-id= | unique; suffixes the Shepherd service, log file and socket |
+| =package= | =gascity-supervisor-configuration-package= | the =gc= package (default =gascity-next=) |
+| =user= | =gascity-supervisor-configuration-user= | account (system only; default =gascity=) |
+| =group= | =gascity-supervisor-configuration-group= | group (system only; default =gascity=) |
+| =gc-home= | =gascity-supervisor-configuration-gc-home= | =GC_HOME=/=XDG_RUNTIME_DIR= (default =<state-directory>/.gc=) |
+| =state-directory= | =gascity-supervisor-configuration-state-directory= | account home and parent of derived city dirs |
+| =log-directory= | =gascity-supervisor-configuration-log-directory= | supervisor and provision logs |
+| =bind= | =gascity-supervisor-configuration-bind= | API bind (default =127.0.0.1=) |
+| =port= | =gascity-supervisor-configuration-port= | API port (required when >1 instance; else 8372) |
+| =settings= | =gascity-supervisor-configuration-settings= | =<gascity-supervisor-settings-configuration>= |
+| =packages= | =gascity-supervisor-configuration-packages= | extra packages on the supervisor =PATH= |
+| =environment-variables= | =gascity-supervisor-configuration-environment-variables= | non-secret ="KEY=value"= strings |
+| =secrets-file= | =gascity-supervisor-configuration-secrets-file= | dotenv file (default =<gc-home>/secrets.env=); see [[#secrets]] |
+| =cities= | =gascity-supervisor-configuration-cities= | =list= of =<gascity-city-configuration>= |
+
+The settings record (=gascity-supervisor-settings-configuration=) owns
+=supervisor.toml=, whose tables are =[supervisor]=, =[publication]=,
+=[publication.tenant_auth]= and =[events.export]=:
+
+| TOML key | Accessor |
+|----------+----------|
+| =[supervisor].port= | =gascity-supervisor-settings-configuration-port= |
+| =[supervisor].bind= | =gascity-supervisor-settings-configuration-bind= |
+| =[supervisor].patrol_interval= | =gascity-supervisor-settings-configuration-patrol-interval= |
+| =[supervisor].allow_mutations= | =gascity-supervisor-settings-configuration-allow-mutations?= |
+| =[supervisor].allowed_origins= | =gascity-supervisor-settings-configuration-allowed-origins= |
+| =[supervisor].allowed_hosts= | =gascity-supervisor-settings-configuration-allowed-hosts= |
+| =[supervisor].write_auth_verify_key= | =gascity-supervisor-settings-configuration-write-auth-verify-key= |
+| =[supervisor].write_auth_required= | =gascity-supervisor-settings-configuration-write-auth-required?= |
+| =[supervisor].write_auth_allow_unverified= | =gascity-supervisor-settings-configuration-write-auth-allow-unverified?= |
+| =[supervisor].read_auth_verify_key= | =gascity-supervisor-settings-configuration-read-auth-verify-key= |
+| =[supervisor].read_auth_required= | =gascity-supervisor-settings-configuration-read-auth-required?= |
+| =[publication].provider= | =gascity-supervisor-settings-configuration-publication-provider= |
+| =[publication].tenant_slug= | =gascity-supervisor-settings-configuration-publication-tenant-slug= |
+| =[publication].public_base_domain= | =gascity-supervisor-settings-configuration-publication-public-base-domain= |
+| =[publication].tenant_base_domain= | =gascity-supervisor-settings-configuration-publication-tenant-base-domain= |
+| =[publication.tenant_auth].policy_ref= | =gascity-supervisor-settings-configuration-publication-tenant-auth-policy-ref= |
+| =[events.export].endpoint= | =gascity-supervisor-settings-configuration-events-export-endpoint= |
+| =[events.export].cities= | =gascity-supervisor-settings-configuration-events-export-cities= |
+| =[events.export].token= | =gascity-supervisor-settings-configuration-events-export-token= |
+| =[events.export].token_file= | =gascity-supervisor-settings-configuration-events-export-token-file= |
+| =[events.export].actor_salt= | =gascity-supervisor-settings-configuration-events-export-actor-salt= |
+| =[events.export].batch_max_events= | =gascity-supervisor-settings-configuration-events-export-batch-max-events= |
+| =[events.export].batch_interval= | =gascity-supervisor-settings-configuration-events-export-batch-interval= |
+| =[events.export].export_ref= | =gascity-supervisor-settings-configuration-events-export-export-ref= |
+
+The city record (=gascity-city-configuration=) has identity fields (service
+configuration, *not* emitted to =city.toml=) and the =city.toml= container
+fields (emitted):
+
+| Field | Accessor | Emitted? |
+|-------+----------+----------|
+| =name= | =gascity-city-configuration-name= | no (registry name; required) |
+| =directory= | =gascity-city-configuration-directory= | no (default =<state-directory>/<name>=) |
+| =package= | =gascity-city-configuration-package= | no (default: the instance package) |
+| =user= | =gascity-city-configuration-user= | no (default: the instance user) |
+| =enabled?= | =gascity-city-configuration-enabled?= | no (default =#t=) |
+| =genesis?= | =gascity-city-configuration-genesis?= | no (default =#t=) |
+| =install-packs?= | =gascity-city-configuration-install-packs?= | no (default =#f=) |
+| =register?= | =gascity-city-configuration-register?= | no (default =#t=) |
+| =files= | =gascity-city-configuration-files= | no (copied into the city root) |
+| =rig-files= | =gascity-city-configuration-rig-files= | no (copied into each rig root) |
+| =extra-config= | =gascity-city-configuration-extra-config= | layered over the generated nodes |
+| =extra-toml= | =gascity-city-configuration-extra-toml= | appended verbatim |
+| =include= | =gascity-city-configuration-include= | =include = [...] = |
+| =workspace= | =gascity-city-configuration-workspace= | =[workspace]= |
+| =providers= | =gascity-city-configuration-providers= | =[providers.<name>]= |
+| =upstreams= | =gascity-city-configuration-upstreams= | =[upstreams.<name>]= |
+| =imports= | =gascity-city-configuration-imports= | =[imports.<binding>]= |
+| =agents= | =gascity-city-configuration-agents= | =[[agent]]= |
+| =named-sessions= | =gascity-city-configuration-named-sessions= | =[[named_session]]= |
+| =rigs= | =gascity-city-configuration-rigs= | =[[rigs]]= |
+| =patches= | =gascity-city-configuration-patches= | =[patches]= |
+| =daemon= | =gascity-city-configuration-daemon= | =[daemon]= |
+| =dolt= | =gascity-city-configuration-dolt= | =[dolt]= |
+| =storage= | =gascity-city-configuration-storage= | =[storage]= |
+| =beads= | =gascity-city-configuration-beads= | =[beads]= |
+| =session= | =gascity-city-configuration-session= | =[session]= |
+| =session-sleep= | =gascity-city-configuration-session-sleep= | =[session_sleep]= |
+| =defaults= | =gascity-city-configuration-defaults= | =[defaults]= |
+| =agent-defaults= | =gascity-city-configuration-agent-defaults= | =[agent_defaults]= |
+| =pricing= | =gascity-city-configuration-pricing= | =[[pricing]]= |
+
+The pack record (=gascity-pack-configuration=) owns =pack.toml=.  Its
+=name=, =schema=, =version=, =requires-gc=, =description=, =includes= and
+=requires= form =[pack]=; the rest are root-level tables:
+
+| Field | Accessor | TOML |
+|-------+----------+------|
+| =name= | =gascity-pack-configuration-name= | =[pack].name= |
+| =schema= | =gascity-pack-configuration-schema= | =[pack].schema= |
+| =version= | =gascity-pack-configuration-version= | =[pack].version= |
+| =requires-gc= | =gascity-pack-configuration-requires-gc= | =[pack].requires_gc= |
+| =description= | =gascity-pack-configuration-description= | =[pack].description= |
+| =includes= | =gascity-pack-configuration-includes= | =[pack].includes= |
+| =requires= | =gascity-pack-configuration-requires= | =[[pack.requires]]= |
+| =imports= | =gascity-pack-configuration-imports= | =[imports.<binding>]= |
+| =agent-defaults= | =gascity-pack-configuration-agent-defaults= | =[agent_defaults]= |
+| =agents= | =gascity-pack-configuration-agents= | =[[agent]]= |
+| =named-sessions= | =gascity-pack-configuration-named-sessions= | =[[named_session]]= |
+| =providers= | =gascity-pack-configuration-providers= | =[providers.<name>]= |
+| =upstreams= | =gascity-pack-configuration-upstreams= | =[upstreams.<name>]= |
+| =runtimes= | =gascity-pack-configuration-runtimes= | =[runtimes.<name>]= |
+| =patches= | =gascity-pack-configuration-patches= | =[patches]= |
+| =doctor= | =gascity-pack-configuration-doctor= | =[[doctor]]= |
+| =commands= | =gascity-pack-configuration-commands= | =[[commands]]= |
+| =global= | =gascity-pack-configuration-global= | =[global]= |
+| =pricing= | =gascity-pack-configuration-pricing= | =[[pricing]]= |
+
+The remaining hand-written leaf records (each =gascity-<name>-configuration=
+with =gascity-<name>-configuration-<field>= accessors) are:
+
+| Record | TOML | Notes |
+|--------+------+-------|
+| =<gascity-workspace-configuration>= | =[workspace]= | =name=, =prefix=, =provider=, =timezone=, =start-command= (gexp), =suspended?=, =suspended-on-start?=, =max-active-sessions=, =session-template=, =install-agent-hooks=, =global-fragments=, =includes=, =default-rig-includes=, =env= |
+| =<gascity-provider-configuration>= | =[providers.<name>]= | =base= inheritance; =command= /= =acp-command= are gexps; =env= and =option-defaults= are string maps; =emits-permission-warning= is tri-state |
+| =<gascity-provider-patch-configuration>= | =[[patches.providers]]= | patch fields plus =replace?= |
+| =<gascity-import-configuration>= | =[imports.<binding>]= | =source= (required), =version= (semver or =sha:<hex>=) |
+| =<gascity-agent-configuration>= | =[[agent]]= | =name= (required); see the worked example; ~55 fields (dir, scope, provider, prompt-template, inject-fragments, option-defaults, env, idle-timeout, ...) |
+| =<gascity-agent-defaults-configuration>= | =[agent_defaults]= | =provider=, =model=, =upstream=, =wake-mode=, =allow-overlay=, =allow-env-override=, =append-fragments=, =skills=, =mcp= |
+| =<gascity-agent-override-configuration>= | =[[rigs.overrides]]= | the override/append surface; =env-remove=, =*-append= fields |
+| =<gascity-agent-patch-configuration>= | =[[patches.agent]]= | the patch surface; =name= (required) |
+| =<gascity-named-session-configuration>= | =[[named_session]]= | =template= (required) |
+| =<gascity-rig-configuration>= | =[[rigs]]= | =name= (required); =path= is a gexp; =formula-vars= is a string map; =overrides=/=patches= lists |
+| =<gascity-rig-patch-configuration>= | =[[patches.rigs]]= | |
+| =<gascity-patches-configuration>= | =[patches]= | =agents= (=[[patches.agent]]=), =rigs=, =providers= |
+| =<gascity-pack-defaults-configuration>= | =[defaults]= | =rig= |
+| =<gascity-pack-rig-defaults-configuration>= | =[defaults.rig]= | =imports= |
+| =<gascity-daemon-configuration>= | =[daemon]= | =patrol-interval=, =max-restarts=, =restart-window=, =shutdown-timeout=, =formula-v2= (tri-state), ... |
+| =<gascity-dolt-configuration>= | =[dolt]= | =port=, =host=, =auto-gc-enabled?=, ... |
+| =<gascity-storage-configuration>= | =[storage]= | =classes= (bindings reachable via =extra-config=) |
+| =<gascity-storage-classes-configuration>= | =[storage.classes]= | =work=, =graph=, =sessions=, =messaging=, =orders=, =nudges= |
+| =<gascity-beads-configuration>= | =[beads]= | =provider=, =backend=, =event-hooks?=, ... |
+| =<gascity-session-configuration>= | =[session]= | =provider=, =socket=, =-*-timeout= fields |
+| =<gascity-session-sleep-configuration>= | =[session_sleep]= | =interactive-resume=, =interactive-fresh=, =noninteractive= |
+| =<gascity-upstream-configuration>= | =[upstreams.<name>]= | =api-key=/=auth-token= are =$VAR= references, never literals |
+| =<gascity-model-pricing-configuration>= | =[[pricing]]= | =provider=, =model= (required), =tier=, =last-verified= |
+| =<gascity-pricing-tier-configuration>= | =[[pricing.tier]]= | real-valued $-per-1M fields |
+| =<gascity-pack-requirement-configuration>= | =[[pack.requires]]= | =scope=, =agent= |
+| =<gascity-pack-patches-configuration>= | =[patches]= (pack) | =agents= |
+| =<gascity-pack-global-configuration>= | =[global]= | =session-live= |
+| =<gascity-pack-runtime-entry-configuration>= | =[runtimes.<name>]= | =command= (gexp), =protocol=, =prompt-delivery= |
+| =<gascity-pack-doctor-entry-configuration>= | =[[doctor]]= | =name=, =script= (gexp), =fix= (gexp), =warmup?= |
+| =<gascity-pack-command-entry-configuration>= | =[[commands]]= | =name=, =description=, =long-description=, =script= (gexp) |
+
+** The generated leaf records
+
+Every documented field of Gas City's =City= and =Pack= schemas is mirrored by a
+*generated* leaf record in =modules/r0man/guix/services/gascity/records.scm=,
+module =(r0man guix services gascity records)=.  That file is generated from the
+committed schemas =docs/reference/schema/{city,pack}-schema.json= by
+=scripts/generate-gascity-records.scm=; regenerate it with =make
+generate-gascity-records= and check it with =make check-gascity-records=.  Do
+not edit it by hand.
+
+The generated records follow the same conventions: the module is
+=(r0man guix services gascity records)=, each record is
+=<gascity-<name>-configuration>= with =gascity-<name>-configuration-<field>=
+accessors, every field defaults to ='unset=, and the leaf records whose
+hand-written sibling lives in =gascity.scm= exist in both (the hand-written one
+is the Phase-2 subset the service itself needs).  When you need a field the
+hand-written records do not expose, import the generated module, or reach the
+key through =extra-config=.
+
+* Worked examples
+
+All examples below are the shapes the test suite renders verbatim
+(=tests/r0man/guix/services/gascity.scm=), so they are known to match the
+implemented API.
+
+** City: the swarm example
+
+Gas City docs:
+
+#+begin_src toml
+[workspace]
+name = "swarm"
+provider = "claude"
+
+[providers.claude]
+base = "builtin:claude"
+
+[daemon]
+patrol_interval = "30s"
+max_restarts = 5
+restart_window = "1h"
+shutdown_timeout = "5s"
+
+[[rigs]]
+name = "checkout-service"
+prefix = "cs"
+formula_vars = { push = "true", open_pr = "true", drain_policy = "separate" }
+#+end_src
+
+Guix records:
+
+#+begin_src scheme
+(gascity-city-configuration
+ (name "swarm")
+ (directory "/var/lib/gascity/swarm")
+ (workspace (gascity-workspace-configuration
+             (name "swarm")
+             (provider "claude")))
+ (providers
+  (list (cons "claude"
+              (gascity-provider-configuration (base "builtin:claude")))))
+ (daemon (gascity-daemon-configuration
+          (patrol-interval "30s")
+          (max-restarts 5)
+          (restart-window "1h")
+          (shutdown-timeout "5s")))
+ (rigs (list (gascity-rig-configuration
+              (name "checkout-service")
+              (prefix "cs")
+              (formula-vars '(("push" . "true")
+                              ("open_pr" . "true")
+                              ("drain_policy" . "separate")))))))
+#+end_src
+
+** Pack: the swarm pack
+
+#+begin_src scheme
+(gascity-pack-configuration
+ (name "swarm")
+ (schema 2)
+ (imports
+  (list
+   (cons "core"
+         (gascity-import-configuration
+          (source "https://github.com/gastownhall/gascity.git//internal/bootstrap/packs/core")
+          (version "sha:f895c0ff47d6ee9334ed282a416387eb5b084d24")))
+   (cons "bd"
+         (gascity-import-configuration
+          (source "https://github.com/gastownhall/gascity.git//examples/bd")
+          (version "sha:f895c0ff47d6ee9334ed282a416387eb5b084d24")))
+   (cons "swarm"
+         (gascity-import-configuration (source "packs/swarm"))))))
+#+end_src
+
+Attach a pack to a city with the city's =pack= field; the service writes it to
+=pack.toml= beside the generated =city.toml=:
+
+#+begin_src scheme
+(gascity-city-configuration
+ (name "swarm")
+ (pack (gascity-pack-configuration ...)))
+#+end_src
+
+** An agent in pack.toml
+
+#+begin_src scheme
+(gascity-pack-configuration
+ (agents
+  (list (gascity-agent-configuration
+         (name "mayor")
+         (scope "city")
+         (provider "claude")
+         (prompt-template "agents/mayor/prompt.template.md")
+         (inject-fragments '("bs-guix" "bs-gates"))
+         (option-defaults '(("model" . "claude-sonnet-5-5")
+                            ("effort" . "medium")))
+         (idle-timeout "30m")
+         (env '(("GC_TARGET_BRANCH" . "$GC_TARGET_BRANCH")))))))
+#+end_src
+
+The =env= value is a =$VAR= reference, expanded by Gas City against the
+supervisor environment; the value itself lives in the =secrets-file=, never in
+the Guix configuration.  See [[#secrets]].
+
+** City: the gastown example
+
+The typed core plus =extra-config= for a table with no dedicated record
+(=mail=):
+
+#+begin_src scheme
+(gascity-city-configuration
+ (name "gastown")
+ (workspace (gascity-workspace-configuration
+             (name "gastown")
+             (provider "claude")
+             (global-fragments '("command-glossary"
+                                 "operational-awareness"))))
+ (providers
+  (list (cons "claude"
+              (gascity-provider-configuration (base "builtin:claude")))))
+ (defaults
+  (gascity-pack-defaults-configuration
+   (rig (gascity-pack-rig-defaults-configuration
+         (imports
+          (list (cons "gastown"
+                      (gascity-import-configuration
+                       (source "https://github.com/gastownhall/gascity-packs/tree/main/gastown")
+                       (version "sha:33d3a430a67d1782ad364556cb566bdb01d0afe3")))))))))
+ (daemon (gascity-daemon-configuration
+          (patrol-interval "30s")
+          (max-restarts 5)
+          (restart-window "1h")
+          (shutdown-timeout "5s")
+          (formula-v2 #t)))
+ (patches (gascity-patches-configuration
+           (agents (list (gascity-agent-patch-configuration
+                          (name "mayor")
+                          (max-session-age "6h")
+                          (max-session-age-jitter "15m"))
+                         (gascity-agent-patch-configuration
+                          (name "deacon")
+                          (max-session-age "6h")
+                          (max-session-age-jitter "15m"))))))
+ (extra-config (list (toml-table 'mail (toml-field 'provider "smtp")))))
+#+end_src
+
+** A minimal single-supervisor system config
+
+#+begin_src scheme
+(use-modules (r0man guix services gascity))
+
+(operating-system
+  ...
+  (services
+   (append
+    (list
+     (service gascity-service-type
+              (gascity-service-config
+               (cities
+                (list (gascity-city-configuration
+                       (name "burningswell")
+                       (workspace (gascity-workspace-configuration
+                                   (name "burningswell")
+                                   (provider "claude")))))))))
+    %base-services)))
+#+end_src
+
+A lone instance defaults to port =8372= and =GC_HOME=/var/lib/gascity/.gc=.
+
+** Two supervisors with distinct gc-home and port
+
+With more than one instance, pass a plain list and set =port= and =gc-home= on
+every instance:
+
+#+begin_src scheme
+(service gascity-service-type
+         (list
+          (gascity-supervisor-configuration
+           (id "prod")
+           (port 8372)
+           (gc-home "/var/lib/gascity/.gc")
+           (cities (list (gascity-city-configuration
+                          (name "burningswell")))))
+          (gascity-supervisor-configuration
+           (id "sandbox")
+           (port 8373)
+           (gc-home "/var/lib/gascity-sandbox/.gc")
+           (state-directory "/var/lib/gascity-sandbox")
+           (log-directory "/var/log/gascity-sandbox")
+           (cities (list (gascity-city-configuration
+                          (name "sandbox")
+                          (install-packs? #f)))))))
+#+end_src
+
+If any instance of a multi-instance value leaves =port= unset, or two instances
+share a =gc-home= or a =(bind, port)=, evaluation fails with a =formatted-message=.
+
+** A home config
+
+#+begin_src scheme
+(use-modules (r0man guix home services gascity))
+
+(home-environment
+  ...
+  (services
+   (list
+    (service home-gascity-service-type
+             (gascity-service-config
+              (id "personal")
+              (port 8372)
+              (cities
+               (list (gascity-city-configuration
+                      (name "burningswell")
+                      (workspace (gascity-workspace-configuration
+                                  (name "burningswell")
+                                  (provider "claude")))))))))))
+#+end_src
+
+The Home defaults: =state-directory= and =log-directory= under
+=$XDG_STATE_HOME/gascity=, =gc-home= under =$HOME/.gc=.  The =user= and =group=
+fields are ignored: the supervisor runs as the user who owns the Home
+environment.  Adding a system =gascity-service-type= configuration to a Home
+environment maps to =home-gascity-service-type= via
+=define-service-type-mapping=.
+
+** extra-config (structured escape hatch)
+
+=extra-config= is a list of TOML IR nodes layered over the generated document
+*before* emission: a field at the same full TOML key *replaces* the generated
+field, and a table *merges recursively*.  A key declared twice inside
+=extra-config= at one level is an error.  Build the nodes with the
+=(r0man guix toml)= constructors =toml-table=, =toml-field=,
+=toml-array-of-tables=, =toml-inline-table= and =toml-array=; keys may be
+symbols or strings.
+
+#+begin_src scheme
+(gascity-city-configuration
+ (name "experiment")
+ (extra-config
+  (list (toml-table 'experimental
+                    (toml-field 'feature_flag "true")))))
+;; => [experimental]
+;;    feature_flag = "true"
+#+end_src
+
+Overriding a generated field:
+
+#+begin_src scheme
+(gascity-city-configuration
+ (name "m")
+ (workspace (gascity-workspace-configuration
+             (name "a")
+             (provider "claude")))
+ (extra-config (list (toml-table "workspace" (toml-field "name" "b")))))
+;; => [workspace]
+;;    name = "b"
+;;    provider = "claude"
+#+end_src
+
+** extra-toml (raw append)
+
+=extra-toml= is a string or a =file-like= appended verbatim at the end of the
+generated file.  It can only add whole new tables: a verbatim append cannot add
+a root-level scalar after a table header, nor extend a table the generator
+already emitted (that would be a duplicate-table error).
+
+#+begin_src scheme
+(gascity-city-configuration
+ (name "t")
+ (workspace (gascity-workspace-configuration (name "t")))
+ (extra-toml "[extra_table]\nk = 1\n"))
+#+end_src
+
+** files and rig-files
+
+=files= is a list of =(destination . file-like)= pairs copied into the city
+root; =rig-files= into each declared rig root.  Both are data only: they are
+never emitted to TOML.  This is how prompt templates, formulas, orders, skills,
+=.mcp.json=, scripts and overlays are supplied.
+
+#+begin_src scheme
+(gascity-city-configuration
+ (name "burningswell")
+ (files (list (cons "prompts/mayor.md" (plain-file "mayor.md" "You are the mayor."))
+              (cons ".mcp.json" (local-file "city/.mcp.json"))))
+ (rig-files (list (cons "scripts/gate.sh" (local-file "gates/gate.sh")))))
+#+end_src
+
+Destinations are relative to the root and may not escape it; executable bits
+are preserved.
+
+* Coming from the Gas City docs
+
+| Gas City TOML / idiom | Guix form |
+|-----------------------+-----------|
+| =[workspace]= | =(workspace (gascity-workspace-configuration ...))= |
+| =[providers.<name>]= | =(providers (list (cons "<name>" (gascity-provider-configuration ...))))= |
+| =[[agent]]= | =(agents (list (gascity-agent-configuration ...)))= |
+| =[[named_session]]= | =(named-sessions (list (gascity-named-session-configuration ...)))= |
+| =[[rigs]]= | =(rigs (list (gascity-rig-configuration ...)))= |
+| =[daemon]= | =(daemon (gascity-daemon-configuration ...))= |
+| =[defaults.rig.imports.<b>]= | =(defaults (gascity-pack-defaults-configuration (rig (gascity-pack-rig-defaults-configuration (imports (list (cons "<b>" ...)))))))= |
+| =key_with_underscores= | accessor =gascity-...-key-with-hyphens= |
+| =ar = { push = "true" }= (string map) | =(formula-vars '(("push" . "true")))= |
+| =arr = ["a", "b"]= (list of strings) | =(field '("a" "b"))= |
+| tri-state boolean | ='unset=, =#t= or =#f= |
+| =ANTHROPIC_API_KEY = "$ANTHROPIC_API_KEY"= | =$VAR= reference in the record; value in the =secrets-file=, never in Guix |
+| =[some.unknown.table]= | =extra-config= with =toml-table=/=toml-field= |
+| paste a TOML fragment | =extra-toml= (whole new tables only) |
+| =include = ["a.toml"]= | =(include '("a.toml"))= |
+| prompt/formula/order/skill file | =files= (city root) or =rig-files= (rig root) |
+| =pack.toml= vs =city.toml= | city's =pack= field owns =pack.toml=; the city record owns =city.toml= |
+
+Gas City merges =pack.toml= and =city.toml= when composing; when a field is set
+in both, the city value wins.  =gc config show= prints the merged view and is the
+source of truth; this service keeps the two files explicit rather than guessing.
+
+* Secrets
+  :PROPERTIES:
+  :ID:       secrets
+  :END:
+
+** The hard policy
+
+*No literal secret may appear anywhere in the Guix configuration.*  Not in a
+record, not in the generated =city.toml=/=pack.toml=, not in =files=, and not in
+the Shepherd =environment-variables=.  The generated TOML may contain only
+=$VAR= / =${VAR}= *references*, which Gas City expands against the supervisor
+process environment.
+
+The document builders run =gascity-sanitize-and-validate= on every generated
+node list.  It rejects obviously literal secrets (=-sk-ant-...=, =ghp_...=,
+long high-entropy tokens, and other known credential shapes) and accepts =$VAR=
+references, ordinary paths, =sha:<hex>= pins and =builtin:= names.  A literal
+secret in a record is therefore rejected at emission, not silently written.
+=gascity-secret-value?= is the underlying predicate.
+
+The =environment-variables= field is for *non-secret* configuration only.
+
+** secrets-file and $GC_HOME/secrets.env
+
+The supervisor configuration's =secrets-file= (accessor
+=gascity-supervisor-configuration-secrets-file=) names a dotenv file
+(=KEY=VALUE= per line, =#= comments, an optional leading =export=, one layer of
+matching quotes) that the service loads into the supervisor environment at
+start.  It defaults to =<gc-home>/secrets.env=, matching Gas City's own
+convention, and defaults to being materialized mode =0600= and owned by the
+service user.  Point it at a decrypted path for sops-guix or any other injection
+path.
+
+** The verified gotcha: foreground gc supervisor run does not load secrets.env
+
+Gas City reads =$GC_HOME/secrets.env= only in its *own* service-file generator
+(=gc supervisor install= / =gc start=).  The foreground =gc supervisor run= this
+service runs under Shepherd *does not* load it.  The service therefore runs the
+supervisor through a small wrapper (a =program-file=) that sources the dotenv
+=secrets-file= into the environment and then =exec=s
+=gc supervisor run=.  Without that wrapper every =$VAR= reference would resolve
+empty, a silent provider auth failure.
+
+The wrapper also inherits =GC_SUPERVISOR_ENV= untouched: that is the allowlist
+=gc= consults when it forwards non-=GC_= variables to spawned agent sessions, so
+a secret reaches agents only when named there.
+
+** sops-guix recipe
+
+[This is a *recipe only*.  The channel ships no =(sops ...)= import and no
+companion module: a =(sops ...)= import in the channel's modules would break the
+default channel build for users who do not have the extra channel.  The base
+service depends on nothing from sops-guix; the generic =secrets-file= also
+serves =guix deploy=, a pre-existing =$GC_HOME/secrets.env=, or any other
+injection path.]
+
+Add the external channel
+(<https://github.com/fishinthecalculator/sops-guix>) to
+=~/.config/guix/channels.scm=:
+
+#+begin_src scheme
+(cons* (channel
+        (name 'sops-guix)
+        (url "https://github.com/fishinthecalculator/sops-guix"))
+       (channel
+        (name 'r0man)
+        (url "https://github.com/r0man/guix-channel"))
+       %default-channels)
+#+end_src
+
+Import the sops module, declare the secret (here the value under the
+=gascity/dotenv= key is the whole dotenv blob, written verbatim as a binary),
+and wire the decrypted path to =secrets-file=:
+
+#+begin_src scheme
+(use-modules (sops services sops))
+(use-modules (r0man guix services gascity))
+
+(define gascity-dotenv-secret
+  ;; Decrypts the "gascity/dotenv" value of secrets/prod.yaml into a file
+  ;; under the sops secrets directory (typically /run/secrets), owned by
+  ;; gascity, mode 0400.  The YAML value is the dotenv text itself.
+  (sops-secret
+   (key '("gascity" "dotenv"))
+   (file (local-file "secrets/prod.yaml"))
+   (user "gascity")
+   (group "gascity")
+   (permissions #o400)
+   (output-type "binary")))
+
+(operating-system
+  ...
+  (services
+   (append
+    (list
+     ;; Bring the secret into being at boot (age key derived from the host
+     ;; SSH key; see the sops-guix docs for the runbook).
+     (service sops-secrets-service-type
+              (sops-service-configuration
+               (generate-key? #t)
+               (host-ssh-key "/etc/ssh/ssh_host_ed25519_key")
+               (secrets (list gascity-dotenv-secret))))
+     ;; The supervisor loads the decrypted dotenv file on every start.
+     (service gascity-service-type
+              (gascity-service-config
+               (secrets-file (sops-secret->secret-file gascity-dotenv-secret))
+               (cities (list (gascity-city-configuration
+                              (name "burningswell")))))))
+    %base-services)))
+#+end_src
+
+=sops-secret->secret-file= returns the decrypted file's path (the sops service
+provisions one Shepherd service per secret, named =sops-secret-<key>=), so the
+supervisor's wrapper reads exactly what sops wrote.  Encrypted secrets can be
+checked into the Guix repository; plaintext never touches disk or the store.
+
+=modify-services= pattern.  When an =operating-system= already carries a sops
+service, extend it instead of declaring a second one, and keep the ordering
+where sops's one-shot runs before the supervisor.  sops-guix names each secret's
+Shepherd service =sops-secret-<key>=, so a service that must wait for one lists
+it in its =requirements= (as the sibling worker/observability services do):
+
+#+begin_src scheme
+(modify-services %base-services
+  (sops-secrets-service-type
+   config =>
+   (sops-service-configuration
+    (inherit config)
+    (secrets (cons gascity-dotenv-secret
+                   (sops-service-configuration-secrets config))))))
+#+end_src
+
+The Gas City service type does not expose an extra-Shepherd-requirement field,
+so it cannot itself declare =requirements '(sops-secret-gascity/dotenv)=.  The
+recipe relies on ordering that is safe in practice: sops-guix decrypts during
+boot activation, the gascity supervisor's provision one-shot runs first, and the
+`respawn? #t` supervisor wrapper re-reads =secrets-file= on every (re)start, so
+a first-start race self-heals.  If you need a hard requirement, express it where
+your own services declare there =requirements=.
+
+* Lifecycle and ownership
+
+The loop runs per supervisor instance; =GC_HOME= is the instance's =gc-home= and
+every derived path is keyed off it.  Two phases:
+
+- Activation (root for system, the user for home) materializes *declarative
+  files* only: it creates the state, log and =gc-home= directories (=0700=,
+  owned by the service user for system), writes each enabled city's generated
+  =city.toml= and =pack.toml= (unchanged files are left alone, so a no-op
+  reconfigure does not perturb a running controller), copies =files=/=rig-files=
+  (preserving executable bits), and writes each instance's =supervisor.toml=
+  (=0600=).  It never runs =gc= and never switches user — Guix activation runs
+  as root with no =#:user=.
+- Provision one-shot (runs as the service user, and the supervisor =requires=
+  it) does the *stateful* work per instance: writes =.gc/site.toml=, runs the
+  idempotent =gc init --file <city>/city.toml --preserve-existing --no-start
+  --skip-provider-readiness= for each city (=genesis?=), optionally runs =gc
+  import install --city <city>= (=install-packs?=), then read-merge-writes the
+  =cities.toml= registry (=register?=).  It performs no network access unless a
+  city opts into =install-packs?=.
+
+Then Shepherd starts the secrets-loading wrapper that =exec=s =gc supervisor
+run= as the service user, using the instance's =gc-home=, =XDG_RUNTIME_DIR= and
+=port=.
+
+** Idempotent gc init --preserve-existing
+
+Genesis is the idempotent =gc init ... --preserve-existing --no-start
+--skip-provider-readiness=, run on *every* one-shot (gated only by =genesis?=).
+There is no "=.gc/= exists" gate and no marker: a partial failure leaves the
+scaffold in place and the next one-shot converges it, and a failure is visible
+in Shepherd status rather than silently skipped.  The generated =city.toml= and
+=pack.toml= must exist on disk *before* genesis, which is why the activation
+runs first.
+
+** cities.toml ownership
+
+The registry holds =[[cities]]=, =[[rigs]]= and =[[pending_city_requests]]= in
+one file, and =gc= rewrites it under an =flock=.  The service writes it with a
+locked read-merge-write that replaces exactly the declared and enabled
+=[[cities]]= set and preserves everything else verbatim:
+
+| Owned by this service | Owned by =gc= |
+|-----------------------+--------------|
+| the declared + enabled =[[cities]]= set (path and name) | =[[rigs]]= |
+| | =pending_city_requests= |
+| | any other section the operator or =gc= adds |
+
+The service deliberately does *not* call =gc register=: on non-systemd-delegated
+systems =gc register= regenerates and installs =gc='s own service unit and
+starts a supervisor, fighting Shepherd.  A manual =gc register= (or =gc rig
+add=) in a service-managed =GC_HOME= is *overwritten* and unsupported — the
+declared set is authoritative for =[[cities]]=.
+
+** Removing or disabling a city
+
+The declared-and-enabled set is exactly =[[cities]]=.  Setting =(enabled? #f)=
+or removing a city from the list unregisters it (the read-merge-write drops it
+and the supervisor reload applies the change) while preserving =[[rigs]]= and
+=pending_city_requests=.  Generated files, =.gc/= and =.beads/= are *never*
+deleted on disk.  Re-enabling or re-adding a city re-registers it.
+
+** genesis? / install-packs? / register? semantics
+
+| Field | Default | Meaning |
+|-------+---------+---------|
+| =genesis?= | =#t= | run the idempotent =gc init ... --preserve-existing= for the city |
+| =install-packs?= | =#f= | run =gc import install --city <city>= (network-dependent; opt-in so the default system is offline) |
+| =register?= | =#t= | include the city in the declared =[[cities]]= set of the instance's registry |
+
+A city with =register? #f= is materialized and genesis-ed but never registered
+(useful for a city another supervisor owns).  =install-packs? #t= makes the
+supervisor wait on a network fetch; a fetch failure leaves the city visibly down
+without failing the system reconfigure.
+
+** Per-instance port rules
+
+Gas City cannot disable its API listener (=[supervisor].port <= 0= resolves to
+8372, and a failed bind exits with a port-in-use code, which under Shepherd
+would crash-loop).  A lone instance defaults to =8372=; every instance of a
+multi-instance value must set =port= explicitly, and two instances that share a
+=(bind, port)= — or a =gc-home= — fail closed at evaluation.  Never persist an
+ephemeral port.  The service forwards =[supervisor].port= into the generated
+=supervisor.toml=.
+
+** Reload and restart
+
+=city.toml=/=pack.toml= changes are picked up by each city controller's own
+=fsnotify= watcher; the service does not force city reloads.  It issues =gc
+supervisor reload= only when the registry or supervisor settings changed; a
+=port=/=bind= change restarts the supervisor instead of reloading.  All of this
+is non-fatal, never touches the network, and never drains the session driving
+the reconfigure.
+
+* Migrating from burningswell
+
+The existing =burningswell= provisioning in =~/common-lisp/burningswell-cl/.guix=
+converges a live city with awk helpers (=converge_kv=, =converge_block=,
+=converge_file=) that re-assert declared =city.toml= keys and block regions on
+every activation, reloading the controller only when something really changed.
+
+*** This migration is a separate, user-owned change (not performed here)
+
+The actual =burningswell= migration is a *separate, user-owned change outside
+this repository*, and was *not* performed by this manual.  It is not part of the
+channel and nothing in the channel reads or edits the =burningswell= =/.guix=
+tree.  The mapping below is guidance for that future change.
+
+How the awk-converging activation maps onto this service:
+
+| burningswell idiom | Gas City service |
+|--------------------+------------------|
+| SCAFFOLD phase (stamp-guarded: =gc init=, =gc import install=, =gc rig add=, =gc register=) | the provision one-shot: =gc init --preserve-existing= (=genesis?=), =gc import install= (=install-packs?=), and the locked =[[cities]]= read-merge-write (=register?=); no stamp |
+| CONVERGE phase (=converge_kv= restates declared =city.toml= keys every activation) | the declarative generator: activation writes whole generated =city.toml=/=pack.toml= only when they differ; the record is the source of truth |
+| =converge_block=/=converge_tree= fenced regions and whole files | =files= / =rig-files= and the typed records; whole files, no fenced markers |
+| whole generated files | =city.toml= from the city record, =pack.toml= from the city's =pack= field |
+| the list of cities and rigs | the supervisor's =cities= list and each city's =rigs= |
+| derived paths (=~/burningswell=, =%gascity-github-token-path=) | =directory=, =gc-home=, =state-directory=, =log-directory=, and =secrets-file= |
+| =gc reload --soft= when a key changed | the supervisor reload the one-shot issues when the registry/settings changed; city =city.toml= changes reload via the controller's watcher |
+| the city is provisioned by a Home activation | the derived =home-gascity-service-type=, or the system service |
+
+The two-phase split is the same insight: creation and machine-local
+registration are one-shot, declarative content is converged every activation.
+The service replaces the hand-rolled convergence with generated whole files and
+the idempotent =gc init --preserve-existing=.
