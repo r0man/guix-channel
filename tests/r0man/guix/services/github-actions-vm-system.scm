@@ -118,15 +118,6 @@ reports that it is not registered."
              '(zero? (system* "herd" "status" "github-actions-vm-shutdown"))
              marionette))
 
-          (test-assert "runner service has exited (it is not registered)"
-            (marionette-eval
-             '(let loop ((attempt 0))
-                (or (not (zero? (system* "herd" "status"
-                                         "github-actions-runner")))
-                    (>= attempt 120)
-                    (begin (sleep 5) (loop (+ attempt 1)))))
-             marionette))
-
           (test-assert "start script reports missing registration"
             (let ((result
                    (marionette-eval
@@ -157,6 +148,15 @@ reports that it is not registered."
                          marionette)))
               result))
 
+          (test-assert "runner service has exited (it is not registered)"
+            (marionette-eval
+             '(let loop ((attempt 0))
+                (or (not (zero? (system* "herd" "status"
+                                         "github-actions-runner")))
+                    (>= attempt 120)
+                    (begin (sleep 5) (loop (+ attempt 1)))))
+             marionette))
+
           (test-end))))
   (gexp->derivation "github-actions-runner-vm-guest-test" test))
 
@@ -177,9 +177,11 @@ programs of the credential lifecycle, and assert their contents."
   (define mint (github-actions-runner-vm-mint-program))
   (define remove (github-actions-vm-remove-runner-program))
   (define test
-    (with-imported-modules '((guix build utils))
+    (with-imported-modules '((gnu build marionette)
+                             (guix build utils))
       #~(begin
-          (use-modules (ice-9 textual-ports)
+          (use-modules (gnu build marionette)
+                       (ice-9 textual-ports)
                        (srfi srfi-64))
 
           (define (read-file file)
@@ -223,9 +225,13 @@ programs of the credential lifecycle, and assert their contents."
             (let ((program (read-file #$mint)))
               (and (string-contains program
                                     "mint-and-store-registration-token")
-                   ;; Tests point the program at a mock server via the
-                   ;; environment.
-                   (string-contains program "GITHUB_API_BASE"))))
+                   ;; The program mints through the shared
+                   ;; (r0man guix services github-actions-vm-mint)
+                   ;; module, which reads GITHUB_API_BASE from the
+                   ;; environment, so tests can point the program at a
+                   ;; mock server.
+                   (string-contains program
+                                    "r0man guix services github-actions-vm-mint"))))
 
           (test-assert "remove program removes runners by name"
             (string-contains (read-file #$remove)
