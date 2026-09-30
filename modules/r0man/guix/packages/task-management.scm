@@ -584,6 +584,30 @@ per-city state.")
               (substitute* "src/github.com/gastownhall/gascity/cmd/gc/main.go"
                 (("^package main")
                  "//go:debug httpmuxgo121=0\npackage main"))))
+          (add-after 'unpack 'pass-gc-home-to-check-scripts
+            ;; A convergence check script runs with HOME=<city> and no
+            ;; GC_HOME, so a `gc' call inside it looks for the pack cache
+            ;; under <city>/.gc/cache/repos, finds nothing and fails with
+            ;; "remote import ... is locked but not cached".  Hand the
+            ;; controller's own GC home through when it is a stable one
+            ;; (an explicit GC_HOME or ~/.gc), never a temporary fallback.
+            ;; Should either substitution miss, the build fails on an unused
+            ;; import or an undefined gchome.
+            (lambda _
+              (substitute* (string-append
+                            "src/github.com/gastownhall/gascity"
+                            "/internal/convergence/condition.go")
+                (("^\t\"github.com/gastownhall/gascity/internal/citylayout\"\n"
+                  all)
+                 (string-append
+                  all "\t\"github.com/gastownhall/gascity/internal/gchome\"\n"))
+                (("^\treturn env\n" all)
+                 (string-append
+                  "\tif gcHome := gchome.ResolveReadOnly(); "
+                  "gcHome.Provenance().Stable() {\n"
+                  "\t\tenv = append(env, \"GC_HOME=\"+gcHome.Path())\n"
+                  "\t}\n"
+                  all)))))
           (add-before 'build 'set-home
             (lambda _
               (setenv "HOME" "/tmp")))
