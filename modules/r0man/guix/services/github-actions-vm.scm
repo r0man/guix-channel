@@ -459,9 +459,10 @@ scratch disk mounted at /scratch."
      (shutdown-file %shutdown-file)
      (registration-marker
       (string-append %feedback-mount-point "/registered"))
-     ;; Log the runner's output to the serial console so that E2E tests
-     ;; can see what the runner is doing.
-     (log-file "/dev/console")))
+     ;; The runner logs to the default /var/log/github-actions-runner.log
+     ;; file, which the runner-log-tail shepherd service forwards to the
+     ;; serial console so that E2E tests can see what the runner is doing.
+     ))
   (operating-system
     (host-name runner-name)
     (timezone "UTC")
