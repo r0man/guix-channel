@@ -679,4 +679,76 @@ without extra-config"
            (equal? '(gascity-provision-b)
                    (shepherd-service-provision (cadr provisions)))))))
 
+
+;;;
+;;; Dolt author identity (§16.18).
+;;;
+
+(test-group "Dolt author identity"
+  (test-equal "an explicit name and email become Dolt JSON"
+    (string-append "{\n"
+                   "  \"user.name\": \"Alice Liddell\",\n"
+                   "  \"user.email\": \"alice@example.com\"\n"
+                   "}\n")
+    (gascity-supervisor-dolt-config-global
+     (gascity-supervisor-configuration
+      (dolt-user-name "Alice Liddell")
+      (dolt-user-email "alice@example.com"))
+     #f))
+
+  (test-equal "the default identity is written when both are unset and no file exists"
+    (string-append "{\n"
+                   "  \"user.name\": \"Gas City\",\n"
+                   "  \"user.email\": \"gascity@localhost\"\n"
+                   "}\n")
+    (gascity-supervisor-dolt-config-global
+     (gascity-supervisor-configuration) #f))
+
+  (test-equal "an existing file is preserved when both are unset (no clobber)"
+    #f
+    (gascity-supervisor-dolt-config-global
+     (gascity-supervisor-configuration) #t))
+
+  (test-equal "a set name defaults the email"
+    (string-append "{\n"
+                   "  \"user.name\": \"Alice Liddell\",\n"
+                   "  \"user.email\": \"gascity@localhost\"\n"
+                   "}\n")
+    (gascity-supervisor-dolt-config-global
+     (gascity-supervisor-configuration (dolt-user-name "Alice Liddell"))
+     #f))
+
+  (test-equal "a set email defaults the name and still wins over an existing file"
+    (string-append "{\n"
+                   "  \"user.name\": \"Gas City\",\n"
+                   "  \"user.email\": \"alice@example.com\"\n"
+                   "}\n")
+    (gascity-supervisor-dolt-config-global
+     (gascity-supervisor-configuration (dolt-user-email "alice@example.com"))
+     #t))
+
+  (test-equal "the identity file lives under the state directory"
+    "/var/lib/gascity/.dolt/config_global.json"
+    (gascity-supervisor-dolt-config-file (gascity-supervisor-configuration)))
+
+  (test-equal "the effective helpers expose the default identity"
+    '("Gas City" "gascity@localhost")
+    (let ((config (gascity-supervisor-configuration)))
+      (list (gascity-supervisor-dolt-user-name config)
+            (gascity-supervisor-dolt-user-email config))))
+
+  (test-assert "a config of the examples' shape declares an explicit identity"
+    (let ((config (gascity-supervisor-configuration
+                   (dolt-user-name "Gas City")
+                   (dolt-user-email "gascity@example.com"))))
+      (and (not (eq? (gascity-supervisor-configuration-dolt-user-name config)
+                     'unset))
+           (not (eq? (gascity-supervisor-configuration-dolt-user-email config)
+                     'unset))
+           (gascity-supervisor-dolt-identity-explicit? config))))
+
+  (test-equal "JSON strings escape quotes, backslashes and control characters"
+    "\"a\\\"b\\\\c\\n\""
+    (gascity-json-string "a\"b\\c\n")))
+
 (test-end "gascity")

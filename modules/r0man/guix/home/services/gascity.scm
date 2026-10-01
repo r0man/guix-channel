@@ -65,6 +65,8 @@
             gascity-supervisor-configuration-packages
             gascity-supervisor-configuration-environment-variables
             gascity-supervisor-configuration-secrets-file
+            gascity-supervisor-configuration-dolt-user-name
+            gascity-supervisor-configuration-dolt-user-email
             gascity-supervisor-configuration-cities
             gascity-supervisor-settings-configuration
             gascity-supervisor-settings-configuration?
@@ -619,6 +621,13 @@
             gascity-supervisor-gc-home
             gascity-supervisor-port
             gascity-supervisor-secrets-file
+            gascity-supervisor-dolt-user-name
+            gascity-supervisor-dolt-user-email
+            gascity-supervisor-dolt-identity-explicit?
+            gascity-supervisor-dolt-config-file
+            gascity-supervisor-dolt-config-global
+            gascity-dolt-config-global-json
+            gascity-json-string
             gascity-supervisor-log-file
             gascity-supervisor-environment
             gascity-city-directory

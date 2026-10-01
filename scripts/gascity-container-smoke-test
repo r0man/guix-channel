@@ -1,0 +1,363 @@
+#!/bin/sh
+# Container smoke test for the Gas City services.
+#
+# Usage: scripts/gascity-container-smoke-test [home|system|all]
+#
+#   home    Build and run examples/gascity/home.scm with
+#           `guix home container'.  The container runs the Home activation
+#           (every home-activation-service-type extension, including
+#           home-gascity-activation), the Home shepherd (the provision
+#           one-shot and the supervisor), and then the check program.  This
+#           covers the materialized city.toml, pack.toml and supervisor.toml,
+#           `gc config show --validate', and that home-gascity-supervisor
+#           reaches Started with a live socket and cities.toml registry.
+#
+#           The wrapper adds `--expose=/bin=/bin': the generated bead shim
+#           (`gc-beads-bd.sh') is `#!/bin/sh', but `guix home container'
+#           provides no `/bin' at all, so without it the provision one-shot
+#           cannot start Dolt and the supervisor never comes up.  Exposing
+#           the host `/bin' emulates a real Guix System's `/bin/sh'.
+#
+#   system  Build and run tests/r0man/guix/services/gascity-container.scm,
+#           first as a container (`guix system container'), falling back to a
+#           VM (`guix system vm --no-graphic') when the host cannot create an
+#           unprivileged container (see below).  Either way the image boots
+#           the OS's real shepherd (PID 1) and runs the full machine-wide
+#           lifecycle: activation materializes city.toml/pack.toml, the
+#           provision one-shot runs genesis and registers the city, and
+#           `gc supervisor run' is running as the gascity account.  The test
+#           OS writes its verdict into a host directory shared with
+#           `--share'.
+#
+#           NOTE: `guix system container' maps a 65536-uid/gid range into the
+#           container's user namespace.  The kernel allows that only for root
+#           (or via newuidmap, which Guix does not use), so on an unprivileged
+#           host the container exits at once with EPERM.  The script then
+#           falls back to the QEMU VM, which boots the same OS with the same
+#           assertions and needs no privileges.
+#
+#   all     home, then system.
+#
+# The script must run from anywhere: it locates the repository root from $0.
+# It exits non-zero as soon as any check fails and prints PASS or FAIL.
+
+set -eu
+
+script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+root=$(CDPATH= cd -- "$script_dir/.." && pwd)
+
+usage() {
+    echo "usage: $0 [home|system|all]" >&2
+}
+
+require_guix() {
+    command -v guix >/dev/null 2>&1 || {
+        echo "FAIL: guix is not on PATH" >&2
+        exit 1
+    }
+}
+
+# The check program is passed to `guix home container FILE -- CMD' as a single
+# argument.  The container joins the command arguments with spaces and feeds
+# the result to a login shell (bash), so the whole check must be one argument.
+# It uses only shell builtins, coreutils (`cat'), and `gc' from the home
+# profile; `grep' is deliberately avoided (it is not in the container).
+home_check_body() {
+    cat <<'CHECK'
+set -eu
+
+state="${XDG_STATE_HOME:-$HOME/.local/state}"
+city="$state/gascity/swarm"
+gc_home="$HOME/.gc"
+fail() {
+    printf 'FAIL: %s\n' "$1" >&2
+    exit 1
+}
+
+echo "state directory:      $state/gascity"
+echo "city directory:       $city"
+echo "GC_HOME:              $gc_home"
+
+# The activation creates the state directory and materializes the generated
+# files.  city.toml and pack.toml live under the city directory; supervisor.toml
+# lives under GC_HOME.
+[ -d "$state/gascity" ] || fail "$state/gascity was not created"
+[ -f "$city/city.toml" ] || fail "$city/city.toml is missing"
+[ -f "$city/pack.toml" ] || fail "$city/pack.toml is missing"
+[ -f "$gc_home/supervisor.toml" ] || fail "$gc_home/supervisor.toml is missing"
+
+city_toml=$(cat "$city/city.toml")
+supervisor_toml=$(cat "$gc_home/supervisor.toml")
+
+# Expected keys of the generated city.toml (see examples/gascity/home.scm).
+case "$city_toml" in
+    *"[workspace]"*)        ;;
+    *) fail "city.toml has no [workspace] table" ;;
+esac
+case "$city_toml" in
+    *'name = "swarm"'*)     ;;
+    *) fail "city.toml has no workspace name" ;;
+esac
+case "$city_toml" in
+    *"[providers.claude]"*) ;;
+    *) fail "city.toml has no [providers.claude] table" ;;
+esac
+case "$city_toml" in
+    *"[daemon]"*)           ;;
+    *) fail "city.toml has no [daemon] table" ;;
+esac
+
+case "$supervisor_toml" in
+    *"[supervisor]"*)       ;;
+    *) fail "supervisor.toml has no [supervisor] table" ;;
+esac
+
+# `gc' is provided by the home profile (home-profile-service-type).  It should
+# be available; skip the validation gracefully if it is not.
+if command -v gc >/dev/null 2>&1; then
+    ( cd "$city" && gc config show --validate ) \
+        || fail "gc config show --validate failed in $city"
+    echo "gc config show --validate: OK"
+else
+    echo "SKIP: gc is not available in the container"
+fi
+
+# The Home shepherd (home-shepherd-service-type) runs the provision one-shot
+# (genesis: Dolt) and then the supervisor.  The bundled bead shim is
+# `#!/bin/sh', which `guix home container' does not provide, so the wrapper
+# exposes the host `/bin' (see run_home); on a real system `/bin/sh' exists.
+# Poll (bounded) for the supervisor to reach Started instead of assuming it.
+i=0
+running=no
+while [ "$i" -lt 120 ]; do
+    status=$(herd status home-gascity-supervisor 2>&1 || true)
+    case "$status" in
+        *running*|*started*) running=yes; break ;;
+    esac
+    sleep 1
+    i=$((i + 1))
+done
+
+if [ "$running" != yes ]; then
+    echo "$status"
+    echo "----- $state/gascity/supervisor-provision.log -----"
+    cat "$state/gascity/supervisor-provision.log" 2>/dev/null || true
+    fail "home-gascity-supervisor did not reach Started"
+fi
+
+[ -S "$gc_home/supervisor.sock" ] || fail "$gc_home/supervisor.sock is missing"
+[ -f "$gc_home/cities.toml" ] || fail "$gc_home/cities.toml is missing"
+echo "home-gascity-supervisor: Started"
+
+echo "PASS: home"
+CHECK
+}
+
+run_home() {
+    file="$root/examples/gascity/home.scm"
+    [ -f "$file" ] || {
+        echo "FAIL: $file not found" >&2
+        exit 1
+    }
+
+    # Resolve a unique state directory.  The path is resolved at *build* time
+    # from XDG_STATE_HOME (the Home service bakes the home paths in), so the
+    # same value must be exported for the `guix home container' process and for
+    # the check program inside the container.  `guix home container' gives the
+    # container a volatile tmpfs /tmp and a tmpfs over $HOME, so writing under
+    # /tmp and $HOME inside the container never touches the host: the host-side
+    # mktemp directory is only used to get a unique path and is removed on exit.
+    tmp=$(mktemp -d "${TMPDIR:-/tmp}/gascity-home-smoke.XXXXXX")
+    trap 'rm -rf "$tmp"' EXIT INT TERM
+    state="$tmp/state"
+
+    check="export XDG_STATE_HOME='$state'
+$(home_check_body)"
+
+    echo "building and running the Home container (examples/gascity/home.scm)..."
+    # `--expose=/bin=/bin' gives the container the host `/bin', emulating a
+    # real Guix System's `/bin/sh'.  `guix home container' provides no `/bin'
+    # at all, but the generated bead shim (`gc-beads-bd.sh') is `#!/bin/sh';
+    # without it the provision one-shot cannot start Dolt and the supervisor
+    # never comes up.
+    XDG_STATE_HOME="$state" \
+        guix home container -L "$root/modules" --expose=/bin=/bin \
+        "$file" -- "$check"
+}
+
+# Run an image launcher (a `guix system container/vm' script) in the
+# background, wait for the assertion service to write `done' into $shared
+# (bounded to 900s), then stop the image and anything it left running.
+#
+# MODE is "tty" to run the launcher under a pseudo-terminal (via `script'),
+# which the VM needs because `guix system vm --no-graphic' passes `-nographic'
+# and QEMU's stdio serial refuses to come up without a tty; the container path
+# does not need a tty and uses "plain".  LAUNCHER is the log path's sibling
+# launcher, the third argument is the log path, and any further arguments are
+# forwarded to the launcher.  Sets $system_log and $system_result (empty when
+# no result was written).
+image_pid=
+
+# Signal every process in a tree.  The launcher is started with `setsid' and
+# (for the VM) `script' puts QEMU in yet another session, so a plain
+# `kill $pid' would leave QEMU running.
+signal_tree() {
+    sig=$1
+    p=$2
+    for c in $(ps -o pid= --ppid "$p" 2>/dev/null); do
+        signal_tree "$sig" "$c"
+    done
+    kill "$sig" "-$p" 2>/dev/null || kill "$sig" "$p" 2>/dev/null || true
+}
+
+# Stop the running image, with a short bounded grace period before KILL.
+stop_image() {
+    [ -n "$image_pid" ] || return 0
+    signal_tree -TERM "$image_pid"
+    n=0
+    while [ "$n" -lt 5 ]; do
+        sleep 1
+        n=$((n + 1))
+    done
+    signal_tree -KILL "$image_pid"
+    wait "$image_pid" 2>/dev/null || true
+    image_pid=
+}
+
+run_system_image() {
+    system_log=$1
+    mode=$2
+    launcher=$3
+    shift 3
+    system_result=
+
+    if [ "$mode" = tty ] && command -v script >/dev/null 2>&1; then
+        # `script -qec' attaches a pty and records the console to $system_log
+        # without echoing the "Script started" banner.  setsid gives the whole
+        # tree its own session so `signal_tree' can reach it.
+        cmd=$launcher
+        for a in "$@"; do
+            cmd="$cmd $a"
+        done
+        setsid script -qec "$cmd" "$system_log" &
+    else
+        "$launcher" "$@" >"$system_log" 2>&1 &
+    fi
+    image_pid=$!
+
+    deadline=$(( $(date +%s) + 900 ))
+    while [ ! -f "$shared/done" ]; do
+        if ! kill -0 "$image_pid" 2>/dev/null; then
+            # The image exited before the assertions finished.
+            break
+        fi
+        if [ "$(date +%s)" -ge "$deadline" ]; then
+            break
+        fi
+        sleep 1
+    done
+
+    stop_image
+
+    if [ -f "$shared/result" ]; then
+        system_result=$(cat "$shared/result")
+    fi
+}
+
+# Print the verdict of an image run and, on failure, preserve and show the
+# log.  Never returns on failure.
+report_system_result() {
+    case "$system_result" in
+        PASS:*)
+            echo "PASS: system"
+            ;;
+        '')
+            trap - EXIT INT TERM
+            echo "FAIL: the system image wrote no result (timed out or exited early)" >&2
+            echo "log preserved at $system_log" >&2
+            echo "----- /shared/progress.log -----" >&2
+            cat "$shared/progress.log" >&2 2>/dev/null || true
+            echo "----- system log (tail) -----" >&2
+            tail -n 100 "$system_log" >&2 || true
+            exit 1
+            ;;
+        *)
+            trap - EXIT INT TERM
+            echo "$system_result" >&2
+            echo "log preserved at $system_log" >&2
+            echo "----- /shared/progress.log -----" >&2
+            cat "$shared/progress.log" >&2 2>/dev/null || true
+            echo "----- system log (tail) -----" >&2
+            tail -n 100 "$system_log" >&2 || true
+            exit 1
+            ;;
+    esac
+}
+
+run_system() {
+    file="$root/tests/r0man/guix/services/gascity-container.scm"
+    [ -f "$file" ] || {
+        echo "FAIL: $file not found" >&2
+        exit 1
+    }
+
+    # The test OS writes its verdict into /shared, a host directory shared
+    # read/write with `--share'.  The image boots the OS's real shepherd and
+    # never shuts down by itself: after `done' appears we kill it.  The log is
+    # preserved on failure.
+    tmp=$(mktemp -d "${TMPDIR:-/tmp}/gascity-system-smoke.XXXXXX")
+    trap 'stop_image; rm -rf "$tmp"' EXIT INT TERM
+    shared="$tmp/shared"
+    mkdir -p "$shared"
+
+    # Primary path: a container, which boots the OS's shepherd as PID 1 and
+    # needs no emulation.  It only runs where an unprivileged user namespace
+    # can be created AND a 65536-uid range can be mapped, which the kernel
+    # allows only for root (Guix does not use newuidmap).  Where that is not
+    # possible the container exits immediately with an EPERM while writing
+    # uid_map; we then fall back to a QEMU VM, which needs no privileges.
+    echo "building the system container (tests/r0man/guix/services/gascity-container.scm)..."
+    if guix system container -L "$root/modules" -r "$tmp/container" \
+            --share="$shared=/shared" "$file"; then
+        echo "booting the container..."
+        run_system_image "$tmp/container.log" plain "$tmp/container"
+        if [ -f "$shared/done" ]; then
+            report_system_result
+            return
+        fi
+        echo "the container did not boot; falling back to 'guix system vm'" \
+             "(unprivileged containers need root to map a uid range)" >&2
+    else
+        echo "the container could not be built; falling back to 'guix system vm'" >&2
+    fi
+
+    # Fallback: a QEMU VM booting the very same OS with the same --share, but
+    # with no privilege requirement.  Clear any partial result first.
+    rm -f "$shared/done" "$shared/result" "$shared/result.tmp" \
+          "$shared/progress.log"
+    echo "building the system VM (guix system vm --no-graphic)..."
+    guix system vm -L "$root/modules" -r "$tmp/vm" \
+         --no-graphic --share="$shared=/shared" "$file"
+    echo "booting the VM..."
+    # `guix system vm' does not pass a machine or CPU for aarch64, and QEMU's
+    # aarch64 emulator has no default machine; the launcher forwards extra
+    # arguments to QEMU, so supply them (and more memory) there.  On x86_64
+    # the defaults are fine and no extra arguments are needed.
+    qemu_args=
+    case "$(uname -m)" in
+        aarch64*) qemu_args="-M virt -cpu max -m 2048" ;;
+    esac
+    # Deliberate word splitting: qemu_args is a list of QEMU arguments.
+    # shellcheck disable=SC2086
+    run_system_image "$tmp/vm.log" tty "$tmp/vm" $qemu_args
+    report_system_result
+}
+
+action=${1:-all}
+case "$action" in
+    home)   require_guix; run_home ;;
+    system) require_guix; run_system ;;
+    all)    require_guix; run_home; run_system ;;
+    -h|--help) usage; exit 0 ;;
+    *) usage; exit 2 ;;
+esac
