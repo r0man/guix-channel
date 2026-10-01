@@ -653,7 +653,12 @@ service defaults, so neither hardcodes the host's =$HOME= or a state path.
   #+end_src
 
   The supervisor runs as the =gascity= account, with state under
-  =/var/lib/gascity=.
+  =/var/lib/gascity=.  The serial console is architecture-dependent: the
+  example selects =ttyAMA0= on aarch64 (where QEMU's =virt= machine wires its
+  PL011 UART), so on aarch64 the generated =guix system vm= launcher needs
+  QEMU's machine and CPU, =$(guix system vm -L modules examples/gascity/system.scm)
+  -M virt -cpu max=, while on x86_64 =guix system vm -L modules
+  examples/gascity/system.scm= works as-is.
 
 =scripts/gascity-container-smoke-test= wraps the image invocations:
 
