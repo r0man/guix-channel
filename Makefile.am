@@ -108,6 +108,9 @@ ACLOCAL_AMFLAGS = -I m4
 
 EXTRA_DIST =					\
   bootstrap					\
+  examples/gascity/home.scm			\
+  examples/gascity/system.scm			\
+  scripts/gascity-container-smoke-test		\
   scripts/github-actions-vm-smoke-test		\
   scripts/generate-gascity-records.scm		\
   docs/gascity-service.org				\
@@ -160,6 +163,32 @@ check-gascity-records:
 	  exit 1;							\
 	fi
 .PHONY: check-gascity-records
+
+# Opt-in container smoke test for the Home Gas City service.  It builds and
+# runs examples/gascity/home.scm with `guix home container', which needs the
+# Guix daemon and unprivileged user namespaces, so it is deliberately NOT part
+# of `make check'.
+check-gascity-home-container:
+	@echo "Running the Home Gas City container smoke test (needs the Guix daemon and user namespaces)..."
+	$(top_srcdir)/scripts/gascity-container-smoke-test home
+.PHONY: check-gascity-home-container
+
+# Opt-in smoke test for the machine-wide Gas City service.  It builds
+# tests/r0man/guix/services/gascity-container.scm and boots it, first as a
+# container and, where the host cannot map a uid range, as a QEMU VM.  Like the
+# Home target it is deliberately NOT part of `make check', as it needs the Guix
+# daemon (and, for the VM fallback, QEMU).
+check-gascity-system-container:
+	@echo "Running the system Gas City container smoke test (needs the Guix daemon; falls back to a VM)..."
+	$(top_srcdir)/scripts/gascity-container-smoke-test system
+.PHONY: check-gascity-system-container
+
+# Run both Gas City smoke tests: the Home container, then the system
+# container/VM.
+check-gascity-containers:
+	@echo "Running all Gas City container smoke tests (needs the Guix daemon; falls back to a VM)..."
+	$(top_srcdir)/scripts/gascity-container-smoke-test all
+.PHONY: check-gascity-containers
 
 clean-go:
 	-$(RM) $(GOBJECTS)
