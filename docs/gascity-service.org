@@ -797,6 +797,94 @@ unprivileged user namespaces and the network:
 make run-gascity-home-container
 #+end_src
 
+** The system-service demo
+
+The =bright-lights= example has a system counterpart,
+=examples/gascity/bright-lights-system.scm=, that runs the *machine-wide*
+=gascity-service-type= in a fresh, ephemeral system image.  It mirrors
+=examples/gascity/system.scm= (one supervisor, the =bright-lights= city, the
+builtin =claude= provider, the pinned builtin =core=/=bd= imports) and adds
+=claude-code= and the credential copy described below.
+
+=scripts/gascity-system-container= wraps the invocation.  By default it builds
+and runs a *system container* with =sudo guix system container --network= (the
+counterpart of =scripts/gascity-home-container=); pass =--vm= for a rootless
+=guix system vm --no-graphic=.
+
+#+begin_src sh
+scripts/gascity-system-container          # system container (sudo)
+scripts/gascity-system-container --vm     # rootless QEMU VM
+#+end_src
+
+A system container needs root to map a 65536-uid/gid range into its user
+namespace.  Containers have no =/dev/tty*=, so interact with =guix container
+exec= rather than a serial console:
+
+#+begin_src sh
+sudo guix container exec "$(cat /tmp/bright-lights.pid)" \
+     /run/current-system/profile/bin/bash --login
+export GC_HOME=/var/lib/gascity/.gc
+gc status                        # supervisor and city status
+gc sling claude "your task"      # route work to the claude agent
+gc session list
+#+end_src
+
+With =--vm= the VM presents a serial =login:= prompt: log in as =root= with no
+password (a fresh Guix System leaves the root account passwordless) and run
+the same =gc= commands.
+
+The city is ephemeral: it lives only in the image and is discarded when it
+exits.
+
+** What the VM/container exposes
+
+- In *container mode* only the host Claude Code *credential* files are exposed
+*read-only* with =--expose=: =~/.claude/.credentials.json=, the optional
+=~/.claude/settings.json= and =~/.claude/settings.local.json=, and
+=~/.claude.json=.  The whole =~/.claude= directory is deliberately *not*
+exposed: it is large (=debug/=, =history=, =session-env=, ...) and copying it
+over 9p at boot stalls the boot.  At boot a one-shot Shepherd service copies
+those files into the service user's home (=/var/lib/gascity/.claude= and
+=/var/lib/gascity/.claude.json=), owned by the =gascity= account, before the
+supervisor starts.  *The host files are never modified:* token refreshes stay
+inside the ephemeral VM.  The copy cannot run in the activation phase, which
+precedes every file-system mount, so it is a one-shot service that
+=user-processes= (and hence the supervisor) waits for.
+- =guix system vm --expose= exports a *directory* (9p cannot export a single
+file), so =scripts/gascity-system-container= stages those credential files in
+a private temporary directory (keeping the =.claude= layout: =.claude/.credentials.json=
+and =.claude.json=) and exposes that instead.  The staging directory is
+removed when the script exits.  If =~/.claude/.credentials.json= is missing
+the script still boots the demo but prints a warning: =claude= will not be
+authenticated in the VM.
+- The VM uses QEMU's user-mode network (=%qemu-static-networking=), which
+=claude= needs.
+- On aarch64 the serial console is the PL011 UART (=ttyAMA0=) and the example
+also runs its =agetty= there; the script passes QEMU's =-M virt -cpu max=,
+without which QEMU's aarch64 emulator has no default machine.  On x86_64 both
+the console and the =-M= default are =ttyS0=.
+
+** =--vm=
+
+Passing =--vm= boots a rootless =guix system vm --no-graphic= (QEMU, with KVM
+when available) instead of the default container, and forwards the serial
+console.  On aarch64 the console is the PL011 UART (=ttyAMA0=) and the example
+runs its =agetty= there; the script passes QEMU's =-M virt -cpu max=, without
+which QEMU's aarch64 emulator has no default machine.  On x86_64 both the
+console and the =-M= default are =ttyS0=.  A system container maps a
+65536-uid/gid range into its user namespace, which the kernel permits only for
+root (Guix does not use =newuidmap=), hence the =sudo= in the default.  The VM
+shares no credentials (QEMU's 9p virtfs hangs on file reads here), so it boots
+unauthenticated: run =claude login= inside it, or use the default container.
+
+The system demo is also available as an opt-in make target.  Like the smoke
+tests it is deliberately NOT part of =make check=, as it builds and boots a full
+system image and needs the Guix daemon (and QEMU):
+
+#+begin_src sh
+make run-gascity-system-container
+#+end_src
+
 * Coming from the Gas City docs
 
 | Gas City TOML / idiom | Guix form |
