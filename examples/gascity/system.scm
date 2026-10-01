@@ -15,15 +15,45 @@
 ;;;   guix system container -L modules examples/gascity/system.scm
 ;;;   guix system vm      -L modules examples/gascity/system.scm
 ;;;
+;;; The VM console is architecture-dependent.  On x86_64 the launcher above
+;;; works as-is; on aarch64 `guix system vm' defaults to no machine and
+;;; `console=ttyS0', but QEMU's `virt' machine wires its PL011 serial device to
+;;; `ttyAMA0', so the console stays empty.  The OS therefore selects
+;;; `ttyAMA0' on aarch64 (see `%kernel-arguments' below), and the generated
+;;; launcher must also be given QEMU's machine and CPU:
+;;;
+;;;   $(guix system vm -L modules examples/gascity/system.scm) -M virt -cpu max
+;;;
+;;; With those arguments the aarch64 boot can be inspected on the serial
+;;; console.
+;;;
 ;;; The system container smoke test is added separately (see
 ;;; docs/gascity-service.org, "Running the examples").
 
 (use-modules (gnu)
              (gnu services)
              (gnu services base)
+             (gnu system)
+             (gnu system linux-initrd)
              (gnu tests)
+             (guix utils)
              (r0man guix services gascity)
              (r0man guix toml))
+
+;;; On aarch64 `guix system vm' boots with no default machine and the plain
+;;; `console=ttyS0' kernel argument, but QEMU's `virt' machine wires its PL011
+;;; serial device to `ttyAMA0'; without this the VM boots but the console
+;;; stays empty.  Select the virt machine CPU in the launcher (see the header)
+;;; and point the kernel at the PL011 UART here.  On x86_64 Guix's defaults
+;;; (ttyS0) already work.
+(define %kernel-arguments
+  (delete
+   "quiet"
+   (append
+    (if (target-aarch64?)
+        '("earlycon=pl011,0x9000000" "console=ttyAMA0")
+        '())
+    %default-kernel-arguments)))
 
 (operating-system
  (inherit
@@ -78,4 +108,9 @@
                                    (toml-field 'provider "smtp")
                                    (toml-field 'retention_ttl "24h"))
                        (toml-table 'api
-                                   (toml-field 'bind "127.0.0.1"))))))))))))
+                                   (toml-field 'bind "127.0.0.1")))))))))))
+ ;; Load the virtio NIC driver before shepherd starts; on aarch64 -M virt the
+ ;; NIC is virtio-net-pci.  Without this the `%qemu-static-networking' device
+ ;; has no driver and the `networking' provision never comes up.
+ (initrd-modules (cons* "virtio_net" %base-initrd-modules))
+ (kernel-arguments %kernel-arguments))
