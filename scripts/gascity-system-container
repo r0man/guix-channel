@@ -1,0 +1,216 @@
+#!/bin/sh
+# Interactive system Gas City demo.
+#
+# Usage: scripts/gascity-system-container
+#        scripts/gascity-system-container --container
+#
+# Build and boot examples/gascity/bright-lights-system.scm, a fresh,
+# ephemeral machine-wide "bright-lights" city, with the Gas City supervisor
+# running as the "gascity" account.  By default it builds and runs a system
+# container (`sudo guix system container --network'), the counterpart of
+# `scripts/gascity-home-container': a 65536-uid/gid range is mapped into the
+# container's user namespace, which only root may do, so the container is
+# built and started through sudo.  Use `--vm' for a rootless QEMU VM
+# (`guix system vm --no-graphic') instead.
+#
+# The wrapper:
+#
+#   * in container mode (the default) exposes the host Claude Code
+#     *credential* files read-only: ~/.claude/.credentials.json, the optional
+#     ~/.claude/settings.json and ~/.claude/settings.local.json, and
+#     ~/.claude.json are staged in a private temporary directory exposed as
+#     /mnt/claude-ro (a bind mount).  The example *copies* them into the
+#     service user's home at boot, so the host files are never modified and
+#     token refreshes stay inside the ephemeral container.  The whole
+#     ~/.claude is deliberately not shared (it is large);
+#   * in VM mode (`--vm') shares nothing: reading files over QEMU's 9p virtfs
+#     hangs the guest here, so the VM boots unauthenticated and you run
+#     `claude login' inside it;
+#   * prints a banner with how to log in and the commands that matter, then
+#     boots the VM and forwards the console;
+#   * on aarch64 also passes QEMU's `-M virt -cpu max', without which QEMU's
+#     aarch64 emulator has no default machine.
+#
+# Containers drop the serial `agetty' (no /dev/tty*), so interact with
+# `sudo guix container exec' (see the banner) instead of a login prompt.
+
+set -eu
+
+script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+root=$(CDPATH= cd -- "$script_dir/.." && pwd)
+example="$root/examples/gascity/bright-lights-system.scm"
+
+usage() {
+    cat <<'USAGE'
+Usage: scripts/gascity-system-container [--vm]
+
+Boot examples/gascity/bright-lights-system.scm, a fresh, ephemeral
+machine-wide "bright-lights" city, with the Gas City supervisor running as
+the "gascity" account.
+
+Options:
+  -h, --help        show this help and exit
+  --vm              boot a rootless QEMU VM (`guix system vm --no-graphic')
+                    instead of the default system container
+  --container       accepted for compatibility; the container is the default
+
+Examples:
+  scripts/gascity-system-container
+  scripts/gascity-system-container --vm
+
+By default the demo builds and runs a system container with
+`sudo guix system container --network' (needs root: a system container maps
+a 65536-uid/gid range into its user namespace).  Interact with it through
+`sudo guix container exec' (see the banner).  With `--vm' it boots a rootless
+QEMU VM whose console is the serial port; log in at the `bright-lights
+login:' prompt as `root' (no password on a fresh Guix System).
+
+In container mode the host Claude Code credential files
+(~/.claude/.credentials.json, the optional settings files, and
+~/.claude.json) are exposed read-only and copied into the service user's home
+at boot; the host files are never modified and the city and copies are
+ephemeral.  In VM mode nothing is shared: the VM boots unauthenticated.
+USAGE
+}
+
+require_guix() {
+    command -v guix >/dev/null 2>&1 || {
+        echo "FAIL: guix is not on PATH" >&2
+        exit 1
+    }
+}
+
+# Container is the default; `--vm' selects the rootless QEMU VM.
+container_mode=yes
+
+while [ $# -gt 0 ]; do
+    case "$1" in
+        -h|--help)
+            usage
+            exit 0
+            ;;
+        --vm)
+            container_mode=no
+            shift
+            ;;
+        --container)
+            container_mode=yes
+            shift
+            ;;
+        *)
+            echo "unknown argument: $1" >&2
+            usage >&2
+            exit 2
+            ;;
+    esac
+done
+
+[ -f "$example" ] || {
+    echo "FAIL: $example not found" >&2
+    exit 1
+}
+
+require_guix
+
+# Stage the host Claude Code credential files for the container, which shares
+# them through a bind mount.  `--expose' exports a *directory*, so the files
+# are staged in a private temporary directory exposed as /mnt/claude-ro:
+# `.claude/.credentials.json' (and the optional settings files) plus
+# `.claude.json'.  The example copies them into the service user's home at
+# boot; the host originals are never modified.
+#
+# The VM (`--vm') deliberately shares nothing: reading any file over QEMU's
+# 9p virtfs mount hangs the guest before it reaches a login prompt, so the VM
+# boots unauthenticated and the user runs `claude login' inside it.
+if [ "$container_mode" = yes ]; then
+    staging=$(mktemp -d "${TMPDIR:-/tmp}/gascity-claude.XXXXXX")
+    chmod 700 "$staging"
+    mkdir -p "$staging/.claude"
+    cleanup() {
+        rm -rf "$staging"
+    }
+    trap cleanup EXIT INT TERM
+
+    if [ -f "$HOME/.claude/.credentials.json" ]; then
+        cp "$HOME/.claude/.credentials.json" "$staging/.claude/.credentials.json"
+        chmod 600 "$staging/.claude/.credentials.json"
+    else
+        echo "WARNING: $HOME/.claude/.credentials.json not found." >&2
+        echo "         The demo still boots, but claude will not be authenticated" >&2
+        echo "         in the container.  Log in with claude on the host first." >&2
+    fi
+
+    for file in settings.json settings.local.json; do
+        if [ -f "$HOME/.claude/$file" ]; then
+            cp "$HOME/.claude/$file" "$staging/.claude/$file"
+            chmod 600 "$staging/.claude/$file"
+        fi
+    done
+
+    if [ -f "$HOME/.claude.json" ]; then
+        cp "$HOME/.claude.json" "$staging/.claude.json"
+        chmod 600 "$staging/.claude.json"
+    else
+        echo "note: $HOME/.claude.json not found; skipping it." >&2
+    fi
+
+    # `set --' keeps the exposed source a separate argument even when a path
+    # contains spaces.
+    set -- --expose="$staging=/mnt/claude-ro"
+else
+    set --
+    echo "note: --vm boots unauthenticated (no Claude Code credentials are" >&2
+    echo "      shared); run 'claude login' inside the VM, or use the" >&2
+    echo "      default container for the host credentials." >&2
+fi
+
+banner() {
+    printf '\n'
+    printf 'Gas City bright-lights demo (ephemeral %s)\n' "$1"
+    printf '\n'
+    printf 'The city is fresh and ephemeral: it lives only in this image.  Your\n'
+    printf 'host Claude Code credentials are exposed read-only and *copied* into\n'
+    printf "the service user's home at boot, so the host files are never touched.\n"
+    printf '\n'
+    if [ "$container_mode" = yes ]; then
+        printf 'Log in with:\n'
+        printf '    sudo guix container exec $(cat /tmp/bright-lights.pid) /run/current-system/profile/bin/bash --login\n'
+    else
+        printf 'Log in on the serial console as root (no password):\n'
+        printf '    bright-lights login: root\n'
+    fi
+    printf '\n'
+    printf 'Then:\n'
+    printf '    export GC_HOME=/var/lib/gascity/.gc\n'
+    printf '    gc status\n'
+    printf '    gc sling claude "your task"\n'
+    printf '    gc session list\n'
+    printf '\n'
+}
+
+echo "building examples/gascity/bright-lights-system.scm..." >&2
+
+if [ "$container_mode" = yes ]; then
+    banner "system container"
+    # A system container maps a 65536-uid/gid range into its user namespace,
+    # which the kernel only allows for root (Guix does not use newuidmap), so
+    # build and run it with sudo.  `--network' shares the host network; Guix
+    # then replaces the OS's static networking with a no-op (see
+    # `containerized-operating-system').
+    launcher=$(sudo guix system container -L "$root/modules" --network \
+                    "$@" "$example")
+    sudo "$launcher" --pid-file=/tmp/bright-lights.pid
+else
+    banner "VM"
+    launcher=$(guix system vm -L "$root/modules" --no-graphic \
+                    "$@" "$example")
+    # On aarch64 QEMU's emulator has no default machine; the launcher forwards
+    # extra arguments to QEMU.  On x86_64 the defaults are fine.
+    qemu_args=
+    case "$(uname -m)" in
+        aarch64*) qemu_args="-M virt -cpu max" ;;
+    esac
+    # Deliberate word splitting: qemu_args is a list of QEMU arguments.
+    # shellcheck disable=SC2086
+    "$launcher" $qemu_args
+fi
