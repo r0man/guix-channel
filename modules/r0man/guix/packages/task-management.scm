@@ -202,6 +202,27 @@ JSONL files stored in git for distributed synchronization across
 machines.")
     (license license:expat)))
 
+(define-public beads-next
+  ;; Tracks the main branch of Beads.
+  (let ((commit "555b01d7891d4b592d83c4545a6dcedd018cbb9c")
+        (revision "0"))
+    (package
+      (inherit beads)
+      (name "beads-next")
+      (version (git-version "1.3.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/gastownhall/beads")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "0v2ihg1hmzg5mcjxvpblnx5jpz5ibp2fkyhhvrs50rpwi94fvp6j"))))
+      (native-inputs
+       (modify-inputs (package-native-inputs beads)
+         (prepend go-github-com-gowebpki-jcs))))))
+
 (define-public go-github-com-steveyegge-beads
   (let ((commit "3a7a2e852a739f43e3c6c58ee36693dea8bac693")
         (revision "0"))
