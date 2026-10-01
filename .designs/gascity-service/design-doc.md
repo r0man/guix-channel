@@ -472,7 +472,7 @@ the VM test in `SYSTEM_TEST_FILES`.
 
 | Record | Role |
 |---|---|
-| `<gascity-supervisor-configuration>` | one supervisor instance: `id`, package, user/group, `gc-home`, state/log dirs, bind, `port`, settings, extra packages, environment, cities. The **service value is a list** of these. |
+| `<gascity-supervisor-configuration>` | one supervisor instance: `id`, package, user/group, `gc-home`, state/log dirs, bind, `port`, settings, extra packages, environment, `dolt-user-name`/`dolt-user-email`, cities. The **service value is a list** of these. |
 | `<gascity-supervisor-settings-configuration>` | the `~/.gc/supervisor.toml` document: `[supervisor]`, `[publication]`, `[events.export]` |
 | `<gascity-city-configuration>` | one city: identity + all `City` fields + files/escape hatches |
 | `<gascity-pack-configuration>` | the root `pack.toml` (optional; when omitted, a minimal `[pack]` is generated) |
@@ -810,6 +810,8 @@ Pseudo-algorithm. Steps 1–2 run in the activation (root for system, user for
 home); steps 3–5 run in the per-instance one-shot as the service user:
 
 ```
+materialize! <state-directory>/.dolt/config_global.json
+             {user.name, user.email}   (activation; see §16.18)
 for each enabled city C:
   dir = C.directory
   # --- activation: materialize generated files ---
@@ -864,6 +866,15 @@ Notes and decisions:
   (registry reconciliation); a `port`/`bind` change restarts the supervisor
   instead of reloading. All of this is non-fatal, never touches the network,
   and must not drain the session driving the reconfigure.
+- **Dolt author identity (decided, §16.18):** the activation materializes
+  `<state-directory>/.dolt/config_global.json` (`0600`, owned by the service
+  user) with `user.name`/`user.email`, because `gc init` of a managed bd store
+  fails at genesis without a Dolt commit identity. `HOME` and `DOLT_ROOT_PATH`
+  are pinned to the state directory in both the provision one-shot and the
+  supervisor environment so Dolt reads it. Two records fields,
+  `dolt-user-name`/`dolt-user-email` (`maybe-string`), carry explicit intent;
+  an operator identity always wins, a default identity is written only when no
+  file exists yet, and an existing file is never clobbered.
 - **Account and directories (system only):** activation creates the `gascity`
   account/group if absent (via the same `user-account`/`user-group` records as
   `github-actions`), then `chown`s the state dir, log dir, city dirs and
@@ -877,14 +888,14 @@ Three `program-file`s, built with `with-imported-modules`:
 
 - `gascity-activation-program` (activation, root for system / user for home) —
   the file-materialization steps of the loop: create/chown dirs, write the
-  generated `city.toml`/`pack.toml`/`files`, and write `supervisor.toml`. Pure
-  data in, files out.
+  generated `city.toml`/`pack.toml`/`files`, write `supervisor.toml`, and
+  materialize the Dolt author identity (§16.18). Pure data in, files out.
 - `gascity-provision-program` (one-shot, runs as `user`) — the stateful steps:
   write `.gc/site.toml`, run idempotent `gc init --file ... --preserve-existing
   --no-start --skip-provider-readiness`, run `gc import install` when enabled,
-  and read-merge-write `[[cities]]`. Sets `HOME`, `GC_HOME`, `XDG_RUNTIME_DIR`,
-  `PATH`, `SSL_CERT_DIR`/`SSL_CERT_FILE` and `GUIX_*`. It refers to `gc` by
-  store path (`#$gascity`), never by name.
+  and read-merge-write `[[cities]]`. Sets `HOME`, `DOLT_ROOT_PATH`, `GC_HOME`,
+  `XDG_RUNTIME_DIR`, `PATH`, `SSL_CERT_DIR`/`SSL_CERT_FILE` and `GUIX_*`. It
+  refers to `gc` by store path (`#$gascity`), never by name.
 - `gascity-supervisor-program` (long-running) — a wrapper that loads
   `secrets-file` into the environment and `exec`s `gc supervisor run` (§16.17).
 
@@ -1654,3 +1665,49 @@ resolves empty (a silent provider auth failure).
 Note: the sibling `github-actions` service currently accepts a `token` field in
 its record; if that token is a literal, it has the same problem. The Gas City
 service must not repeat it.
+
+### 16.18 Dolt author identity at genesis (decided)
+
+`gc init` of a managed bd store (`--file ... --preserve-existing --no-start
+--skip-provider-readiness`) runs Dolt's `init`, which commits a bootstrap
+revision and therefore requires a commit author identity. Dolt reads the global
+identity from `$DOLT_ROOT_PATH/.dolt/config_global.json` (or `$HOME/.dolt`),
+and fails at genesis when both are absent. The provision one-shot then fails,
+the supervisor never starts, and the failure is invisible in the activation
+unless the operator reads the provision log. The system container example hit
+exactly this.
+
+**Decision.** The root activation program materializes the identity, because
+it is declarative state that must exist before the one-shot runs (§16.1), not
+data owned by the one-shot. Two new fields on
+`<gascity-supervisor-configuration>`:
+
+- `dolt-user-name` → `gascity-supervisor-configuration-dolt-user-name`,
+- `dolt-user-email` → `gascity-supervisor-configuration-dolt-user-email`,
+
+both `maybe-string` (`'unset` default) so explicit intent is distinguishable
+from an absent field. The effective helpers
+`gascity-supervisor-dolt-user-name` / `-dolt-user-email` apply the default
+identity (`"Gas City"` / `"gascity@localhost"`), and
+`gascity-supervisor-dolt-config-global config installed?` is the pure decision
+returning the JSON text to write, or `#f` to leave the file alone.
+
+**Semantics.**
+
+- The file is `<state-directory>/.dolt/config_global.json`, mode `0600`,
+  owned by the service user (system activation chowns; Home activation writes
+  as the user, §16.4). The service user's home is the state directory, so
+  `$HOME` and `$DOLT_ROOT_PATH` both resolve to it; the provision one-shot sets
+  `DOLT_ROOT_PATH` explicitly, and the supervisor environment pins it too, so
+  the identity reaches agent sessions that commit.
+- Setting **either** field is explicit intent: the activation writes the file
+  even if one already exists, filling the unset field with the default identity
+  (the default is documented, not a hard error).
+- When **both** are unset the default identity is written only when no file
+  exists yet; an existing file is an operator- or sops-provided identity and
+  **wins** (no clobber). This makes a pristine system work out of the box while
+  never overwriting an operator's configured identity.
+- The write is compare-and-write (the activation's `install-file`), so an
+  unchanged reconfigure does not touch the file and does not restart anything.
+- The identity is service configuration, not a Gas City TOML key: it is never
+  emitted into `city.toml` or `supervisor.toml`.

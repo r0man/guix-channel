@@ -74,6 +74,9 @@
 (define-module (r0man guix services gascity)
   #:use-module (gnu packages admin)
   #:use-module (gnu packages base)
+  #:use-module (gnu packages bash)
+  #:use-module (gnu packages gawk)
+  #:use-module (gnu packages sqlite)
   #:use-module (gnu packages version-control)
   #:use-module ((gnu services) #:hide (delete))
   #:use-module (gnu services shepherd)
@@ -131,6 +134,8 @@
             gascity-supervisor-configuration-packages
             gascity-supervisor-configuration-environment-variables
             gascity-supervisor-configuration-secrets-file
+            gascity-supervisor-configuration-dolt-user-name
+            gascity-supervisor-configuration-dolt-user-email
             gascity-supervisor-configuration-cities
 
             gascity-supervisor-settings-configuration
@@ -721,6 +726,13 @@
             gascity-supervisor-gc-home
             gascity-supervisor-port
             gascity-supervisor-secrets-file
+            gascity-supervisor-dolt-user-name
+            gascity-supervisor-dolt-user-email
+            gascity-supervisor-dolt-identity-explicit?
+            gascity-supervisor-dolt-config-file
+            gascity-supervisor-dolt-config-global
+            gascity-dolt-config-global-json
+            gascity-json-string
             gascity-supervisor-log-file
             gascity-supervisor-environment
             gascity-city-directory
@@ -1033,6 +1045,10 @@ emission."
    (default '()))                                   ;list of "KEY=value" strings
   (secrets-file        gascity-supervisor-configuration-secrets-file
                        (default 'unset))            ;string, gexp or 'unset
+  (dolt-user-name      gascity-supervisor-configuration-dolt-user-name
+                       (default 'unset))            ;string or 'unset
+  (dolt-user-email     gascity-supervisor-configuration-dolt-user-email
+                       (default 'unset))            ;string or 'unset
   (cities              gascity-supervisor-configuration-cities
                        (default '())))              ;list of city records
 
@@ -3113,6 +3129,16 @@ generated nodes."
   ;; it, so it is never "disabled" and a second instance must set its own.
   8372)
 
+(define %gascity-default-dolt-user-name
+  ;; Dolt requires a commit author identity, and `gc init' of a managed bd
+  ;; store fails at genesis without one.  This is the identity a pristine
+  ;; service falls back to when the operator sets neither `dolt-user-name'
+  ;; nor `dolt-user-email' and no identity file exists yet.
+  "Gas City")
+
+(define %gascity-default-dolt-user-email
+  "gascity@localhost")
+
 (define (gascity-supervisor-user config)
   "Return the user name the supervisor instance CONFIG runs as."
   (let ((user (gascity-supervisor-configuration-user config)))
@@ -3163,6 +3189,83 @@ service gexp (§16.17)."
     (if (eq? file 'unset)
         (string-append (gascity-supervisor-gc-home config) "/secrets.env")
         file)))
+
+(define (gascity-supervisor-dolt-user-name config)
+  "Return the effective Dolt `user.name' of the supervisor instance CONFIG:
+its `dolt-user-name' field, or the default identity when unset."
+  (let ((name (gascity-supervisor-configuration-dolt-user-name config)))
+    (if (eq? name 'unset) %gascity-default-dolt-user-name name)))
+
+(define (gascity-supervisor-dolt-user-email config)
+  "Return the effective Dolt `user.email' of the supervisor instance CONFIG:
+its `dolt-user-email' field, or the default identity when unset."
+  (let ((email (gascity-supervisor-configuration-dolt-user-email config)))
+    (if (eq? email 'unset) %gascity-default-dolt-user-email email)))
+
+(define (gascity-supervisor-dolt-identity-explicit? config)
+  "Return #t when the operator set the supervisor instance CONFIG's
+`dolt-user-name' or `dolt-user-email' field, i.e. declared a Dolt author
+identity explicitly."
+  (or (not (eq? (gascity-supervisor-configuration-dolt-user-name config)
+                'unset))
+      (not (eq? (gascity-supervisor-configuration-dolt-user-email config)
+                'unset))))
+
+(define (gascity-json-string value)
+  "Return VALUE, a string, quoted and escaped as a JSON string."
+  (define (hex character)
+    (string-pad (number->string (char->integer character) 16) 4 #\0))
+  (string-append
+   "\""
+   (call-with-output-string
+    (lambda (port)
+      (string-for-each
+       (lambda (character)
+         (cond
+          ((char=? character #\") (display "\\\"" port))
+          ((char=? character #\\) (display "\\\\" port))
+          ((char=? character #\newline) (display "\\n" port))
+          ((char=? character #\return) (display "\\r" port))
+          ((char=? character #\tab) (display "\\t" port))
+          ((char<? character #\space)
+           (display "\\u" port)
+           (display (hex character) port))
+          (else (display character port))))
+       value)))
+   "\""))
+
+(define (gascity-dolt-config-global-json name email)
+  "Return the text of a Dolt global configuration file (`config_global.json')
+that declares the commit author identity NAME and EMAIL.  Dolt reads it from
+`$DOLT_ROOT_PATH/.dolt' (or `$HOME/.dolt'), which the service pins to the
+supervisor's state directory."
+  (string-append "{\n"
+                 "  \"user.name\": " (gascity-json-string name) ",\n"
+                 "  \"user.email\": " (gascity-json-string email) "\n"
+                 "}\n"))
+
+(define (gascity-supervisor-dolt-config-file config)
+  "Return the path of the Dolt global configuration file of the supervisor
+instance CONFIG: `<state-directory>/.dolt/config_global.json'.  Dolt reads it
+through `$DOLT_ROOT_PATH'/`$HOME', both pinned to the state directory."
+  (string-append (gascity-supervisor-state-directory config)
+                 "/.dolt/config_global.json"))
+
+(define (gascity-supervisor-dolt-config-global config installed?)
+  "Return the JSON text the activation must install as the supervisor instance
+CONFIG's `<state-directory>/.dolt/config_global.json', or #f when it must
+leave the existing file untouched.
+
+An explicit operator identity (`dolt-user-name' or `dolt-user-email', either
+one) is intent, so it is written even when INSTALLED? is true, the default
+identity filling whichever of the two is unset.  When both are unset the
+default identity is written only when no file exists yet: an existing file is
+an operator- or sops-provided identity and wins (no clobber)."
+  (if (and installed? (not (gascity-supervisor-dolt-identity-explicit? config)))
+      #f
+      (gascity-dolt-config-global-json
+       (gascity-supervisor-dolt-user-name config)
+       (gascity-supervisor-dolt-user-email config))))
 
 (define (gascity-supervisor-log-file config)
   "Return the log file of the supervisor instance CONFIG, named after its id."
@@ -3530,8 +3633,10 @@ input (transitive inputs are (LABEL PACKAGE OUTPUTS...) lists)."
   "Return the packages whose bin directories head the PATH of the supervisor
 instance CONFIG: its `package' and the closure of the packages it propagates
 (so every tool `gc' looks up by name is present), its `packages' field, plus
-coreutils and git (git is the only runtime dependency `gascity-next' does not
-propagate, §2.5)."
+coreutils, git and the helpers the bundled beads/dolt lifecycle script
+(`gc-beads-bd.sh') invokes by name.  The provision program *replaces* PATH
+with this list, so without those helpers the system's own `sed', `awk', etc.
+would be invisible and genesis would fail (§2.5)."
   (let ((package (gascity-supervisor-configuration-package config)))
     (delete-duplicates
      (append
@@ -3539,19 +3644,22 @@ propagate, §2.5)."
       (filter-map gascity-input-package
                   (package-transitive-propagated-inputs package))
       (gascity-supervisor-configuration-packages config)
-      (list coreutils git)))))
+      (list coreutils git sed gawk which bash sqlite netcat)))))
 
 (define (gascity-supervisor-environment config)
   "Return a gexp lowering to the Shepherd environment-variables list of the
-supervisor instance CONFIG: HOME, GC_HOME, XDG_RUNTIME_DIR (pinned to
-`gc-home' so an isolated supervisor never touches the host socket, §16.2),
-GC_SUPERVISOR_PRESERVE_SESSIONS_ON_SIGNAL, PATH, and the operator's
-non-secret `environment-variables'."
+supervisor instance CONFIG: HOME, DOLT_ROOT_PATH (pinned to the state
+directory, the account's home, so Dolt reads the activation-materialized
+`<state-directory>/.dolt/config_global.json' author identity), GC_HOME,
+XDG_RUNTIME_DIR (pinned to `gc-home' so an isolated supervisor never touches
+the host socket, §16.2), GC_SUPERVISOR_PRESERVE_SESSIONS_ON_SIGNAL, PATH, and
+the operator's non-secret `environment-variables'."
   (let ((home (gascity-supervisor-state-directory config))
         (gc-home (gascity-supervisor-gc-home config))
         (packages (gascity-supervisor-path-packages config))
         (extra (gascity-supervisor-configuration-environment-variables config)))
     #~(list (string-append "HOME=" #$home)
+            (string-append "DOLT_ROOT_PATH=" #$home)
             (string-append "GC_HOME=" #$gc-home)
             (string-append "XDG_RUNTIME_DIR=" #$gc-home)
             "GC_SUPERVISOR_PRESERVE_SESSIONS_ON_SIGNAL=1"
@@ -3587,6 +3695,10 @@ the user that owns the Home environment, so the files are already theirs."
         (log-directory (gascity-supervisor-log-directory config))
         (gc-home (gascity-supervisor-gc-home config))
         (supervisor-toml (gascity-supervisor-toml-string config))
+        (dolt-config-file (gascity-supervisor-dolt-config-file config))
+        (dolt-config (gascity-supervisor-dolt-config-global config #f))
+        (dolt-identity-explicit?
+         (gascity-supervisor-dolt-identity-explicit? config))
         (cities (gascity-supervisor-cities config)))
     (program-file
      "gascity-activation"
@@ -3640,6 +3752,24 @@ the user that owns the Home environment, so the files are already theirs."
 
            (install-file (string-append #$gc-home "/supervisor.toml")
                          #$supervisor-toml #o600)
+
+           ;; Dolt requires a commit author identity, and `gc init' of a
+           ;; managed bd store fails at genesis without one.  It reads
+           ;; `$HOME/.dolt/config_global.json' (the service user's home is
+           ;; the state directory).  The same decision as
+           ;; `gascity-supervisor-dolt-config-global': an explicit operator
+           ;; identity always wins, while the default identity is written
+           ;; only when no file exists yet, so an operator- or
+           ;; sops-provided file is never clobbered.
+           (let ((dolt-config-file #$dolt-config-file))
+             (when (or #$dolt-identity-explicit?
+                       (not (file-exists? dolt-config-file)))
+               ;; Own the `.dolt' directory (not just the config file): Dolt
+               ;; writes its event/telemetry data to `<state>/.dolt/eventsData'
+               ;; when `gc init' runs as the service user, so a root-owned
+               ;; directory would make genesis fail with EACCES.
+               (ensure-directory (dirname dolt-config-file))
+               (install-file dolt-config-file #$dolt-config #o600)))
 
            #$@(append-map
                (lambda (city)
@@ -3756,6 +3886,10 @@ into `install-packs?'."
                (chmod file mode)))
 
            (setenv "HOME" #$state-directory)
+           ;; Pin Dolt's global configuration root to the account's home (the
+           ;; state directory) so `gc init' reads the author identity the
+           ;; activation materialized as `<state>/.dolt/config_global.json'.
+           (setenv "DOLT_ROOT_PATH" #$state-directory)
            (setenv "GC_HOME" #$gc-home)
            (setenv "XDG_RUNTIME_DIR" #$gc-home)
            (setenv "PATH"
