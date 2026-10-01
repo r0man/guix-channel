@@ -65,6 +65,38 @@ multi-instance service must set =port= explicitly.  A system supervisor and a
 home supervisor on the same host share the network namespace, so they too need
 distinct ports.
 
+** Dolt author identity
+:PROPERTIES:
+:CUSTOM_ID: dolt-identity
+:END:
+
+=gc init= of a managed bd store runs Dolt's =init=, which commits a bootstrap
+revision and therefore needs a commit author identity.  Dolt reads it from
+=$DOLT_ROOT_PATH/.dolt/config_global.json= (or =$HOME/.dolt=) and fails at
+genesis when it is absent, so the provision one-shot fails and the supervisor
+never starts.  The root activation (not the one-shot) materializes
+=<state-directory>/.dolt/config_global.json= (=0600=, owned by the service
+user):
+
+| Field | Default |
+|-------+---------|
+| =dolt-user-name= | =Gas City= |
+| =dolt-user-email= | =gascity@localhost= |
+
+- Setting *either* field is explicit intent: the file is rewritten, the unset
+  field filled with the default above.
+- When *both* are unset the default identity is written only if no file exists
+  yet; an existing file (an operator- or sops-provided identity) is left
+  untouched, so the service never clobbers it.
+- The write is compare-and-write, so an unchanged reconfigure does not touch
+  the file.
+
+The service user's home is the state directory, so =$HOME= and
+=$DOLT_ROOT_PATH= both point at it; the provision one-shot and the supervisor
+environment pin =DOLT_ROOT_PATH= explicitly.  This is service configuration,
+not a Gas City TOML key: it is never emitted into =city.toml= or
+=supervisor.toml=.
+
 ** Multiple cities
 
 One supervisor manages a list of cities.  Each city owns a directory, its
@@ -141,6 +173,8 @@ account, the directories and the paths.  Its =settings= field owns the
 | =packages= | =gascity-supervisor-configuration-packages= | extra packages on the supervisor =PATH= |
 | =environment-variables= | =gascity-supervisor-configuration-environment-variables= | non-secret ="KEY=value"= strings |
 | =secrets-file= | =gascity-supervisor-configuration-secrets-file= | dotenv file (default =<gc-home>/secrets.env=); see [[#secrets]] |
+| =dolt-user-name= | =gascity-supervisor-configuration-dolt-user-name= | Dolt commit author name (default =Gas City=); see [[#dolt-identity]] |
+| =dolt-user-email= | =gascity-supervisor-configuration-dolt-user-email= | Dolt commit author email (default =gascity@localhost=); see [[#dolt-identity]] |
 | =cities= | =gascity-supervisor-configuration-cities= | =list= of =<gascity-city-configuration>= |
 
 The settings record (=gascity-supervisor-settings-configuration=) owns
@@ -451,6 +485,8 @@ The typed core plus =extra-config= for a table with no dedicated record
     (list
      (service gascity-service-type
               (gascity-service-config
+               (dolt-user-name "Gas City")
+               (dolt-user-email "gascity@example.com")
                (cities
                 (list (gascity-city-configuration
                        (name "burningswell")
@@ -461,6 +497,8 @@ The typed core plus =extra-config= for a table with no dedicated record
 #+end_src
 
 A lone instance defaults to port =8372= and =GC_HOME=/var/lib/gascity/.gc=.
+Setting the Dolt author identity is optional: an unset service falls back to
+the default identity ([[#dolt-identity]]).
 
 ** Two supervisors with distinct gc-home and port
 
@@ -503,6 +541,8 @@ share a =gc-home= or a =(bind, port)=, evaluation fails with a =formatted-messag
              (gascity-service-config
               (id "personal")
               (port 8372)
+              (dolt-user-name "Gas City")
+              (dolt-user-email "gascity@example.com")
               (cities
                (list (gascity-city-configuration
                       (name "burningswell")
@@ -583,6 +623,91 @@ never emitted to TOML.  This is how prompt templates, formulas, orders, skills,
 
 Destinations are relative to the root and may not escape it; executable bits
 are preserved.
+
+* Running the examples
+
+The channel ships two runnable example configurations, one per service, each
+running a single supervisor with one trivial =swarm= city.  Both use the
+service defaults, so neither hardcodes the host's =$HOME= or a state path.
+
+- =examples/gascity/home.scm= — a =home-environment= using
+  =home-gascity-service-type=.  Build it, or run its activation and a command
+  in a container:
+
+  #+begin_src sh
+  guix home build -L modules examples/gascity/home.scm
+  guix home container -L modules examples/gascity/home.scm -- gc --version
+  #+end_src
+
+  The state and log directories default to =$XDG_STATE_HOME/gascity= and
+  =GC_HOME= to =$HOME/.gc=.
+
+- =examples/gascity/system.scm= — an =operating-system= using
+  =gascity-service-type=, in the style of =simple-operating-system=.  Build a
+  VM or a container:
+
+  #+begin_src sh
+  guix system build -L modules examples/gascity/system.scm
+  guix system vm -L modules examples/gascity/system.scm
+  guix system container -L modules examples/gascity/system.scm
+  #+end_src
+
+  The supervisor runs as the =gascity= account, with state under
+  =/var/lib/gascity=.
+
+=scripts/gascity-container-smoke-test= wraps the image invocations:
+
+#+begin_src sh
+scripts/gascity-container-smoke-test home     # Home activation and generated TOML
+scripts/gascity-container-smoke-test system   # machine-wide lifecycle
+scripts/gascity-container-smoke-test all      # both, in that order
+#+end_src
+
+The =home= check builds =examples/gascity/home.scm= with
+=guix home container=, runs the Home activation, and asserts in the container
+that the state directory and the generated =city.toml=, =pack.toml= and
+=supervisor.toml= exist and contain the expected keys, then runs
+=gc config show --validate= in the generated city directory (skipping
+gracefully if =gc= is unavailable).  It prints =PASS= or =FAIL: reason= and
+exits non-zero on failure.  Because =guix home container= never starts
+=home-shepherd-service-type=, the provision one-shot (genesis, site binding,
+registry) and the running user shepherd are not covered here; the unit tests
+cover them, and the =system= check covers the machine-wide path.
+
+The =system= check builds =tests/r0man/guix/services/gascity-container.scm=, a
+test-only =operating-system= that mirrors =examples/gascity/system.scm= and adds
+a one-shot assertion service.  It boots the OS's real shepherd (PID 1), so the
+full machine-wide lifecycle runs: activation materializes =city.toml= and
+=pack.toml=, the provision one-shot runs genesis and registers the city, and
+=gc supervisor run= is running as the =gascity= account.  The assertion service
+waits (bounded) for =supervisor.sock= and =cities.toml=, then checks that
+=city.toml=, =pack.toml=, the =.gc/site.toml= site binding and the =cities.toml=
+registry exist, that the =gascity-supervisor= service is running, that the
+state is owned by the =gascity= account, and finally that
+=gc config show --validate= accepts the generated city.  It writes =PASS= or
+=FAIL: reason= into a host directory shared with =--share=, and the script maps
+that to =PASS: system= or a non-zero exit.  The image never shuts down by
+itself: the script polls the shared directory for the verdict under a hard
+timeout, then tears the image down and kills its process group.
+
+The =system= check prefers =guix system container=, which boots the shepherd
+without emulation.  That path requires mapping a 65536-uid/gid range into the
+container's user namespace, which the kernel permits only for root (Guix does
+not use =newuidmap=); on an unprivileged host the container exits at once with
+=EPERM=, so the script falls back to =guix system vm --no-graphic=.  The VM
+boots the very same OS with the same assertions and needs no privileges (QEMU
+is used, with KVM when available).  The =system= section of
+=tests/r0man/guix/services/gascity-container.scm= documents that fallback.
+
+The checks are also available as opt-in make targets.  They are deliberately
+NOT part of =make check=, as they need the Guix daemon and, for the VM
+fallback, QEMU:
+
+#+begin_src sh
+make check-gascity-home-container     # scripts/gascity-container-smoke-test home
+make check-gascity-system-container   # scripts/gascity-container-smoke-test system
+make check-gascity-containers         # scripts/gascity-container-smoke-test all
+#+end_src
 
 * Coming from the Gas City docs
 
