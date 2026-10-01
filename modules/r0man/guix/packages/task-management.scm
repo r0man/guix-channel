@@ -735,3 +735,32 @@ a configurable toolkit with runtime providers, work routing, formulas, orders,
 health patrol, and a declarative city configuration.  It supports multiple
 runtime backends including tmux, subprocess, exec, ACP, and Kubernetes.")
     (license license:expat)))
+
+(define-public gascity-next
+  ;; Tracks the main branch of Gas City.
+  (let ((commit "c8873cba2dedfe56221addf511cd342e7e08cac7")
+        (revision "0"))
+    (package
+      (inherit gascity)
+      (name "gascity-next")
+      (version (git-version "1.4.2" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/gastownhall/gascity")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1fvxcsd10z9k58k2vf3a2nay596ygb3in1lqj74zdfxcmzjiazc1"))))
+      (arguments
+       (substitute-keyword-arguments (package-arguments gascity)
+         ((#:phases phases)
+          ;; Upstream main passes GC_HOME to check scripts itself.
+          #~(modify-phases #$phases
+              (delete 'pass-gc-home-to-check-scripts)))))
+      (native-inputs
+       (modify-inputs (package-native-inputs gascity)
+         (prepend go-github-com-cenkalti-backoff-v4
+                  go-golang-org-x-mod
+                  go-modernc-org-sqlite))))))
