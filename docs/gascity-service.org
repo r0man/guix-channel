@@ -714,6 +714,89 @@ make check-gascity-system-container   # scripts/gascity-container-smoke-test sys
 make check-gascity-containers         # scripts/gascity-container-smoke-test all
 #+end_src
 
+* Interactive container demo
+
+The =bright-lights= example,
+=examples/gascity/bright-lights-home.scm=, is a runnable Home environment for
+the [[https://github.com/gastownhall/gascity][Gas City]] quickstart: one
+supervisor running a fresh city called =bright-lights= with the builtin
+=claude= provider.  It puts =claude-code= on both the supervisor's agent
+=PATH= (so =gc sling= can spawn a claude agent) and the interactive user's
+=PATH=, and shares the host Claude Code state so an existing login keeps
+working inside the container.
+
+=scripts/gascity-home-container= wraps the invocation.  It builds and runs the
+example with =guix home container=, waits (bounded) for
+=home-gascity-supervisor= to reach =Started=, prints a short banner and drops
+you into a login shell:
+
+#+begin_src sh
+scripts/gascity-home-container
+#+end_src
+
+The banner tells you the city directory and =GC_HOME=, and the two commands
+that matter inside the shell:
+
+#+begin_src sh
+gc status                        # supervisor and city status
+gc sling claude "your task"      # route work to the claude agent
+#+end_src
+
+The demo registers an ephemeral =bright-lights= rig in the container
+(=~ /bright-lights-rig=) so =gc sling claude ...= has a target out of the box;
+this is best-effort and a failure is not fatal.  Before slinging, =cd= into
+the rig (=cd ~/bright-lights-rig=).  It does not call the Anthropic API itself.
+
+** What the container shares
+
+- =$HOME/.claude= and, when present, =$HOME/.claude.json= are mounted
+  *read-write* (=--share=), so the container reuses the host's Claude Code
+  credentials.  Only Claude Code itself writes there.  *The container is
+trusted and local:* it can read and write your Claude Code state, so run it
+  only on your own machine.
+- The host =/bin= is exposed (=--expose=/bin=/bin=).  =guix home container=
+  provides no =/bin= at all, but the generated bead shim (=gc-beads-bd.sh=) is
+  =#!/bin/sh= and the login shell is =bash=; without it the provision one-shot
+  cannot start Dolt and the supervisor never comes up.
+- The container accesses the *network* (=--network=), which =claude= needs.
+
+** The city is ephemeral
+
+The state directory is pinned to =$HOME/.local/state/gascity=, =GC_HOME= to
+=$HOME/.gc=, and =guix home container= mounts a volatile tmpfs over =$HOME=.
+The whole city therefore lives inside the container and is discarded when you
+exit: nothing is written to the host home except what Claude Code itself
+writes under the shared =~/.claude=.
+
+The demo also shares the host *network namespace* (required for =claude=),
+and a machine-wide supervisor already owns the default API port =8372=, so the
+example binds =18372= instead.  Override it with =GASCITY_DEMO_PORT= when the
+host already uses that port.
+
+** Non-interactive use
+
+A command after =--= runs in the container instead of the login shell (still
+after the wait) and its exit status is propagated; =GASCITY_DEMO_CMD= does the
+same with a single command line.  Both are what the non-interactive checks
+use:
+
+#+begin_src sh
+scripts/gascity-home-container -- gc status
+scripts/gascity-home-container -- sh -c 'gc status; command -v claude'
+GASCITY_DEMO_CMD='gc status' scripts/gascity-home-container
+#+end_src
+
+If =~/.claude/.credentials.json= is missing the script still boots the demo
+but prints a warning: =claude= will not be authenticated in the container.
+
+The demo is also available as an opt-in make target.  Like the smoke tests it
+is deliberately NOT part of =make check=, as it needs the Guix daemon,
+unprivileged user namespaces and the network:
+
+#+begin_src sh
+make run-gascity-home-container
+#+end_src
+
 * Coming from the Gas City docs
 
 | Gas City TOML / idiom | Guix form |

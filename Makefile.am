@@ -108,9 +108,11 @@ ACLOCAL_AMFLAGS = -I m4
 
 EXTRA_DIST =					\
   bootstrap					\
+  examples/gascity/bright-lights-home.scm	\
   examples/gascity/home.scm			\
   examples/gascity/system.scm			\
   scripts/gascity-container-smoke-test		\
+  scripts/gascity-home-container			\
   scripts/github-actions-vm-smoke-test		\
   scripts/generate-gascity-records.scm		\
   docs/gascity-service.org				\
@@ -172,6 +174,15 @@ check-gascity-home-container:
 	@echo "Running the Home Gas City container smoke test (needs the Guix daemon and user namespaces)..."
 	$(top_srcdir)/scripts/gascity-container-smoke-test home
 .PHONY: check-gascity-home-container
+
+# Opt-in interactive demo: boot the ephemeral bright-lights city in a
+# `guix home container' and drop into a login shell where the supervisor is
+# already up.  Deliberately NOT part of `make check': it needs the Guix
+# daemon, unprivileged user namespaces and the network.
+run-gascity-home-container:
+	@echo "Running the interactive bright-lights Home container demo..."
+	$(top_srcdir)/scripts/gascity-home-container
+.PHONY: run-gascity-home-container
 
 # Opt-in smoke test for the machine-wide Gas City service.  It builds
 # tests/r0man/guix/services/gascity-container.scm and boots it, first as a

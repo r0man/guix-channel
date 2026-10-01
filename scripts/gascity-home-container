@@ -1,0 +1,249 @@
+#!/bin/sh
+# Interactive Home Gas City container demo.
+#
+# Usage: scripts/gascity-home-container [-- CMD...]
+#        GASCITY_DEMO_CMD='CMD' scripts/gascity-home-container
+#
+# Build and run examples/gascity/bright-lights-home.scm with `guix home
+# container' and drop the user into a login shell where the Gas City
+# supervisor is already up.  The city is fresh and ephemeral: its state, its
+# GC_HOME and the whole home directory live on the container's tmpfs, so
+# nothing is written to the host except what Claude Code itself writes under
+# the shared ~/.claude.
+#
+# The wrapper:
+#
+#   * shares the host Claude Code state read-write so an existing login
+#     keeps working: ~/.claude and, when present, ~/.claude.json;
+#   * exposes the host /bin.  `guix home container' provides no /bin at all,
+#     but the generated bead shim (`gc-beads-bd.sh') and the login shell are
+#     `#!/bin/sh', so without it the provision one-shot cannot start Dolt and
+#     the supervisor never comes up.  Exposing the host /bin emulates a real
+#     Guix System's /bin/sh, and the container command adds /bin to PATH so
+#     `sh' resolves;
+#   * allows the container to reach the network, which `claude' needs;
+#   * waits (bounded) for home-gascity-supervisor to reach Started, prints a
+#     short banner, optionally registers an ephemeral demo rig, and then runs
+#     the given command or execs a login shell.
+#
+# With `-- CMD...' the command runs in the container instead of the shell
+# (still after the wait) and its exit status is propagated.  The
+# GASCITY_DEMO_CMD environment variable does the same with a single command
+# line.  This is what the non-interactive checks use.
+
+set -eu
+
+script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+root=$(CDPATH= cd -- "$script_dir/.." && pwd)
+example="$root/examples/gascity/bright-lights-home.scm"
+
+usage() {
+    cat <<'USAGE'
+Usage: scripts/gascity-home-container [-- CMD...]
+
+Boot examples/gascity/bright-lights-home.scm in a fresh, ephemeral
+`guix home container' and drop into a login shell with the Gas City
+supervisor already up.
+
+Options:
+  -h, --help        show this help and exit
+  -- CMD...         run CMD in the container instead of the login shell
+                    (still after the supervisor is up); its exit status is
+                    propagated
+
+Environment:
+  GASCITY_DEMO_CMD  a command line to run instead of the login shell when no
+                    `-- CMD' is given (used for non-interactive checks)
+  GASCITY_DEMO_PORT a supervisor port other than the example's default 18372
+
+Examples:
+  scripts/gascity-home-container
+  scripts/gascity-home-container -- gc status
+  scripts/gascity-home-container -- sh -c 'gc status; command -v claude'
+
+The host ~/.claude (and ~/.claude.json, when present) are mounted read-write
+so an existing Claude Code login works inside the container.  The city, its
+GC_HOME and the container home are ephemeral: only Claude Code itself writes
+to ~/.claude.  The container is trusted and runs with the host network.
+USAGE
+}
+
+require_guix() {
+    command -v guix >/dev/null 2>&1 || {
+        echo "FAIL: guix is not on PATH" >&2
+        exit 1
+    }
+}
+
+# Single-quote ARG so the result can be re-parsed by a POSIX shell.  Built
+# only from shell builtins and parameter expansion: the dev shell is --pure
+# and has no sed.  An embedded single quote becomes '\''.
+shell_quote() {
+    _q=$1
+    _out="'"
+    while [ -n "$_q" ]; do
+        case "$_q" in
+            *\'*)
+                _out="$_out${_q%%\'*}'\\''"
+                _q=${_q#*\'}
+                ;;
+            *)
+                _out="$_out$_q"
+                _q=
+                ;;
+        esac
+    done
+    printf '%s' "$_out'"
+}
+
+command_string=
+demo_cmd=${GASCITY_DEMO_CMD:-}
+
+while [ $# -gt 0 ]; do
+    case "$1" in
+        -h|--help)
+            usage
+            exit 0
+            ;;
+        --)
+            shift
+            for arg in "$@"; do
+                command_string="$command_string $(shell_quote "$arg")"
+            done
+            command_string=${command_string# }
+            break
+            ;;
+        *)
+            echo "unknown argument: $1" >&2
+            usage >&2
+            exit 2
+            ;;
+    esac
+done
+
+# `-- CMD' wins over GASCITY_DEMO_CMD; the env var is the single-line form.
+if [ -n "$command_string" ]; then
+    demo_cmd=$command_string
+fi
+
+[ -f "$example" ] || {
+    echo "FAIL: $example not found" >&2
+    exit 1
+}
+
+require_guix
+
+# Keep the whole demo inside the container's tmpfs: the state directory is
+# baked at build time from XDG_STATE_HOME, so pin it under $HOME (mounted as
+# a tmpfs by `guix home container') rather than let a host value point at a
+# path the container cannot write.
+XDG_STATE_HOME="$HOME/.local/state"
+export XDG_STATE_HOME
+
+if [ ! -f "$HOME/.claude/.credentials.json" ]; then
+    echo "WARNING: $HOME/.claude/.credentials.json not found." >&2
+    echo "         The demo still boots, but claude will not be authenticated" >&2
+    echo "         in the container.  Log in with claude on the host first." >&2
+fi
+
+# The container command: wait for the supervisor, print the banner, register
+# an ephemeral demo rig when possible, then run the given command or a login
+# shell.  It is passed to `guix home container FILE -- CMD' as one argument
+# and the container feeds it to a login shell (bash).  The heredoc delimiter
+# is quoted so every $HOME/$city below expands inside the container, not the
+# host; the wait uses `herd status' plus shell builtins only (grep is not in
+# the container).
+container_command=$(cat <<'CHECK'
+set -u
+
+# `guix home container' provides no /bin on PATH, but the exposed /bin/sh and
+# /bin/bash live there; add it so `sh' and friends resolve.
+PATH="$PATH:/bin"
+export PATH
+
+state="$HOME/.local/state/gascity"
+city="$state/bright-lights"
+gc_home="$HOME/.gc"
+
+# Point the interactive gc at the running supervisor and give it the same
+# Dolt author identity the activation materialized, so `gc rig add' and
+# managed bd stores also work from the shell.  XDG_RUNTIME_DIR is left alone:
+# it is where the Home shepherd keeps its own socket, and `herd' looks there.
+GC_HOME="$gc_home"
+DOLT_ROOT_PATH="$state"
+export GC_HOME DOLT_ROOT_PATH
+
+i=0
+status=""
+while [ "$i" -lt 180 ]; do
+    status=$(herd status home-gascity-supervisor 2>&1 || true)
+    case "$status" in
+        *Started*|*started*|*running*|*Running*) break ;;
+    esac
+    sleep 1
+    i=$((i + 1))
+done
+
+case "$status" in
+    *Started*|*started*|*running*|*Running*)
+        echo "home-gascity-supervisor: Started"
+        ;;
+    *)
+        echo "$status"
+        echo "----- $state/supervisor-provision.log -----"
+        cat "$state/supervisor-provision.log" 2>/dev/null || true
+        echo "WARNING: home-gascity-supervisor did not reach Started within 180s" >&2
+        ;;
+esac
+
+printf '\n'
+printf 'Gas City bright-lights demo (ephemeral container)\n'
+printf '  city directory: %s\n' "$city"
+printf '  GC_HOME:        %s\n' "$gc_home"
+printf '\n'
+printf '  gc status\n'
+printf '  gc sling claude "your task"\n'
+printf '  gc session list\n'
+printf '\n'
+
+# Best-effort ephemeral rig so gc sling has a target out of the box.  A
+# failure is not fatal: the supervisor and the city are already usable.
+rig_dir="$HOME/bright-lights-rig"
+if [ ! -d "$rig_dir" ] && command -v gc >/dev/null 2>&1; then
+    mkdir -p "$rig_dir"
+    if ( cd "$rig_dir" && gc rig add "$rig_dir" --city "$city" ) >/dev/null 2>&1; then
+        printf 'registered demo rig: %s\n' "$rig_dir"
+    else
+        printf 'note: no demo rig registered; run "gc rig add <dir>" yourself.\n'
+    fi
+fi
+CHECK
+)
+
+if [ -n "$demo_cmd" ]; then
+    # Run the command after the wait; the container's login shell parses the
+    # quoted command line and guix propagates its exit status.
+    container_command="$container_command
+$demo_cmd"
+else
+    # Drop into an interactive login shell.  /bin/bash is available through
+    # the --expose=/bin mapping above.
+    container_command="$container_command
+exec /bin/bash -l"
+fi
+
+# Share the host Claude Code state read-write so an existing login works.
+share_claude="--share=$HOME/.claude=$HOME/.claude"
+share_claude_json=
+if [ -f "$HOME/.claude.json" ]; then
+    share_claude_json="--share=$HOME/.claude.json=$HOME/.claude.json"
+else
+    echo "note: $HOME/.claude.json not found; skipping its share." >&2
+fi
+
+echo "building and running the Home container ($example)..." >&2
+# Deliberate word splitting: $share_claude_json is empty or one --share flag.
+# shellcheck disable=SC2086
+guix home container -L "$root/modules" --network --expose=/bin=/bin \
+    "$share_claude" $share_claude_json \
+    "$example" -- "$container_command"
