@@ -50,9 +50,9 @@
   #:use-module (r0man guix packages golang-web)
   #:use-module (r0man guix packages golang-xyz))
 
-(define-public beads-next
+(define-public beads
   (package
-    (name "beads-next")
+    (name "beads")
     (version "1.3.0")
     (source
      (origin
@@ -254,14 +254,14 @@ and utility functions needed to interact with Beads databases.")
       (license license:expat))))
 
 (define-public go-github-com-steveyegge-beads-next
-  ;; Library variant of beads-next, required by gascity 1.3.5+.  Kept
+  ;; Library variant of beads, required by gascity 1.3.5+.  Kept
   ;; separate from go-github-com-steveyegge-beads (pinned at 1.0.4), which is
   ;; still used by gastown-next via the dolt v1 release line.
   (package
     (inherit go-github-com-steveyegge-beads)
     (name "go-github-com-steveyegge-beads-next")
-    (version (package-version beads-next))
-    (source (package-source beads-next))
+    (version (package-version beads))
+    (source (package-source beads))
     (propagated-inputs
      (modify-inputs (package-propagated-inputs go-github-com-steveyegge-beads)
        (delete "go-github-com-dolthub-driver")
@@ -417,7 +417,7 @@ and utility functions needed to interact with Beads databases.")
                     go-golang-org-x-time
                     go-gopkg-in-natefinch-lumberjack-v2
                     go-gopkg-in-yaml-v3))
-    (propagated-inputs (list beads-next dolt tmux))
+    (propagated-inputs (list beads dolt tmux))
     (home-page "https://github.com/gastownhall/gastown")
     (synopsis "Multi-agent orchestrator for Claude Code")
     (description
@@ -716,7 +716,7 @@ per-city state.")
     ;; tr/dirname/mktemp/grep, and python-for-gascity is a python3 whose
     ;; baked-in GUIX_PYTHONPATH makes `import yaml` work under the gate's
     ;; env whitelist.
-    (propagated-inputs (list beads-next
+    (propagated-inputs (list beads
                              coreutils
                              dolt
                              grep

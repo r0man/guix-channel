@@ -144,7 +144,7 @@ credentials sources.")
     (license license:asl2.0)))
 
 ;; Override core OpenTelemetry packages from (gnu packages golang-web) to
-;; version 1.42.0, needed by beads-next and gastown-next.  All subpackages
+;; version 1.42.0, needed by beads and gastown-next.  All subpackages
 ;; come from the same opentelemetry-go monorepo at the same commit.
 
 (define otel-source/1.42

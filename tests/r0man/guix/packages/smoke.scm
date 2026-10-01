@@ -92,7 +92,7 @@
 
 (test-load-package "task-management"
                    (r0man guix packages task-management)
-                   beads-next)
+                   beads)
 
 (test-load-package "wm"
                    (r0man guix packages wm)

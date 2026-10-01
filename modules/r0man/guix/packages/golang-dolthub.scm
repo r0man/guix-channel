@@ -1150,7 +1150,7 @@ a CLI for managing versioned databases with full MySQL compatibility.")
 
 (define-public go-github-com-dolthub-dolt-go-v2
   ;; Library variant of the dolt v2 release line, needed by
-  ;; go-github-com-dolthub-driver-v2 and beads-next.  Kept separate from
+  ;; go-github-com-dolthub-driver-v2 and beads.  Kept separate from
   ;; go-github-com-dolthub-dolt-go (pinned at 1.88.1), which is still used
   ;; by go-github-com-steveyegge-beads and gastown-next.
   (package
