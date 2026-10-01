@@ -254,7 +254,7 @@ and utility functions needed to interact with Beads databases.")
       (license license:expat))))
 
 (define-public go-github-com-steveyegge-beads-next
-  ;; Library variant of beads-next, required by gascity-next 1.3.5+.  Kept
+  ;; Library variant of beads-next, required by gascity 1.3.5+.  Kept
   ;; separate from go-github-com-steveyegge-beads (pinned at 1.0.4), which is
   ;; still used by gastown-next via the dolt v1 release line.
   (package
@@ -527,9 +527,9 @@ build-artifact and verdict validators work in that environment with no
 per-city state.")
       (license (package-license python)))))
 
-(define-public gascity-next
+(define-public gascity
   (package
-    (name "gascity-next")
+    (name "gascity")
     (version "1.4.2")
     (source
      (origin
