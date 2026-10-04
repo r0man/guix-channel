@@ -1307,7 +1307,7 @@ and are not emitted."
      (gascity-serialize-subtables "named_session" named-sessions
                                   gascity-named-session-configuration->toml)
      (gascity-serialize-subtables "rigs" rigs
-                                  gascity-rig-configuration->toml)
+                                  gascity-rig-configuration->city-toml)
      (gascity-serialize-subtable "patches" patches
                                  gascity-patches-configuration->toml)
      (gascity-serialize-subtable "daemon" daemon
@@ -2416,6 +2416,16 @@ and are not emitted."
      (gascity-serialize-maybe-string "dolt_host" dolt-host)
      (gascity-serialize-maybe-string "dolt_port" dolt-port)
      (gascity-serialize-string-map "formula_vars" formula-vars))))
+
+(define (gascity-rig-configuration->city-toml config)
+  "Return the `[[rigs]]' body of CONFIG, a <gascity-rig-configuration>,
+with the schema-2 machine-local `path' omitted.  The path belongs in
+`.gc/site.toml' (see `gascity-rig-site->toml'); emitting it in `city.toml'
+makes `gc init' reject the whole city as a pre-1.0 site binding."
+  (remove (lambda (node)
+            (and (toml-field? node)
+                 (string=? (toml-field-key node) "path")))
+          (gascity-rig-configuration->toml config)))
 
 (define-record-type* <gascity-rig-patch-configuration>
   gascity-rig-patch-configuration
@@ -4203,7 +4213,13 @@ group).  Root is left to the operator."
               (system? #t)
               (comment "Gas City supervisor")
               (home-directory (gascity-supervisor-state-directory first))
-              (shell (file-append shadow "/sbin/nologin"))))))
+              ;; A real shell, not `nologin': gascity runs every agent in a tmux
+              ;; session, and tmux's `default-shell' falls back to the account's
+              ;; login shell.  With `nologin' each pane command dies with "This
+              ;; account is currently not available." (exit 1), so no agent
+              ;; ever starts.  The account still has no password and cannot be
+              ;; logged into interactively.
+              (shell (file-append bash "/bin/bash"))))))
     users)))
 
 (define (gascity-supervisor-activation value)

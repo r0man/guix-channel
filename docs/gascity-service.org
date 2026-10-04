@@ -734,18 +734,34 @@ you into a login shell:
 scripts/gascity-home-container
 #+end_src
 
-The banner tells you the city directory and =GC_HOME=, and the two commands
-that matter inside the shell:
+The banner tells you the city directory and =GC_HOME=, and the commands that
+matter inside the shell:
 
 #+begin_src sh
-gc status                        # supervisor and city status
-gc sling claude "your task"      # route work to the claude agent
+gc status                                # supervisor and city status
+cd ~/my-project && gc sling my-project/claude "your task"
 #+end_src
 
-The demo registers an ephemeral =bright-lights= rig in the container
-(=~ /bright-lights-rig=) so =gc sling claude ...= has a target out of the box;
-this is best-effort and a failure is not fatal.  Before slinging, =cd= into
-the rig (=cd ~/bright-lights-rig=).  It does not call the Anthropic API itself.
+The example declares the tutorial's project rig =my-project= (=~ /my-project=)
+with prefix =mp=, so =gc sling my-project/claude ...= has a target out of the
+box; the wrapper runs the idempotent =gc rig add ~/my-project= before dropping
+you into the shell (the controller may not have finished initializing a
+declared rig's beads yet).  It does not call the Anthropic API itself.
+
+** Container workarounds
+
+=guix home container= leaves two gaps the wrapper/example close so agent
+sessions actually start:
+
+- =devpts= is mounted with =ptmxmode=000=, so =/dev/ptmx= is unopenable and
+tmux cannot allocate a PTY ("create window failed: fork failed: Permission
+denied").  A remount needs =CAP_SYS_ADMIN=, which the unprivileged container
+lacks, but the container user owns the node, so the wrapper =chmod=s
+=/dev/pts/ptmx= to =0666=.
+- The supervisor's =HOME= is the state directory, not the user's home, so
+claude misses the shared =~/.claude= ("Not logged in") and =~/.claude.json=
+(and hangs at the first-run theme prompt).  The example's Home activation
+links both into the state home before the supervisor starts.
 
 ** What the container shares
 
@@ -824,10 +840,22 @@ exec= rather than a serial console:
 sudo guix container exec "$(cat /tmp/bright-lights.pid)" \
      /run/current-system/profile/bin/bash --login
 export GC_HOME=/var/lib/gascity/.gc
+cd /var/lib/gascity/bright-lights
 gc status                        # supervisor and city status
-gc sling claude "your task"      # route work to the claude agent
+cd /var/lib/gascity/my-project
+gc sling my-project/claude "your task"   # route work to the claude agent
 gc session list
 #+end_src
+
+The example declares the tutorial's project rig at the service user's
+=~/my-project= (=/var/lib/gascity/my-project=, prefix =mp=).  Because the rig
+is declared in the city config, the service initializes its beads store
+itself, as the =gascity= user, when the city starts, so =gc sling= works
+without running =gc rig add=.  Do *not* run =gc rig add= as root: the
+container's login shell is root, and root-owned beads files in the rig are
+unreadable by the =gascity= supervisor, which then fails city init with
+=permission denied= and never starts an agent.  (For an *undeclared* rig,
+run =gc rig add <path>= as the =gascity= user, or use =--adopt=.)
 
 With =--vm= the VM presents a serial =login:= prompt: log in as =root= with no
 password (a fresh Guix System leaves the root account passwordless) and run
@@ -846,8 +874,11 @@ exposed: it is large (=debug/=, =history=, =session-env=, ...) and copying it
 over 9p at boot stalls the boot.  At boot a one-shot Shepherd service copies
 those files into the service user's home (=/var/lib/gascity/.claude= and
 =/var/lib/gascity/.claude.json=), owned by the =gascity= account, before the
-supervisor starts.  *The host files are never modified:* token refreshes stay
-inside the ephemeral VM.  The copy cannot run in the activation phase, which
+supervisor starts.  The same one-shot seeds
+=projects[<rig>].hasTrustDialogAccepted= in =~gascity/.claude.json= (so
+=claude= does not stop at the first-run trust dialog, whose default answer
+exits a non-interactive session).  *The host files are never modified:* token
+refreshes stay inside the ephemeral VM.  The copy cannot run in the activation phase, which
 precedes every file-system mount, so it is a one-shot service that
 =user-processes= (and hence the supervisor) waits for.
 - =guix system vm --expose= exports a *directory* (9p cannot export a single
@@ -876,6 +907,19 @@ console and the =-M= default are =ttyS0=.  A system container maps a
 root (Guix does not use =newuidmap=), hence the =sudo= in the default.  The VM
 shares no credentials (QEMU's 9p virtfs hangs on file reads here), so it boots
 unauthenticated: run =claude login= inside it, or use the default container.
+
+The VM boots a tiny root image, so the example mounts a 4 GiB tmpfs at the
+service state directory (=needed-for-boot?=): Dolt's managed server refuses to
+start below its 0.5 GiB free-space floor, which would otherwise fail genesis
+for a reason unrelated to the service.  The same tmpfs also caps the
+=guix system container= demo, whose state directory would otherwise sit on the
+container root: 1 GiB was too small once the bead store and session history
+grew, at which point Dolt stopped accepting connections and every agent
+stalled.  tmpfs only charges pages that are actually written, so the larger
+limit is safe on the VM's 2 GiB of RAM.  The launcher also gives QEMU 2 GiB of
+RAM (its 128 MiB default OOM-kills =gc= during genesis).  The system smoke
+test (=tests/r0man/guix/services/gascity-container.scm=) carries the same two
+workarounds.
 
 The system demo is also available as an opt-in make target.  Like the smoke
 tests it is deliberately NOT part of =make check=, as it builds and boots a full
