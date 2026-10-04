@@ -21,10 +21,14 @@
 #     the supervisor never comes up.  Exposing the host /bin emulates a real
 #     Guix System's /bin/sh, and the container command adds /bin to PATH so
 #     `sh' resolves;
+#   * chmods /dev/pts/ptmx before the supervisor uses tmux:
+#     `guix home container' mounts devpts with ptmxmode=000, so /dev/ptmx is
+#     unopenable and tmux cannot allocate a PTY to fork a window into;
 #   * allows the container to reach the network, which `claude' needs;
 #   * waits (bounded) for home-gascity-supervisor to reach Started, prints a
-#     short banner, optionally registers an ephemeral demo rig, and then runs
-#     the given command or execs a login shell.
+#     short banner, and then runs the given command or execs a login shell.
+#     The example declares the tutorial's ~/my-project rig; the wrapper
+#     provisions it with an idempotent `gc rig add' so it is ready to sling.
 #
 # With `-- CMD...' the command runs in the container instead of the shell
 # (still after the wait) and its exit status is propagated.  The
@@ -161,17 +165,30 @@ set -u
 PATH="$PATH:/bin"
 export PATH
 
+# `guix home container' mounts /dev/pts with ptmxmode=000, so /dev/ptmx is
+# unopenable and every PTY allocation fails.  tmux then cannot fork a window
+# ("create window failed: fork failed: Permission denied") and no agent
+# session can start.  A remount needs CAP_SYS_ADMIN, which the unprivileged
+# container lacks, but the container user owns the node, so chmod it to 0666.
+# The supervisor retries session starts, so doing this before the wait below
+# is enough to let those retries succeed.
+if [ -e /dev/pts/ptmx ]; then
+    chmod 666 /dev/pts/ptmx 2>/dev/null || true
+fi
+
 state="$HOME/.local/state/gascity"
 city="$state/bright-lights"
 gc_home="$HOME/.gc"
 
 # Point the interactive gc at the running supervisor and give it the same
 # Dolt author identity the activation materialized, so `gc rig add' and
-# managed bd stores also work from the shell.  XDG_RUNTIME_DIR is left alone:
-# it is where the Home shepherd keeps its own socket, and `herd' looks there.
+# managed bd stores also work from the shell.  GC_DIR points gc at the city so
+# `gc status' works from $HOME.  XDG_RUNTIME_DIR is left alone: it is where the
+# Home shepherd keeps its own socket, and `herd' looks there.
 GC_HOME="$gc_home"
+GC_DIR="$city"
 DOLT_ROOT_PATH="$state"
-export GC_HOME DOLT_ROOT_PATH
+export GC_HOME GC_DIR DOLT_ROOT_PATH
 
 i=0
 status=""
@@ -202,20 +219,20 @@ printf '  city directory: %s\n' "$city"
 printf '  GC_HOME:        %s\n' "$gc_home"
 printf '\n'
 printf '  gc status\n'
-printf '  gc sling claude "your task"\n'
+printf '  cd ~/my-project && gc sling my-project/claude "your task"\n'
 printf '  gc session list\n'
 printf '\n'
 
-# Best-effort ephemeral rig so gc sling has a target out of the box.  A
-# failure is not fatal: the supervisor and the city are already usable.
-rig_dir="$HOME/bright-lights-rig"
-if [ ! -d "$rig_dir" ] && command -v gc >/dev/null 2>&1; then
-    mkdir -p "$rig_dir"
-    if ( cd "$rig_dir" && gc rig add "$rig_dir" --city "$city" ) >/dev/null 2>&1; then
-        printf 'registered demo rig: %s\n' "$rig_dir"
-    else
-        printf 'note: no demo rig registered; run "gc rig add <dir>" yourself.\n'
-    fi
+# The example declares ~/my-project, but the controller does not always
+# finish initializing a declared rig's beads before the shell's first sling.
+# `gc rig add' is idempotent (a re-add of the declared rig) and matches
+# Tutorial 01; GC_DIR above resolves the city.
+rig_dir="$HOME/my-project"
+mkdir -p "$rig_dir"
+if ( cd "$rig_dir" && gc rig add "$rig_dir" ) >/dev/null 2>&1; then
+    printf 'provisioned rig: %s\n' "$rig_dir"
+else
+    printf 'note: run "gc rig add %s" if sling fails.\n' "$rig_dir"
 fi
 CHECK
 )

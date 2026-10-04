@@ -7,8 +7,8 @@
 # Build and boot examples/gascity/bright-lights-system.scm, a fresh,
 # ephemeral machine-wide "bright-lights" city, with the Gas City supervisor
 # running as the "gascity" account.  By default it builds and runs a system
-# container (`sudo guix system container --network'), the counterpart of
-# `scripts/gascity-home-container': a 65536-uid/gid range is mapped into the
+# container (`sudo env PATH="$PATH" guix system container --network'), the
+# counterpart of `scripts/gascity-home-container': a 65536-uid/gid range is mapped into the
 # container's user namespace, which only root may do, so the container is
 # built and started through sudo.  Use `--vm' for a rootless QEMU VM
 # (`guix system vm --no-graphic') instead.
@@ -28,11 +28,13 @@
 #     `claude login' inside it;
 #   * prints a banner with how to log in and the commands that matter, then
 #     boots the VM and forwards the console;
-#   * on aarch64 also passes QEMU's `-M virt -cpu max', without which QEMU's
-#     aarch64 emulator has no default machine.
+#   * passes QEMU 2 GiB of RAM (the 128 MiB default OOM-kills `gc' during
+#     genesis) and, on aarch64, QEMU's `-M virt -cpu max' (without which the
+#     aarch64 emulator has no default machine).
 #
 # Containers drop the serial `agetty' (no /dev/tty*), so interact with
-# `sudo guix container exec' (see the banner) instead of a login prompt.
+# `sudo env PATH="$PATH" guix container exec' (see the banner) instead of a
+# login prompt.
 
 set -eu
 
@@ -59,9 +61,10 @@ Examples:
   scripts/gascity-system-container --vm
 
 By default the demo builds and runs a system container with
-`sudo guix system container --network' (needs root: a system container maps
-a 65536-uid/gid range into its user namespace).  Interact with it through
-`sudo guix container exec' (see the banner).  With `--vm' it boots a rootless
+`sudo env PATH="$PATH" guix system container --network' (needs root: a system
+container maps a 65536-uid/gid range into its user namespace).  Interact with
+it through `sudo env PATH="$PATH" guix container exec' (see the banner).
+With `--vm' it boots a rootless
 QEMU VM whose console is the serial port; log in at the `bright-lights
 login:' prompt as `root' (no password on a fresh Guix System).
 
@@ -174,16 +177,22 @@ banner() {
     printf '\n'
     if [ "$container_mode" = yes ]; then
         printf 'Log in with:\n'
-        printf '    sudo guix container exec $(cat /tmp/bright-lights.pid) /run/current-system/profile/bin/bash --login\n'
+        printf '    sudo env PATH="$PATH" guix container exec $(cat /tmp/bright-lights.pid) /run/current-system/profile/bin/bash --login\n'
     else
         printf 'Log in on the serial console as root (no password):\n'
         printf '    bright-lights login: root\n'
     fi
     printf '\n'
+    printf 'The declared rig /var/lib/gascity/my-project is initialized for you\n'
+    printf '(as the gascity user) when the city starts; do NOT run `gc rig add`\n'
+    printf 'as root -- that would create root-owned beads files the gascity\n'
+    printf 'supervisor cannot read.\n'
+    printf '\n'
     printf 'Then:\n'
     printf '    export GC_HOME=/var/lib/gascity/.gc\n'
+    printf '    cd /var/lib/gascity/bright-lights\n'
     printf '    gc status\n'
-    printf '    gc sling claude "your task"\n'
+    printf '    gc sling my-project/claude "your task"\n'
     printf '    gc session list\n'
     printf '\n'
 }
@@ -197,7 +206,7 @@ if [ "$container_mode" = yes ]; then
     # build and run it with sudo.  `--network' shares the host network; Guix
     # then replaces the OS's static networking with a no-op (see
     # `containerized-operating-system').
-    launcher=$(sudo guix system container -L "$root/modules" --network \
+    launcher=$(sudo env PATH="$PATH" guix system container -L "$root/modules" --network \
                     "$@" "$example")
     sudo "$launcher" --pid-file=/tmp/bright-lights.pid
 else
@@ -205,10 +214,14 @@ else
     launcher=$(guix system vm -L "$root/modules" --no-graphic \
                     "$@" "$example")
     # On aarch64 QEMU's emulator has no default machine; the launcher forwards
-    # extra arguments to QEMU.  On x86_64 the defaults are fine.
-    qemu_args=
+    # extra arguments to QEMU.  The default VM memory (QEMU's 128 MiB) is too
+    # small for the running city (Dolt plus the supervisor and its `gc'
+    # helpers), so the guest OOM-kills `gc' during genesis; give it 2 GiB, the
+    # same as the system smoke test.  On x86_64 the machine and CPU defaults
+    # are fine.
+    qemu_args="-m 2048"
     case "$(uname -m)" in
-        aarch64*) qemu_args="-M virt -cpu max" ;;
+        aarch64*) qemu_args="-M virt -cpu max $qemu_args" ;;
     esac
     # Deliberate word splitting: qemu_args is a list of QEMU arguments.
     # shellcheck disable=SC2086

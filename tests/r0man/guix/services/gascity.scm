@@ -139,6 +139,33 @@
                                     ("open_pr" . "true")
                                     ("drain_policy" . "separate")))))))))))
 
+(test-group "rig paths are site-local"
+  (test-equal "city.toml omits rig.path (schema 2)"
+    (string-append "[[rigs]]\n"
+                   "name = \"my-project\"\n"
+                   "prefix = \"mp\"\n")
+    (eval-gexp
+     (gascity-city->toml-string
+      (gascity-city-configuration
+       (name "bright-lights")
+       (rigs (list (gascity-rig-configuration
+                    (name "my-project")
+                    (path "/home/roman/my-project")
+                    (prefix "mp"))))))))
+
+  (test-equal ".gc/site.toml carries the path"
+    (string-append "[[rig]]\n"
+                   "name = \"my-project\"\n"
+                   "path = \"/home/roman/my-project\"\n")
+    (eval-gexp
+     (gascity-city-site->toml-string
+      (gascity-city-configuration
+       (name "bright-lights")
+       (rigs (list (gascity-rig-configuration
+                    (name "my-project")
+                    (path "/home/roman/my-project")
+                    (prefix "mp")))))))))
+
 (test-group "golden swarm pack.toml"
   (test-equal "the §11 swarm pack"
     (string-append "[pack]\n"
