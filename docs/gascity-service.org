@@ -1109,26 +1109,44 @@ every derived path is keyed off it.  Two phases:
   (=0600=).  It never runs =gc= and never switches user — Guix activation runs
   as root with no =#:user=.
 - Provision one-shot (runs as the service user, and the supervisor =requires=
-  it) does the *stateful* work per instance: writes =.gc/site.toml=, runs the
-  idempotent =gc init --file <city>/city.toml --preserve-existing --no-start
+  it) does the *stateful* work per instance: writes =.gc/site.toml=, runs
+  =gc init --file <city>/city.toml --preserve-existing --no-start
   --skip-provider-readiness= for each city (=genesis?=), optionally runs =gc
   import install --city <city>= (=install-packs?=), then read-merge-writes the
   =cities.toml= registry (=register?=).  It performs no network access unless a
-  city opts into =install-packs?=.
+  city opts into =install-packs?=.  The program is *re-runnable*: a stamp under
+  =GC_HOME= short-circuits a rerun whose generated inputs are unchanged, so a
+  supervisor stop/start or =herd restart= within one boot does not re-run
+  genesis (see below).
 
 Then Shepherd starts the secrets-loading wrapper that =exec=s =gc supervisor
 run= as the service user, using the instance's =gc-home=, =XDG_RUNTIME_DIR= and
 =port=.
 
-** Idempotent gc init --preserve-existing
+** Re-runnable gc init --preserve-existing
 
-Genesis is the idempotent =gc init ... --preserve-existing --no-start
---skip-provider-readiness=, run on *every* one-shot (gated only by =genesis?=).
-There is no "=.gc/= exists" gate and no marker: a partial failure leaves the
-scaffold in place and the next one-shot converges it, and a failure is visible
-in Shepherd status rather than silently skipped.  The generated =city.toml= and
-=pack.toml= must exist on disk *before* genesis, which is why the activation
-runs first.
+Genesis is =gc init ... --preserve-existing --no-start
+--skip-provider-readiness= (=genesis?=).  That command is *not* idempotent in
+current =gc= releases: a second run refuses with =gc init: already initialized=
+(exit code 2).  Shepherd also forgets that a one-shot service already ran once
+it exits, so every start of a dependent supervisor re-runs the provision
+program.  The service therefore makes the rerun safe:
+
+- it keeps a stamp of the generated inputs of the last successful run (the
+generated =city.toml=/=pack.toml=, the =.gc/site.toml= text this program
+writes, the =genesis?=/=install-packs?=/=register?= flags and the =gc=
+package) in =<gc-home>/.gascity-provision-stamp=;
+- a rerun whose inputs still match, and whose city scaffolds and registry
+still exist, short-circuits with exit 0 — so a supervisor stop/start or =herd
+restart= inside one boot does not re-run genesis;
+- a change to any of them — including a reconfigure that changes the generated
+files or flags — yields a different stamp and provisions again;
+- =gc init= exit code 2 is also accepted as success, so a system provisioned
+by an earlier generation (which has no stamp yet) upgrades without a spurious
+failure.
+
+The generated =city.toml= and =pack.toml= must exist on disk *before* genesis,
+which is why the activation runs first.
 
 ** cities.toml ownership
 
@@ -1207,7 +1225,7 @@ How the awk-converging activation maps onto this service:
 
 | burningswell idiom | Gas City service |
 |--------------------+------------------|
-| SCAFFOLD phase (stamp-guarded: =gc init=, =gc import install=, =gc rig add=, =gc register=) | the provision one-shot: =gc init --preserve-existing= (=genesis?=), =gc import install= (=install-packs?=), and the locked =[[cities]]= read-merge-write (=register?=); no stamp |
+| SCAFFOLD phase (stamp-guarded: =gc init=, =gc import install=, =gc rig add=, =gc register=) | the provision one-shot: =gc init --preserve-existing= (=genesis?=), =gc import install= (=install-packs?=), and the locked =[[cities]]= read-merge-write (=register?=); stamp-guarded under =GC_HOME= |
 | CONVERGE phase (=converge_kv= restates declared =city.toml= keys every activation) | the declarative generator: activation writes whole generated =city.toml=/=pack.toml= only when they differ; the record is the source of truth |
 | =converge_block=/=converge_tree= fenced regions and whole files | =files= / =rig-files= and the typed records; whole files, no fenced markers |
 | whole generated files | =city.toml= from the city record, =pack.toml= from the city's =pack= field |
