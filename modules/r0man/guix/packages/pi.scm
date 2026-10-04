@@ -7,7 +7,7 @@
   #:use-module (guix packages)
   #:use-module (nonguix build-system binary))
 
-(define %pi-coding-agent-version "0.87.0")
+(define %pi-coding-agent-version "1.0.2")
 
 (define (pi-coding-agent-binary arch hash)
   (origin
@@ -23,11 +23,11 @@
     (version %pi-coding-agent-version)
     (source
      (let-system system
-       (if (string-prefix? "aarch64" system)
-           (pi-coding-agent-binary
-            "arm64" "01srqyd41y7a6zqmqsxazxh0shp1v0h348vfkkpr1zpnf4gsnw0p")
-           (pi-coding-agent-binary
-            "x64" "0ippx16w03qkrv4ivddbh9rhhypr7v4j70nvwqi3zkbm45jh4pgm"))))
+                 (if (string-prefix? "aarch64" system)
+                     (pi-coding-agent-binary "arm64"
+                      "0g01b99mxr6ck57ab20rimhk8r708s1b5njb4x96r3gk7zfcq89k")
+                     (pi-coding-agent-binary "x64"
+                      "062x52daww4anigbacc908zfxs9wd0l6pjv4ys7sifpwm6k8fxhd"))))
     (build-system binary-build-system)
     (arguments
      (list
@@ -51,15 +51,17 @@
               ;; Patchelfing the binary corrupts Bun's single-file ELF
               ;; layout, so wrap it instead.
               (let* ((out (assoc-ref outputs "out"))
-                     (gcc-lib (assoc-ref inputs "gcc"))
+                     (gcc-lib (assoc-ref inputs "gcc:lib"))
                      (pi (string-append out "/lib/pi-coding-agent/pi"))
                      (bin (string-append out "/bin")))
                 (wrap-program pi
                   `("LD_LIBRARY_PATH" ":" prefix
                     (,(string-append gcc-lib "/lib"))))
                 (mkdir-p bin)
-                (symlink pi (string-append bin "/pi"))))))))
-    (inputs (list bash (list gcc "lib")))
+                (symlink pi
+                         (string-append bin "/pi"))))))))
+    (inputs (list (list "bash-minimal" bash-minimal)
+                  (list "gcc:lib" gcc "lib")))
     (supported-systems '("aarch64-linux" "x86_64-linux"))
     (home-page "https://github.com/earendil-works/pi")
     (synopsis "Minimal terminal coding agent")
