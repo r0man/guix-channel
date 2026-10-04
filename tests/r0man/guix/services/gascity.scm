@@ -708,6 +708,41 @@ without extra-config"
 
 
 ;;;
+;;; Provision one-shot idempotency.
+;;;
+
+(test-group "provision one-shot idempotency"
+  (define (provision-source config)
+    "Return the generated provision program's source, as a string, for
+inspection."
+    (format #f "~s"
+            (gexp->approximate-sexp
+             (program-file-gexp
+              (gascity-supervisor-provision-program config)))))
+
+  (test-equal "the provision stamp lives under gc-home"
+    "/var/lib/gascity/.gc/.gascity-provision-stamp"
+    (gascity-supervisor-provision-stamp-file
+     (gascity-supervisor-configuration)))
+
+  (test-equal "an explicit gc-home moves the provision stamp"
+    "/custom/.gc/.gascity-provision-stamp"
+    (gascity-supervisor-provision-stamp-file
+     (gascity-supervisor-configuration (gc-home "/custom/.gc"))))
+
+  (let ((source (provision-source (gascity-supervisor-configuration))))
+    (test-assert "the program stamps the generated inputs"
+      (string-contains source ".gascity-provision-stamp"))
+
+    (test-assert "the program tolerates gc init's already-initialized exit"
+      (and (string-contains source "already-initialized?")
+           (string-contains source "status:exit-val")))
+
+    (test-assert "the program skips a rerun whose inputs still match"
+      (string-contains source "provision-complete?"))))
+
+
+;;;
 ;;; Dolt author identity (§16.18).
 ;;;
 
