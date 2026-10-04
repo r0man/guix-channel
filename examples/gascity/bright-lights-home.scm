@@ -2,7 +2,11 @@
 ;;;
 ;;; It runs one user-level Gas City supervisor with a single city named
 ;;; "bright-lights" that uses the builtin "claude" provider, the same minimal
-;;; shape as examples/gascity/home.scm.  On top of that it puts the Claude
+;;; shape as examples/gascity/home.scm.  The city also declares the tutorial's
+;;; project rig `~/my-project', so `cd ~/my-project && gc sling
+;;; my-project/claude ...' has a target out of the box (the wrapper runs the
+;;; idempotent `gc rig add ~/my-project' before dropping into the shell).  On
+;;; top of that it puts the Claude
 ;;; Code CLI on both the supervisor's agent PATH (so `gc sling' can spawn a
 ;;; claude agent) and the interactive user's PATH (so `claude' can be run by
 ;;; hand), and it shares the host's Claude Code state so an existing login
@@ -26,6 +30,7 @@
              (gnu packages gawk)
              (gnu packages version-control)
              (gnu services)
+             (guix gexp)
              (r0man guix home services gascity)
              (r0man guix packages claude)
              (r0man guix toml))
@@ -67,6 +72,15 @@
                   (list (cons "claude"
                               (gascity-provider-configuration
                                (base "builtin:claude")))))
+                 ;; The tutorial's project rig, declared so it has a name,
+                 ;; prefix and path.  HOME is the container's tmpfs home, so
+                 ;; the rig lives and dies with the demo.
+                 (rigs
+                  (list
+                   (gascity-rig-configuration
+                    (name "my-project")
+                    (path (string-append (getenv "HOME") "/my-project"))
+                    (prefix "mp"))))
                  (daemon (gascity-daemon-configuration
                           (patrol-interval "30s")
                           (max-restarts 5)))
@@ -94,5 +108,32 @@
                                     (toml-field 'provider "smtp")
                                     (toml-field 'retention_ttl "24h"))
                         (toml-table 'api
-                                    (toml-field 'bind "127.0.0.1"))))))))))
+                                    (toml-field 'bind "127.0.0.1")))))))))
+    ;; The supervisor runs with HOME=$XDG_STATE_HOME/gascity, so claude would
+    ;; look for its config there and miss the shared host ~/.claude and
+    ;; ~/.claude.json: sessions then hang at the first-run theme prompt and
+    ;; the session start times out.  Link the shared files into the state home
+    ;; before the supervisor starts; the links are ephemeral, like the rest of
+    ;; the demo.
+    (simple-service 'gascity-share-claude-config
+                    home-activation-service-type
+                    #~(begin
+                        (use-modules (guix build utils))
+                        (let* ((home (getenv "HOME"))
+                               (state (string-append
+                                       (or (getenv "XDG_STATE_HOME")
+                                           (string-append home "/.local/state"))
+                                       "/gascity")))
+                          (mkdir-p state)
+                          (for-each
+                           (lambda (entry)
+                             (let ((source (car entry))
+                                   (target (cdr entry)))
+                               (when (file-exists? source)
+                                 (false-if-exception (delete-file target))
+                                 (symlink source target))))
+                           (list (cons (string-append home "/.claude")
+                                       (string-append state "/.claude"))
+                                 (cons (string-append home "/.claude.json")
+                                       (string-append state "/.claude.json"))))))))
    %base-home-services)))

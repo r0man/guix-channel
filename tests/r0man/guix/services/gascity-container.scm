@@ -394,6 +394,8 @@
  ;; before activation materializes the generated TOML; activation still owns
  ;; it as the service user.  (A later mount would shadow the generated files;
  ;; "/dev/shm" would too, since `activate' runs before /dev/shm is mounted.)
+ ;; 1 GiB was too small for the bead store plus session history; use the same
+ ;; roomy limit as the interactive demo (tmpfs only charges written pages).
  (file-systems
   (cons (file-system
           (mount-point (gascity-supervisor-state-directory %supervisor))
@@ -401,7 +403,7 @@
           (type "tmpfs")
           (create-mount-point? #t)
           (needed-for-boot? #t)
-          (options "size=1024M"))
+          (options "size=4096M"))
         (operating-system-file-systems %base-os)))
  ;; Load the virtio NIC driver before shepherd starts; on aarch64 -M virt the
  ;; NIC is virtio-net-pci (mirrors gascity-system.scm).
