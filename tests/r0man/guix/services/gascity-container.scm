@@ -342,6 +342,38 @@
                (expect (and status (zero? status))
                        "gc config show --validate failed"))
 
+             ;; Regression (guix-channel-rso): Shepherd forgets that the
+             ;; provision one-shot already ran once it exits, so stopping and
+             ;; starting the supervisor re-runs it.  That must not fail on
+             ;; `gc init: already initialized' (exit 2); the supervisor must
+             ;; come back within the same boot, and `herd restart' must work.
+             (define (herd-ok? . args)
+               (let ((code (status:exit-val (apply system* herd args))))
+                 (log "herd ~a exit status: ~a" (string-join args " ") code)
+                 (and code (zero? code))))
+
+             (define (wait-until-running label)
+               (let wait ((remaining 60))
+                 (cond
+                  ((service-running? supervisor-service)
+                   (log "~a: gascity-supervisor is running again" label))
+                  ((<= remaining 0)
+                   (expect #f (string-append label
+                                             ": gascity-supervisor did not "
+                                             "come back (provision one-shot "
+                                             "not re-runnable?)")))
+                  (else (sleep 1) (wait (- remaining 1))))))
+
+             (expect (herd-ok? "stop" supervisor-service)
+                     "herd stop gascity-supervisor failed")
+             (expect (herd-ok? "start" supervisor-service)
+                     "herd start gascity-supervisor failed")
+             (wait-until-running "stop/start")
+
+             (expect (herd-ok? "restart" supervisor-service)
+                     "herd restart gascity-supervisor failed")
+             (wait-until-running "restart")
+
              (if (null? problems)
                  (finish "PASS: system")
                  (begin
