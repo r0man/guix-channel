@@ -740,6 +740,7 @@
             gascity-cities-toml-merge
             gascity-supervisor-activation-program
             gascity-supervisor-provision-program
+            gascity-supervisor-provision-stamp-file
             gascity-supervisor-program))
 
 
@@ -3118,7 +3119,12 @@ generated nodes."
 ;;; secrets-loading wrapper that execs `gc supervisor run') and a paired
 ;;; provision one-shot it requires.  The provision one-shot runs genesis,
 ;;; pack fetching and the registry merge as the service user, because Guix
-;;; activation scripts run as root and cannot switch user (§16.1).
+;;; activation scripts run as root and cannot switch user (§16.1).  Because
+;;; Shepherd re-runs a one-shot on every start of a dependent service and
+;;; `gc init' refuses an already-initialized city (exit 2), the provision
+;;; program is explicitly re-runnable: a stamp under `GC_HOME' records the
+;;; generated inputs of its last successful run and short-circuits a rerun
+;;; whose inputs are unchanged (see `gascity-supervisor-provision-program').
 
 (define %gascity-user
   ;; The account every instance runs as, unless it overrides `user'.
@@ -3826,12 +3832,24 @@ the user that owns the Home environment, so the files are already theirs."
 (define (gascity-supervisor-provision-program config)
   "Return a Guile program, as a file-like object, that provisions the
 supervisor instance CONFIG as the service user: for each enabled city it
-writes `.gc/site.toml', runs the idempotent `gc init --file ...
---preserve-existing --no-start --skip-provider-readiness', optionally runs
-`gc import install' (`install-packs?'), and then flock-guarded
-read-merge-writes `<gc-home>/cities.toml', reloading a running supervisor
-when the registry changed.  It performs no network access unless a city opts
-into `install-packs?'."
+writes `.gc/site.toml', runs `gc init --file ... --preserve-existing
+--no-start --skip-provider-readiness', optionally runs `gc import install'
+(`install-packs?'), and then flock-guarded read-merge-writes
+`<gc-home>/cities.toml', reloading a running supervisor when the registry
+changed.  It performs no network access unless a city opts into
+`install-packs?'.
+
+The run is idempotent.  `gc init' is *not* idempotent: a second run refuses
+with `gc init: already initialized' (exit code 2).  Because Shepherd forgets
+that a one-shot service already ran once it exits, every supervisor restart
+re-runs this program; the program therefore keeps a stamp of the exact
+generated inputs of the last successful run (`city.toml', `pack.toml', the
+`.gc/site.toml' it writes, the genesis / install-packs? / register?
+settings, and the `gc' package) under `<gc-home>/.gascity-provision-stamp'.
+A rerun whose inputs still match short-circuits; a reconfigure that changes
+any of them recomputes a different stamp and provisions again.  Exit code 2
+from `gc init' is also treated as success, so a system provisioned by an
+earlier generation (with no stamp yet) upgrades without a spurious failure."
   (let ((user (gascity-supervisor-user config))
         (state-directory (gascity-supervisor-state-directory config))
         (gc-home (gascity-supervisor-gc-home config))
@@ -3928,34 +3946,6 @@ into `install-packs?'."
                                      #$(gascity-city-configuration-name city)))
                            cities)))
 
-           (for-each
-            (lambda (entry)
-              (let ((directory (list-ref entry 0))
-                    (site (list-ref entry 1))
-                    (genesis? (list-ref entry 2))
-                    (install-packs? (list-ref entry 3))
-                    (name (list-ref entry 5)))
-                (log "provisioning city ~a in ~a" name directory)
-                (mkdir-p (string-append directory "/.gc"))
-                (chmod (string-append directory "/.gc") #o700)
-                (install-file (string-append directory "/.gc/site.toml")
-                              site #o600)
-                (when genesis?
-                  (unless (zero?
-                           (system* #$gc "init"
-                                    "--file"
-                                    (string-append directory "/city.toml")
-                                    "--preserve-existing"
-                                    "--no-start"
-                                    "--skip-provider-readiness"
-                                    directory))
-                    (fail "gc init failed for city ~a" name)))
-                (when install-packs?
-                  (unless (zero? (system* #$gc "import" "install"
-                                          "--city" directory))
-                    (fail "gc import install failed for city ~a" name)))))
-            city-entries)
-
            (define registry (string-append #$gc-home "/cities.toml"))
 
            (define registry-entries
@@ -3964,37 +3954,163 @@ into `install-packs?'."
                                 (cons (list-ref entry 0) (list-ref entry 5))))
                          city-entries))
 
-           (let* ((original (if (file-exists? registry)
-                                (call-with-input-file registry get-string-all)
-                                ""))
-                  (desired (gascity-cities-toml-merge original
-                                                      registry-entries)))
-             (unless (string=? original desired)
-               (let ((lock-port (open-file (string-append registry ".lock") "a")))
-                 (chmod (string-append registry ".lock") #o600)
-                 (flock (fileno lock-port) LOCK_EX)
-                 (let* ((current (if (file-exists? registry)
-                                     (call-with-input-file registry
-                                       get-string-all)
-                                     ""))
-                        (merged (gascity-cities-toml-merge current
-                                                           registry-entries)))
-                   (unless (string=? current merged)
-                     (let ((temporary (string-append registry ".tmp")))
-                       (call-with-output-file temporary
-                         (lambda (port) (display merged port)))
-                       (chmod temporary #o600)
-                       (rename-file temporary registry))))
-                 (flock (fileno lock-port) LOCK_UN)
-                 (close-port lock-port))
-               ;; Best-effort, non-fatal: only a running supervisor reloads.
-               (when (any file-exists?
-                          (list (string-append #$gc-home "/gc/supervisor.sock")
-                                (string-append #$gc-home "/supervisor.sock")))
-                 (false-if-exception
-                  (system* #$gc "supervisor" "reload")))))
+           ;; Idempotency: Shepherd forgets that a one-shot service already
+           ;; ran as soon as it exits, so every `herd start gascity-supervisor'
+           ;; re-runs this program, and `gc init' refuses a second run with
+           ;; exit code 2 ("gc init: already initialized").  Persist a stamp of
+           ;; the exact generated inputs of a successful run; a rerun whose
+           ;; inputs still match short-circuits.  A reconfigure changes the
+           ;; generated city.toml / pack.toml / site.toml or the genesis /
+           ;; install-packs? / register? settings, so its stamp differs and
+           ;; provisioning runs again.
+           (define stamp-file
+             #$(gascity-supervisor-provision-stamp-file config))
 
-           (log "provisioning complete"))))))
+           (define (read-file file)
+             (if (file-exists? file)
+                 (call-with-input-file file get-string-all)
+                 ""))
+
+           (define (city-manifest entry)
+             (let* ((directory (list-ref entry 0))
+                    (site (list-ref entry 1))
+                    (genesis? (list-ref entry 2))
+                    (install-packs? (list-ref entry 3))
+                    (register? (list-ref entry 4))
+                    (name (list-ref entry 5)))
+               (string-append
+                "city " name "\n"
+                "directory " directory "\n"
+                "genesis " (if genesis? "yes" "no") "\n"
+                "install-packs " (if install-packs? "yes" "no") "\n"
+                "register " (if register? "yes" "no") "\n"
+                ;; The generated city.toml/pack.toml are materialized by the
+                ;; activation *before* this program runs, so reading them here
+                ;; keys the stamp on the desired inputs.  The site.toml is
+                ;; written by this program, so use the generated text rather
+                ;; than the previous on-disk copy.
+                "city.toml\n"
+                (read-file (string-append directory "/city.toml")) "\n"
+                "pack.toml\n"
+                (read-file (string-append directory "/pack.toml")) "\n"
+                "site.toml\n" site "\n")))
+
+           (define (provision-manifest)
+             (string-append "gc " #$gc "\n"
+                            (apply string-append
+                                   (map city-manifest city-entries))))
+
+           (define (city-provisioned? entry)
+             ;; The site binding is written for every city; genesis adds the
+             ;; runtime scaffold.  Check both, so a wiped `.gc' re-provisions
+             ;; even though the stamp still matches.
+             (let ((directory (list-ref entry 0)))
+               (and (file-exists?
+                     (string-append directory "/.gc/site.toml"))
+                    (or (not (list-ref entry 2))
+                        (and (file-exists?
+                              (string-append directory "/.gc/runtime"))
+                             (file-exists?
+                              (string-append directory
+                                             "/.gc/events.jsonl")))))))
+
+           (define (registry-provisioned?)
+             ;; The registry must exist and already contain the declared set;
+             ;; otherwise the merge below must run to restore a manually
+             ;; truncated or deleted file.
+             (if (null? registry-entries)
+                 #t
+                 (and (file-exists? registry)
+                      (string=? (read-file registry)
+                                (gascity-cities-toml-merge
+                                 (read-file registry) registry-entries)))))
+
+           (define (provision-complete? manifest)
+             (and (file-exists? stamp-file)
+                  (string=? (read-file stamp-file) manifest)
+                  (every city-provisioned? city-entries)
+                  (registry-provisioned?)))
+
+           (define (already-initialized? status)
+             ;; `gc init' exits 2 when the runtime scaffold already exists
+             ;; (`initExitAlreadyInitialized'): the idempotent rerun case.
+             (let ((code (status:exit-val status)))
+               (and (integer? code) (= code 2))))
+
+           (define manifest (provision-manifest))
+
+           (if (provision-complete? manifest)
+               (log "provisioning already complete for the current inputs; \
+skipping")
+               (begin
+                 (for-each
+                  (lambda (entry)
+                    (let ((directory (list-ref entry 0))
+                          (site (list-ref entry 1))
+                          (genesis? (list-ref entry 2))
+                          (install-packs? (list-ref entry 3))
+                          (name (list-ref entry 5)))
+                      (log "provisioning city ~a in ~a" name directory)
+                      (mkdir-p (string-append directory "/.gc"))
+                      (chmod (string-append directory "/.gc") #o700)
+                      (install-file (string-append directory "/.gc/site.toml")
+                                    site #o600)
+                      (when genesis?
+                        (let ((status
+                               (system* #$gc "init"
+                                        "--file"
+                                        (string-append directory "/city.toml")
+                                        "--preserve-existing"
+                                        "--no-start"
+                                        "--skip-provider-readiness"
+                                        directory)))
+                          (unless (or (zero? status)
+                                      (already-initialized? status))
+                            (fail "gc init failed for city ~a (exit ~a)"
+                                  name (status:exit-val status)))))
+                      (when install-packs?
+                        (unless (zero? (system* #$gc "import" "install"
+                                                "--city" directory))
+                          (fail "gc import install failed for city ~a" name)))))
+                  city-entries)
+
+                 (let* ((original (if (file-exists? registry)
+                                      (call-with-input-file registry
+                                        get-string-all)
+                                      ""))
+                        (desired (gascity-cities-toml-merge original
+                                                            registry-entries)))
+                   (unless (string=? original desired)
+                     (let ((lock-port
+                            (open-file (string-append registry ".lock") "a")))
+                       (chmod (string-append registry ".lock") #o600)
+                       (flock (fileno lock-port) LOCK_EX)
+                       (let* ((current (if (file-exists? registry)
+                                           (call-with-input-file registry
+                                             get-string-all)
+                                           ""))
+                              (merged (gascity-cities-toml-merge
+                                       current registry-entries)))
+                         (unless (string=? current merged)
+                           (let ((temporary (string-append registry ".tmp")))
+                             (call-with-output-file temporary
+                               (lambda (port) (display merged port)))
+                             (chmod temporary #o600)
+                             (rename-file temporary registry))))
+                       (flock (fileno lock-port) LOCK_UN)
+                       (close-port lock-port))
+                     ;; Best-effort, non-fatal: only a running supervisor
+                     ;; reloads.
+                     (when (any file-exists?
+                                (list (string-append #$gc-home
+                                                     "/gc/supervisor.sock")
+                                      (string-append #$gc-home
+                                                     "/supervisor.sock")))
+                       (false-if-exception
+                        (system* #$gc "supervisor" "reload")))))
+
+                 (install-file stamp-file manifest #o600)
+                 (log "provisioning complete"))))))))
 
 (define (gascity-supervisor-program config)
   "Return a Guile program, as a file-like object, that loads the dotenv
@@ -4113,6 +4229,12 @@ CONFIG."
                        (string-append "-" id)
                        "")
                    "-provision.log")))
+
+(define (gascity-supervisor-provision-stamp-file config)
+  "Return the file where the provision one-shot of the supervisor instance
+CONFIG records the generated inputs of its last successful run."
+  (string-append (gascity-supervisor-gc-home config)
+                 "/.gascity-provision-stamp"))
 
 (define (gascity-supervisor-provision-shepherd-service config)
   "Return the one-shot Shepherd service of the supervisor instance CONFIG:
