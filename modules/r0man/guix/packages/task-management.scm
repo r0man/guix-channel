@@ -454,16 +454,16 @@ project spaces called Rigs.")
 (define-public go-github-com-gastownhall-gascity-packs
   (package
     (name "go-github-com-gastownhall-gascity-packs")
-    (version "0.4.1-0.202609300325-2e7ec4c55981")
+    (version "0.4.1-0.202610050155-33da48cd9ec4")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
              (url "https://github.com/gastownhall/gascity-packs")
-             (commit "2e7ec4c5598173ff00c20a2048ef28d4202bd38a")))
+             (commit "33da48cd9ec44e1de75fe598f520b9b9333ee469")))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0050ym820msd20xf7rs966xsjp13xc2kfvm2lgsd4p4n21h47ph6"))))
+        (base32 "1w1k27qf1xbxm5maxyd9hpb7s84pym6hcf7kmpips0rg1k4ylndd"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -551,7 +551,7 @@ per-city state.")
 (define-public gascity
   (package
     (name "gascity")
-    (version "1.4.2")
+    (version "1.5.0")
     (source
      (origin
        (method git-fetch)
@@ -560,7 +560,7 @@ per-city state.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0yqk179kv7jhykcqqa9a4krpfq1wk0xa35qhbv8kin6x1gps6wkh"))))
+        (base32 "070kvrv73xqk2b56a715pfzm734n4pihfw53apy1rxrlvs5c5vwm"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -605,30 +605,6 @@ per-city state.")
               (substitute* "src/github.com/gastownhall/gascity/cmd/gc/main.go"
                 (("^package main")
                  "//go:debug httpmuxgo121=0\npackage main"))))
-          (add-after 'unpack 'pass-gc-home-to-check-scripts
-            ;; A convergence check script runs with HOME=<city> and no
-            ;; GC_HOME, so a `gc' call inside it looks for the pack cache
-            ;; under <city>/.gc/cache/repos, finds nothing and fails with
-            ;; "remote import ... is locked but not cached".  Hand the
-            ;; controller's own GC home through when it is a stable one
-            ;; (an explicit GC_HOME or ~/.gc), never a temporary fallback.
-            ;; Should either substitution miss, the build fails on an unused
-            ;; import or an undefined gchome.
-            (lambda _
-              (substitute* (string-append
-                            "src/github.com/gastownhall/gascity"
-                            "/internal/convergence/condition.go")
-                (("^\t\"github.com/gastownhall/gascity/internal/citylayout\"\n"
-                  all)
-                 (string-append
-                  all "\t\"github.com/gastownhall/gascity/internal/gchome\"\n"))
-                (("^\treturn env\n" all)
-                 (string-append
-                  "\tif gcHome := gchome.ResolveReadOnly(); "
-                  "gcHome.Provenance().Stable() {\n"
-                  "\t\tenv = append(env, \"GC_HOME=\"+gcHome.Path())\n"
-                  "\t}\n"
-                  all)))))
           (add-before 'build 'set-home
             (lambda _
               (setenv "HOME" "/tmp")))
@@ -718,7 +694,9 @@ per-city state.")
                     go-go-opentelemetry-io-otel-sdk-log
                     go-go-opentelemetry-io-otel-sdk-metric
                     go-go-opentelemetry-io-proto-otlp
+                    go-github-com-cenkalti-backoff-v4
                     go-github-com-cenkalti-backoff-v5
+                    go-golang-org-x-mod
                     go-golang-org-x-sync
                     go-golang-org-x-sys
                     go-golang-org-x-term
@@ -726,6 +704,7 @@ per-city state.")
                     go-golang-org-x-time
                     go-google-golang-org-grpc
                     go-gopkg-in-yaml-v3
+                    go-modernc-org-sqlite
                     go-k8s-io-api
                     go-k8s-io-apimachinery
                     go-k8s-io-client-go
@@ -759,12 +738,12 @@ runtime backends including tmux, subprocess, exec, ACP, and Kubernetes.")
 
 (define-public gascity-next
   ;; Tracks the main branch of Gas City.
-  (let ((commit "c8873cba2dedfe56221addf511cd342e7e08cac7")
+  (let ((commit "aa8afe87c6f6044686c9e2a7359f999143e9c8b1")
         (revision "0"))
     (package
       (inherit gascity)
       (name "gascity-next")
-      (version (git-version "1.4.2" revision commit))
+      (version (git-version "1.5.0" revision commit))
       (source
        (origin
          (method git-fetch)
@@ -773,15 +752,20 @@ runtime backends including tmux, subprocess, exec, ACP, and Kubernetes.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "1fvxcsd10z9k58k2vf3a2nay596ygb3in1lqj74zdfxcmzjiazc1"))))
-      (arguments
-       (substitute-keyword-arguments (package-arguments gascity)
-         ((#:phases phases)
-          ;; Upstream main passes GC_HOME to check scripts itself.
-          #~(modify-phases #$phases
-              (delete 'pass-gc-home-to-check-scripts)))))
+          (base32 "1apn2wxc34rx1xpbf1icsl0nl7544clf3mm5wi7gj4dyyalm944f"))))
       (native-inputs
        (modify-inputs (package-native-inputs gascity)
-         (prepend go-github-com-cenkalti-backoff-v4
-                  go-golang-org-x-mod
-                  go-modernc-org-sqlite))))))
+         ;; Upstream main moved to otel 1.45.0 / log 0.21.0, where the log
+         ;; module's value types are aliases of the attribute package.  Drop
+         ;; the 1.42.0 packages and pull the whole 1.45.0 monorepo tree in
+         ;; through the core module instead, so no stale copy leaks into the
+         ;; GOPATH union.
+         (delete "go-go-opentelemetry-io-otel"
+                 "go-go-opentelemetry-io-otel-exporters-otlp-otlplog-otlploghttp"
+                 "go-go-opentelemetry-io-otel-exporters-otlp-otlpmetric-otlpmetrichttp"
+                 "go-go-opentelemetry-io-otel-log"
+                 "go-go-opentelemetry-io-otel-metric"
+                 "go-go-opentelemetry-io-otel-sdk"
+                 "go-go-opentelemetry-io-otel-sdk-log"
+                 "go-go-opentelemetry-io-otel-sdk-metric")
+         (prepend go-go-opentelemetry-io-otel-next))))))

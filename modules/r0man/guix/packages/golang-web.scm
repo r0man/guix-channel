@@ -444,6 +444,29 @@ be used by bridges between existing logging libraries and OpenTelemetry.")
 protobuf payloads.")
     (license license:asl2.0)))
 
+;; OpenTelemetry packages required by gascity-next, which tracks the main
+;; branch of Gas City.  Upstream main moved to otel 1.45.0 / log 0.21.0,
+;; where the log module's value and attribute types are aliases of
+;; go.opentelemetry.io/otel/attribute.  The 1.42.0 packages above keep the
+;; older, distinct log value types still used by the stable gascity
+;; release, so the newer line is kept as a separate "-next" variant.
+(define otel-source/1.45
+  (origin
+    (method git-fetch)
+    (uri (git-reference
+          (url "https://github.com/open-telemetry/opentelemetry-go")
+          (commit "93a693edeed0e07ce5ebd1dfe67af42d1e2055d8")))
+    (file-name "opentelemetry-go-1.45.0-checkout")
+    (sha256
+     (base32 "0nhv8fcjjs1qlvghifih9d9d4gx6fc4hzvfz6gz0nq70qs5ajl8c"))))
+
+(define-public go-go-opentelemetry-io-otel-next
+  (package
+    (inherit go-go-opentelemetry-io-otel)
+    (name "go-go-opentelemetry-io-otel-next")
+    (version "1.45.0")
+    (source otel-source/1.45)))
+
 (define-public go-github-com-anthropics-anthropic-sdk-go
   (let ((base (@ (gnu packages golang-web)
                  go-github-com-anthropics-anthropic-sdk-go)))
