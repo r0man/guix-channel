@@ -38,6 +38,8 @@ NOCOMP_SOURCES = \
   modules/r0man/guix/files/gnu-head.svg
 
 SOURCES = \
+  modules/r0man/guix/github-api.scm \
+  modules/r0man/guix/github-app.scm \
   modules/r0man/guix/home/services/gascity.scm \
   modules/r0man/guix/home/services/github-actions.scm \
   modules/r0man/guix/packages/bootloader.scm \
@@ -66,16 +68,22 @@ SOURCES = \
   modules/r0man/guix/services/github-actions.scm \
   modules/r0man/guix/services/github-actions-vm.scm \
   modules/r0man/guix/services/github-actions-vm-mint.scm \
+  modules/r0man/guix/services/github-app-token.scm \
+  modules/r0man/guix/services/github-token.scm \
   modules/r0man/guix/toml.scm
 
 # Regular, fast SRFI-64 tests — run by `make check`.
 UNIT_TESTS = \
+  tests/r0man/guix/github-app.scm \
   tests/r0man/guix/packages/smoke.scm \
   tests/r0man/guix/services/github-actions-vm.scm \
   tests/r0man/guix/services/runner-script.scm \
   tests/r0man/guix/services/github-actions-token-mint.scm \
   tests/r0man/guix/services/github-actions.scm \
+  tests/r0man/guix/services/github-app-token.scm \
+  tests/r0man/guix/services/github-token.scm \
   tests/r0man/guix/services/gascity.scm \
+  tests/r0man/guix/services/gascity-activation.scm \
   tests/r0man/guix/services/gascity-home.scm \
   tests/r0man/guix/services/gascity-records.scm \
   tests/r0man/guix/services/gascity-toml.scm \
@@ -111,6 +119,8 @@ EXTRA_DIST =					\
   bootstrap					\
   examples/gascity/bright-lights-home.scm	\
   examples/gascity/bright-lights-system.scm	\
+  examples/gascity/github-app.scm		\
+  examples/gascity/github-machine-user.scm	\
   examples/gascity/home.scm			\
   examples/gascity/system.scm			\
   scripts/gascity-container-smoke-test		\
