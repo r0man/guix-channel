@@ -9,7 +9,9 @@
 ;;; and from store programs built with 'program-file' (see the
 ;;; 'github-actions-vm-mint-program' and
 ;;; 'github-actions-vm-remove-runner-program' procedures of
-;;; (r0man guix services github-actions-vm)).
+;;; (r0man guix services github-actions-vm)).  The shared HTTP plumbing,
+;;; '%http-request' and '%github-api-base', lives in (r0man guix github-api)
+;;; and is re-exported here, so store programs must import both modules.
 
 (define-module (r0man guix services github-actions-vm-mint)
   #:use-module (ice-9 match)
@@ -23,27 +25,16 @@
   #:use-module (web client)
   #:use-module (web response)
   #:use-module (web uri)
-  #:export (%github-api-base
-            %http-request
-            github-api-url
+  #:use-module (r0man guix github-api)
+  #:re-export (%github-api-base
+               %http-request)
+  #:export (github-api-url
             read-pat-file
             mint-registration-token
             mint-and-store-registration-token
             remove-github-actions-runner
             dispatch-workflow-file
             cancel-queued-workflow-runs))
-
-(define %http-request
-  ;; The HTTP request procedure, a parameter so that tests can stub it
-  ;; out; defaults to Guile core's 'http-request' (see the design doc
-  ;; for why (guix http-client) could not be used: it is GET-only).
-  (make-parameter http-request))
-
-(define %github-api-base
-  ;; Base URL of the GitHub REST API.  Overridable with the
-  ;; GITHUB_API_BASE environment variable, which lets tests point the
-  ;; store programs at a mock API server.
-  (make-parameter (or (getenv "GITHUB_API_BASE") "https://api.github.com")))
 
 (define (github-api-url url path)
   "Return the full GitHub API URL for the API PATH, derived from URL,
