@@ -15,14 +15,14 @@
 #
 # The wrapper:
 #
-#   * in container mode (the default) exposes the host Claude Code
-#     *credential* files read-only: ~/.claude/.credentials.json, the optional
-#     ~/.claude/settings.json and ~/.claude/settings.local.json, and
-#     ~/.claude.json are staged in a private temporary directory exposed as
-#     /mnt/claude-ro (a bind mount).  The example *copies* them into the
-#     service user's home at boot, so the host files are never modified and
-#     token refreshes stay inside the ephemeral container.  The whole
-#     ~/.claude is deliberately not shared (it is large);
+#   * in container mode (the default) exposes a dedicated Claude Code API
+#     key read-only: the file named by GASCITY_ANTHROPIC_API_KEY_FILE (a
+#     Console API key created for this city alone, with a spend limit) is
+#     staged in a private temporary directory exposed as /mnt/claude-ro (a
+#     bind mount), and the example installs it into the service user's home
+#     at boot.  Your own ~/.claude/.credentials.json and ~/.claude.json are
+#     never shared: the agents run with --dangerously-skip-permissions and can
+#     read everything their user can;
 #   * in VM mode (`--vm') shares nothing: reading files over QEMU's 9p virtfs
 #     hangs the guest here, so the VM boots unauthenticated and you run
 #     `claude login' inside it;
@@ -68,11 +68,12 @@ With `--vm' it boots a rootless
 QEMU VM whose console is the serial port; log in at the `bright-lights
 login:' prompt as `root' (no password on a fresh Guix System).
 
-In container mode the host Claude Code credential files
-(~/.claude/.credentials.json, the optional settings files, and
-~/.claude.json) are exposed read-only and copied into the service user's home
-at boot; the host files are never modified and the city and copies are
-ephemeral.  In VM mode nothing is shared: the VM boots unauthenticated.
+In container mode the file named by GASCITY_ANTHROPIC_API_KEY_FILE, a
+dedicated Console API key with a spend limit, is exposed read-only and
+installed into the service user's home at boot.  Your own Claude Code login
+(~/.claude/.credentials.json, ~/.claude.json) is never shared.  Without the
+variable, and in VM mode, the demo boots unauthenticated: run `claude login'
+as the gascity user with an account of its own.
 USAGE
 }
 
@@ -115,12 +116,10 @@ done
 
 require_guix
 
-# Stage the host Claude Code credential files for the container, which shares
-# them through a bind mount.  `--expose' exports a *directory*, so the files
-# are staged in a private temporary directory exposed as /mnt/claude-ro:
-# `.claude/.credentials.json' (and the optional settings files) plus
-# `.claude.json'.  The example copies them into the service user's home at
-# boot; the host originals are never modified.
+# Stage the dedicated API key for the container, which shares it through a
+# bind mount.  `--expose' exports a *directory*, so the key is staged in a
+# private temporary directory exposed as /mnt/claude-ro.  Only this key is
+# staged: the operator's own Claude Code login never reaches the agents.
 #
 # The VM (`--vm') deliberately shares nothing: reading any file over QEMU's
 # 9p virtfs mount hangs the guest before it reaches a login prompt, so the VM
@@ -128,33 +127,20 @@ require_guix
 if [ "$container_mode" = yes ]; then
     staging=$(mktemp -d "${TMPDIR:-/tmp}/gascity-claude.XXXXXX")
     chmod 700 "$staging"
-    mkdir -p "$staging/.claude"
     cleanup() {
         rm -rf "$staging"
     }
     trap cleanup EXIT INT TERM
 
-    if [ -f "$HOME/.claude/.credentials.json" ]; then
-        cp "$HOME/.claude/.credentials.json" "$staging/.claude/.credentials.json"
-        chmod 600 "$staging/.claude/.credentials.json"
+    key_file=${GASCITY_ANTHROPIC_API_KEY_FILE:-}
+    if [ -n "$key_file" ] && [ -f "$key_file" ]; then
+        cp "$key_file" "$staging/anthropic-api-key"
+        chmod 600 "$staging/anthropic-api-key"
     else
-        echo "WARNING: $HOME/.claude/.credentials.json not found." >&2
-        echo "         The demo still boots, but claude will not be authenticated" >&2
-        echo "         in the container.  Log in with claude on the host first." >&2
-    fi
-
-    for file in settings.json settings.local.json; do
-        if [ -f "$HOME/.claude/$file" ]; then
-            cp "$HOME/.claude/$file" "$staging/.claude/$file"
-            chmod 600 "$staging/.claude/$file"
-        fi
-    done
-
-    if [ -f "$HOME/.claude.json" ]; then
-        cp "$HOME/.claude.json" "$staging/.claude.json"
-        chmod 600 "$staging/.claude.json"
-    else
-        echo "note: $HOME/.claude.json not found; skipping it." >&2
+        echo "note: GASCITY_ANTHROPIC_API_KEY_FILE is not set (or not a file)." >&2
+        echo "      The demo boots, but claude is not authenticated; create a" >&2
+        echo "      Console API key for this city with a spend limit, or run" >&2
+        echo "      'claude login' as the gascity user with an account of its own." >&2
     fi
 
     # `set --' keeps the exposed source a separate argument even when a path
@@ -162,18 +148,18 @@ if [ "$container_mode" = yes ]; then
     set -- --expose="$staging=/mnt/claude-ro"
 else
     set --
-    echo "note: --vm boots unauthenticated (no Claude Code credentials are" >&2
-    echo "      shared); run 'claude login' inside the VM, or use the" >&2
-    echo "      default container for the host credentials." >&2
+    echo "note: --vm boots unauthenticated (no API key is shared); run" >&2
+    echo "      'claude login' as the gascity user inside the VM, or use the" >&2
+    echo "      default container with GASCITY_ANTHROPIC_API_KEY_FILE." >&2
 fi
 
 banner() {
     printf '\n'
     printf 'Gas City bright-lights demo (ephemeral %s)\n' "$1"
     printf '\n'
-    printf 'The city is fresh and ephemeral: it lives only in this image.  Your\n'
-    printf 'host Claude Code credentials are exposed read-only and *copied* into\n'
-    printf "the service user's home at boot, so the host files are never touched.\n"
+    printf 'The city is fresh and ephemeral: it lives only in this image.  The\n'
+    printf 'agents use the dedicated API key from GASCITY_ANTHROPIC_API_KEY_FILE,\n'
+    printf 'never your own Claude Code login.\n'
     printf '\n'
     if [ "$container_mode" = yes ]; then
         printf 'Log in with:\n'
