@@ -166,13 +166,15 @@ account, the directories and the paths.  Its =settings= field owns the
 | =group= | =gascity-supervisor-configuration-group= | group (system only; default =gascity=) |
 | =gc-home= | =gascity-supervisor-configuration-gc-home= | =GC_HOME=/=XDG_RUNTIME_DIR= (default =<state-directory>/.gc=) |
 | =state-directory= | =gascity-supervisor-configuration-state-directory= | account home and parent of derived city dirs |
-| =log-directory= | =gascity-supervisor-configuration-log-directory= | supervisor and provision logs |
+| =log-directory= | =gascity-supervisor-configuration-log-directory= | supervisor and provision logs (root-owned for system; see [[*Lifecycle and ownership]]) |
 | =bind= | =gascity-supervisor-configuration-bind= | API bind (default =127.0.0.1=) |
 | =port= | =gascity-supervisor-configuration-port= | API port (required when >1 instance; else 8372) |
 | =settings= | =gascity-supervisor-configuration-settings= | =<gascity-supervisor-settings-configuration>= |
 | =packages= | =gascity-supervisor-configuration-packages= | extra packages on the supervisor =PATH= |
 | =environment-variables= | =gascity-supervisor-configuration-environment-variables= | non-secret ="KEY=value"= strings |
 | =secrets-file= | =gascity-supervisor-configuration-secrets-file= | dotenv file (default =<gc-home>/secrets.env=); see [[#secrets]] |
+| =shepherd-requirement= | =gascity-supervisor-configuration-shepherd-requirement= | extra Shepherd services the provision one-shot and the supervisor require (default ='()=) |
+| =git-config= | =gascity-supervisor-configuration-git-config= | read-only git config (file-like or file name), exported as =GIT_CONFIG_GLOBAL=; see [[*GitHub identity]] |
 | =dolt-user-name= | =gascity-supervisor-configuration-dolt-user-name= | Dolt commit author name (default =Gas City=); see [[#dolt-identity]] |
 | =dolt-user-email= | =gascity-supervisor-configuration-dolt-user-email= | Dolt commit author email (default =gascity@localhost=); see [[#dolt-identity]] |
 | =cities= | =gascity-supervisor-configuration-cities= | =list= of =<gascity-city-configuration>= |
@@ -660,6 +662,16 @@ service defaults, so neither hardcodes the host's =$HOME= or a state path.
   -M virt -cpu max=, while on x86_64 =guix system vm -L modules
   examples/gascity/system.scm= works as-is.
 
+- =examples/gascity/github-app.scm= and
+  =examples/gascity/github-machine-user.scm= — the same system service,
+  committing as a GitHub App or as a machine user; see [[*GitHub identity]].
+  Replace the placeholder App, identity and secret paths before booting them:
+
+  #+begin_src sh
+  guix system build -L modules examples/gascity/github-app.scm
+  guix system build -L modules examples/gascity/github-machine-user.scm
+  #+end_src
+
 =scripts/gascity-container-smoke-test= wraps the image invocations:
 
 #+begin_src sh
@@ -820,7 +832,7 @@ The =bright-lights= example has a system counterpart,
 =gascity-service-type= in a fresh, ephemeral system image.  It mirrors
 =examples/gascity/system.scm= (one supervisor, the =bright-lights= city, the
 builtin =claude= provider, the pinned builtin =core=/=bd= imports) and adds
-=claude-code= and the credential copy described below.
+=claude-code= and the API key install described below.
 
 =scripts/gascity-system-container= wraps the invocation.  By default it builds
 and runs a *system container* with =sudo guix system container --network= (the
@@ -866,28 +878,28 @@ exits.
 
 ** What the VM/container exposes
 
-- In *container mode* only the host Claude Code *credential* files are exposed
-*read-only* with =--expose=: =~/.claude/.credentials.json=, the optional
-=~/.claude/settings.json= and =~/.claude/settings.local.json=, and
-=~/.claude.json=.  The whole =~/.claude= directory is deliberately *not*
-exposed: it is large (=debug/=, =history=, =session-env=, ...) and copying it
-over 9p at boot stalls the boot.  At boot a one-shot Shepherd service copies
-those files into the service user's home (=/var/lib/gascity/.claude= and
-=/var/lib/gascity/.claude.json=), owned by the =gascity= account, before the
-supervisor starts.  The same one-shot seeds
-=projects[<rig>].hasTrustDialogAccepted= in =~gascity/.claude.json= (so
-=claude= does not stop at the first-run trust dialog, whose default answer
-exits a non-interactive session).  *The host files are never modified:* token
-refreshes stay inside the ephemeral VM.  The copy cannot run in the activation phase, which
-precedes every file-system mount, so it is a one-shot service that
-=user-processes= (and hence the supervisor) waits for.
+- The demo never shares the operator's own Claude Code login
+(=~/.claude/.credentials.json=, =~/.claude.json=).  The agents run with
+=--dangerously-skip-permissions= on untrusted input and can read everything
+their user can, so they get a credential of their own.  In *container mode*
+the wrapper exposes *read-only* the file named by
+=GASCITY_ANTHROPIC_API_KEY_FILE=: a Console API key created for this city
+alone, with a spend limit.
+- At boot a one-shot Shepherd service, which =user-processes= (and hence the
+supervisor) waits for, installs it.  Root only reads the exposed key, then
+forks and drops to the =gascity= account, which writes
+=~gascity/.claude/anthropic-api-key= (=0600=), a =~gascity/.claude/settings.json=
+whose =apiKeyHelper= prints it, and a generated, minimal =~gascity/.claude.json=:
+onboarding done plus =projects[<rig>].hasTrustDialogAccepted= for each
+declared rig, so =claude= does not stop at the first-run trust dialog, whose
+default answer exits a non-interactive session.  The install cannot run in the
+activation phase, which precedes every file-system mount.
 - =guix system vm --expose= exports a *directory* (9p cannot export a single
-file), so =scripts/gascity-system-container= stages those credential files in
-a private temporary directory (keeping the =.claude= layout: =.claude/.credentials.json=
-and =.claude.json=) and exposes that instead.  The staging directory is
-removed when the script exits.  If =~/.claude/.credentials.json= is missing
-the script still boots the demo but prints a warning: =claude= will not be
-authenticated in the VM.
+file), so =scripts/gascity-system-container= stages the key in a private
+temporary directory and exposes that instead; it is removed when the script
+exits.  Without =GASCITY_ANTHROPIC_API_KEY_FILE= the demo boots
+unauthenticated: run =claude login= as the =gascity= user with an account of
+its own.
 - The VM uses QEMU's user-mode network (=%qemu-static-networking=), which
 =claude= needs.
 - On aarch64 the serial console is the PL011 UART (=ttyAMA0=) and the example
@@ -1075,7 +1087,7 @@ checked into the Guix repository; plaintext never touches disk or the store.
 service, extend it instead of declaring a second one, and keep the ordering
 where sops's one-shot runs before the supervisor.  sops-guix names each secret's
 Shepherd service =sops-secret-<key>=, so a service that must wait for one lists
-it in its =requirements= (as the sibling worker/observability services do):
+it among its requirements:
 
 #+begin_src scheme
 (modify-services %base-services
@@ -1087,13 +1099,221 @@ it in its =requirements= (as the sibling worker/observability services do):
                    (sops-service-configuration-secrets config))))))
 #+end_src
 
-The Gas City service type does not expose an extra-Shepherd-requirement field,
-so it cannot itself declare =requirements '(sops-secret-gascity/dotenv)=.  The
-recipe relies on ordering that is safe in practice: sops-guix decrypts during
-boot activation, the gascity supervisor's provision one-shot runs first, and the
-`respawn? #t` supervisor wrapper re-reads =secrets-file= on every (re)start, so
-a first-start race self-heals.  If you need a hard requirement, express it where
-your own services declare there =requirements=.
+Make the provision one-shot and the supervisor wait for the decrypted file with
+the =shepherd-requirement= field (a list of Shepherd service names; the Home
+service honours it too):
+
+#+begin_src scheme
+(gascity-service-config
+ (secrets-file (sops-secret->secret-file gascity-dotenv-secret))
+ (shepherd-requirement '(sops-secret-gascity/dotenv))
+ ...)
+#+end_src
+
+The field is called =shepherd-requirement=, singular, like the
+=github-app-token-configuration= field of the same name; the github-actions
+services in this channel call theirs =requirements=.  Without it the recipe
+still works in practice, because the =respawn? #t= supervisor wrapper re-reads
+=secrets-file= on every (re)start, so a first-start race self-heals.
+
+* GitHub identity
+
+Each city commits and opens pull requests as a GitHub identity of its own,
+never with the operator's SSH or GPG keys or =gh= login.
+
+The threat model decides the design.  Agents run Claude Code with
+=--dangerously-skip-permissions= and read untrusted content (issues, pull
+requests, web pages), so assume an agent can run anything as its Unix user
+and read every credential that user can.  File modes and environment hygiene
+only stop accidental leaks.  The real limits are what GitHub lets the
+credential do and how long it lives.  Hence:
+
+- one Unix user (and group) per city: instances that share a user share its
+  credentials, and the system service warns about it;
+- a Gas City account never joins a privileged group (=wheel=, =sudo=,
+  =docker=, =libvirt=, =kvm=, =video=, =input=, =netdev=, =disk=, =root=);
+  the service refuses such a =group=;
+- short-lived, narrowly scoped tokens, and GitHub-side rules that hold even
+  when a token leaks.
+
+** Choosing an identity
+
+| | GitHub App | Machine user |
+|-+------------+--------------|
+| Identity | =<slug>[bot]= | a second GitHub account |
+| Credential | 1-hour installation token, minted by =github-app-token-service-type= | classic personal access token |
+| Lifetime | 1 hour, re-minted every 15 minutes when due | up to 90 days, rotated by hand |
+| Your own repositories | yes (install the App on them) | yes (as a collaborator) |
+| Upstream repositories and forks | no | yes |
+| Commit signing | none (see below) | none (see below) |
+| Terms of service | unlimited | one free machine account per person |
+| =gh= limits | =gh api user=, =@me= queries and =gh repo fork= fail with an installation token | none |
+
+Prefer the App for your own repositories.  Use a machine user for upstream
+contributions, which an App cannot make.  Fine-grained tokens do not work for
+a collaborator on a personal account's repositories, which is why the machine
+user needs a *classic* token.
+
+Both identities hand the consumers the same thing, a token file:
+
+- git reads it through =github-token-credential-helper=, a git credential
+  helper that answers only =https://github.com= (any other host, and plain
+  =http=, gets nothing) and refuses a token whose =token.expires_at= sidecar
+  is in the past;
+- =gh= reads it through =github-token-gh=, a wrapper =bin/gh= that sets
+  =GH_TOKEN= from the file.  Put it first in the supervisor's =packages=:
+  =PATH= is first-wins, and the agents only see =packages=, never a Home
+  profile;
+- =github-git-config= writes a git configuration with the identity, the
+  credential helper, =insteadOf= rewrites from =git@github.com:= and
+  =ssh://git@github.com/= to HTTPS (so no SSH key is ever used), and
+  =push.autoSetupRemote=.  Pass it as the supervisor's =git-config=: it is
+  exported as =GIT_CONFIG_GLOBAL=, a read-only store file the agents cannot
+  replace.  =~/.config/git/config= (for example from =guix-home-service-type=)
+  is only the fallback for interactive sessions as the user, since the agents
+  can rewrite it.
+
+All three live in =(r0man guix services github-token)=, which works from both
+system and Home configurations.  The worked examples are
+=examples/gascity/github-app.scm= and =examples/gascity/github-machine-user.scm=.
+
+** GitHub App
+
+=github-app-token-service-type= (=(r0man guix services github-app-token)=)
+keeps an installation token on disk:
+
+#+begin_src scheme
+(github-app-token-configuration
+ (name "gascity")                          ; 'github-app-token-gascity
+ (client-id "Iv23li...")
+ (installation-id 12345678)                ; or (repository "r0man/guix-channel")
+ (private-key-file "/run/secrets/gascity-app.pem") ; sops: user github-app-token, 0400
+ (reader-group "gascity")                  ; that city's own group only
+ (repositories '("guix-channel"))          ; required, non-empty
+ (permissions '((contents . "write") (pull_requests . "write")
+                (checks . "read") (statuses . "read") (actions . "read")))
+ (schedule "*/15 * * * *")                 ; cron string or calendar-event gexp
+ (shepherd-requirement '(sops-secret-gascity-app-pem)))
+#+end_src
+
+- A dedicated =github-app-token= system account (no login shell, home
+  =/var/empty=) is the only reader of the private key.
+- The token is written to =/run/github-app-token/<name>/token= (the directory
+  is =2750 github-app-token:<reader-group>=), with its expiry in
+  =token.expires_at=.  Writes are atomic (temporary file, =fsync=, =rename=).
+  Nothing logs the JWT, the token or GitHub's error bodies; the log shows the
+  expiry and a short SHA-256 prefix of the token.
+- Narrowing is mandatory: =repositories= must be non-empty and =permissions=
+  explicit.  =workflows=, =administration=, =secrets=, =environments=, =pages=
+  and =actions: write= are refused.
+- The one-shot =github-app-token-<name>= mints at boot, retrying for about two
+  minutes (a laptop's =networking= comes up before connectivity), and then
+  succeeds anyway so the supervisor that requires it still starts.  The timer
+  =github-app-token-<name>-refresh= re-mints once the token is less than 30
+  minutes from expiry; it does not require the one-shot, and =herd trigger=
+  forces a run.  Its output goes to =/var/log/github-app-token.log=.
+
+Require the one-shot from the supervisor with
+=(shepherd-requirement '(github-app-token-gascity))=.
+
+Commit as the bot: =user.name= is =<slug>[bot]= and =user.email= is
+=<bot-user-id>+<slug>[bot]@users.noreply.github.com=, where the bot user id is
+the =id= of =https://api.github.com/users/<slug>%5Bbot%5D=.
+
+Registering the App:
+
+- register it on your own account only, never an organization you don't own;
+- turn the webhook off, and leave "Request user authorization (OAuth)" off;
+- grant only the repository permissions above;
+- install it on *selected* repositories, not "All repositories";
+- generate a private key, encrypt it with sops, and delete the download;
+- rotate the key by generating a new one, deploying it, then deleting the old
+  one on the App's settings page.
+
+** Machine user
+
+- Create the account (one free machine account per person), invite it as a
+  collaborator with write access, and keep its email private with "Block
+  command line pushes that expose my email" on.  Commit as
+  =<id>+<login>@users.noreply.github.com=.
+- Create a *classic* token with =public_repo= (or =repo= for private
+  repositories) and nothing else.  In particular, no =workflow=.  Set an
+  expiry of 90 days or less and calendar the rotation.
+- Deliver it with sops-guix as a file readable only by the city's user
+  (=0400=), and list the secret's Shepherd service in the supervisor's
+  =shepherd-requirement=.
+
+** Commit signing
+
+Agent commits are not signed.  A signing key the agent can read proves
+nothing about who wrote the commit, and the "Verified" badge would suggest
+otherwise.  For a "Verified" history on =main=, squash-merge pull requests in
+the web UI: GitHub signs the merge commit itself.
+
+** File versus environment
+
+The token is a file, not an environment variable, so it does not end up in
+every child's environment, in =/proc/<pid>/environ= dumps or in logs that
+print the environment.  This is hygiene, not a boundary: the agent can read
+the file.  A later phase could put a credential broker, running as a separate
+user, between the agents and GitHub that adds the =Authorization= header
+itself, so the agents never hold a token at all.
+
+** Mandatory GitHub-side guardrails
+
+These rules are what contains a leaked or misused token.  Set them up before
+the first agent push:
+
+- a ruleset on =main= and on tags: pull request required, review from code
+  owners (a =CODEOWNERS= naming =@r0man=), approval of the most recent push,
+  stale approvals dismissed, no force pushes, no deletion, and the bot never
+  on the bypass list;
+- a ruleset limiting the bot's branches to =gascity/**=;
+- the default =GITHUB_TOKEN= permissions set to read-only;
+- no =pull_request_target= or =workflow_run= workflow that checks out a pull
+  request's head;
+- self-hosted runners and jobs that use secrets gated behind an environment
+  with a required reviewer.  This matters here: this channel's workflows run
+  on =[self-hosted, docker]=;
+- secret-scanning push protection on;
+- vigilant mode on the operator's account, so unsigned commits claiming to be
+  the operator show as "Unverified";
+- rulesets on private repositories of a personal account need GitHub Pro.
+
+** Host hardening
+
+Outside this channel, in the operator's own system configuration:
+
+- =DenyUsers gascity*= in =sshd_config=, so an agent cannot plant an
+  =authorized_keys= and log in;
+- =kernel.yama.ptrace_scope=1=;
+- =umask 077= for the operator, so the agents cannot read the operator's new
+  files;
+- nftables egress rules per Gas City user (=meta skuid=): block =127.0.0.0/8=
+  except the city's own ports, the LAN and Tor's =9050=, optionally sending
+  everything else through an allowlisting proxy;
+- the supervisor's =read-auth= and =write-auth= settings enabled for every
+  city, so another local user cannot drive its API.
+
+** Claude Code credentials
+
+Never copy the operator's =~/.claude/.credentials.json= or =~/.claude.json=
+into a service user's home.  Give each city its own Console API key (or its
+own account) with a spend limit, and generate a minimal =~/.claude.json= with
+only the onboarding flag and the trust entries of its rigs.
+=examples/gascity/bright-lights-system.scm= does exactly that.
+
+** Revocation runbook
+
+When a city misbehaves or a credential may have leaked:
+
+1. Suspend the App's installation (Settings → Applications → Configure →
+   Suspend), or remove the machine user's collaborator access.
+2. Delete the App's private key on its settings page.
+3. Stop the city: =herd stop gascity-supervisor= (or the instance's
+   suffixed name), then kill its tmux sessions (=pkill -u gascity tmux=).
+4. Revoke the machine user's token and the city's Claude API key.
+5. Keep the state directory as it is, for forensics.
 
 * Lifecycle and ownership
 
@@ -1101,13 +1321,31 @@ The loop runs per supervisor instance; =GC_HOME= is the instance's =gc-home= and
 every derived path is keyed off it.  Two phases:
 
 - Activation (root for system, the user for home) materializes *declarative
-  files* only: it creates the state, log and =gc-home= directories (=0700=,
-  owned by the service user for system), writes each enabled city's generated
-  =city.toml= and =pack.toml= (unchanged files are left alone, so a no-op
-  reconfigure does not perturb a running controller), copies =files=/=rig-files=
-  (preserving executable bits), and writes each instance's =supervisor.toml=
-  (=0600=).  It never runs =gc= and never switches user — Guix activation runs
-  as root with no =#:user=.
+  files* only: it creates the state, log and =gc-home= directories, writes each
+  enabled city's generated =city.toml= and =pack.toml= (unchanged files are
+  left alone, so a no-op reconfigure does not perturb a running controller),
+  copies =files=/=rig-files= (preserving executable bits), and writes each
+  instance's =supervisor.toml= (=0600=).  It never runs =gc=.
+
+  For the system service, root never writes below the state directory.  The
+  agents run as the service user and can plant symbolic links anywhere it owns
+  (=ln -s /etc ~/.gc=), and every file operation of a root process follows
+  them.  So root only:
+
+  - creates the state directory (=0700=, the service user's) and the log
+    directory (=0750=, =root:<group>=), refusing a symbolic link and any
+    ancestor that is not a root-owned, non-writable directory, and changing
+    ownership through an =O_NOFOLLOW= descriptor;
+  - removes anything but a plain file at the supervisor and provision log
+    paths, and pre-creates the provision log (=0640=, the service user's);
+  - then forks, drops its supplementary groups, =setgid=/=setuid=s to the
+    service account, and writes everything else as that user.
+
+  The log directory stays root's because Shepherd opens the supervisor's
+  =#:log-file= as root and follows symbolic links.  An instance whose
+  activation refuses a path or fails is reported and skipped; it does not
+  abort the activation of the rest of the system.  The Home service runs as
+  the user already and writes everything in-process.
 - Provision one-shot (runs as the service user, and the supervisor =requires=
   it) does the *stateful* work per instance: writes =.gc/site.toml=, runs
   =gc init --file <city>/city.toml --preserve-existing --no-start
@@ -1122,6 +1360,16 @@ every derived path is keyed off it.  Two phases:
 Then Shepherd starts the secrets-loading wrapper that =exec=s =gc supervisor
 run= as the service user, using the instance's =gc-home=, =XDG_RUNTIME_DIR= and
 =port=.
+
+Both the one-shot and the supervisor (and so every agent) also get:
+
+- =TMPDIR= pointing at =<state-directory>/tmp= (=0700=, created by the
+  one-shot), so agent temporary files never land in the shared =/tmp=;
+- =GIT_TERMINAL_PROMPT=0=, so a git that wants a password fails instead of
+  hanging a session;
+- =SSL_CERT_FILE=, =SSL_CERT_DIR= and =GIT_SSL_CAINFO=: the values Shepherd
+  itself runs with, otherwise =/etc/ssl/certs= when it exists;
+- =GIT_CONFIG_GLOBAL= when =git-config= is set.
 
 ** Re-runnable gc init --preserve-existing
 
