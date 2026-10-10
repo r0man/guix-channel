@@ -15,10 +15,11 @@
 ;;; gives the service user a Claude Code configuration of its own at boot.
 ;;;
 ;;; The agents never see the operator's own Claude Code login.  The wrapper
-;;; exposes a dedicated Console API key read-only
-;;; (`scripts/gascity-system-container' passes `--expose'), and a one-shot
-;;; service installs it, with a minimal generated `~/.claude.json', into the
-;;; service user's home before the supervisor starts.  Without a key the city
+;;; exposes a dedicated credential read-only -- a `claude setup-token' token
+;;; for your subscription, or a Console API key
+;;; (`scripts/gascity-system-container' passes `--expose') -- and a one-shot
+;;; service installs it for the service user, with a minimal generated
+;;; `~/.claude.json', before the supervisor starts.  Without one the city
 ;;; boots unauthenticated.
 ;;;
 ;;; Everything else uses the service defaults: the supervisor runs as the
@@ -144,15 +145,21 @@
 (define %service-user (gascity-supervisor-user %supervisor))
 (define %service-home (gascity-supervisor-state-directory %supervisor))
 
-;;; The exposed, read-only Claude Code API key.  `scripts/gascity-system-container'
-;;; stages the file named by `GASCITY_ANTHROPIC_API_KEY_FILE' -- a Console API
-;;; key created for this city alone, with a spend limit -- as `anthropic-api-key'
+;;; The exposed, read-only Claude Code credential.
+;;; `scripts/gascity-system-container' stages one of
+;;;
+;;;   - `claude-oauth-token': the file named by
+;;;     `GASCITY_CLAUDE_OAUTH_TOKEN_FILE', holding a long-lived token from
+;;;     `claude setup-token', which bills your Claude subscription;
+;;;   - `anthropic-api-key': the file named by `GASCITY_ANTHROPIC_API_KEY_FILE',
+;;;     a Console API key created for this city alone, with a spend limit;
+;;;
 ;;; in a private directory and mounts it here (`--expose' can only export a
 ;;; directory).  The operator's own `~/.claude/.credentials.json' and
 ;;; `~/.claude.json' are never shared: the agents run with
 ;;; `--dangerously-skip-permissions' on untrusted input and can read anything
-;;; their user can, so they get a credential that is theirs alone and cheap to
-;;; revoke.
+;;; their user can, so they get a credential that is theirs alone and can be
+;;; revoked without logging the operator out.
 (define %claude-source "/mnt/claude-ro")
 
 ;;; Claude Code remembers which directories it may work in
@@ -172,10 +179,14 @@
 ;;; service user before it writes anything.  It writes:
 ;;;
 ;;;   - `~/.claude.json': onboarding done, plus the rig trust entries;
-;;;   - when a key was exposed, `~/.claude/anthropic-api-key' (0600) and a
+;;;   - for a subscription token, a `CLAUDE_CODE_OAUTH_TOKEN=' line in the
+;;;     supervisor's secrets file (`<gc-home>/secrets.env', 0600).  The
+;;;     supervisor loads that file into its environment, and gc passes
+;;;     CLAUDE_CODE_OAUTH_TOKEN on to every agent session by itself;
+;;;   - for an API key, `~/.claude/anthropic-api-key' (0600) and a
 ;;;     `~/.claude/settings.json' whose `apiKeyHelper' prints it.
 ;;;
-;;; Without a key the city still boots; run `claude login' as the service
+;;; Without either the city still boots; run `claude login' as the service
 ;;; user with an account of its own.
 (define %claude-credentials-program
   (program-file
@@ -184,12 +195,14 @@
      #~(begin
          (use-modules (guix build utils)
                       (ice-9 match)
-                      (ice-9 textual-ports))
+                      (ice-9 textual-ports)
+                      (srfi srfi-1))
 
          (define home #$%service-home)
          (define key-file (string-append home "/.claude/anthropic-api-key"))
+         (define secrets-file #$(gascity-supervisor-secrets-file %supervisor))
 
-         (define (json-string string)
+         (define (json-string text)
            ;; Rig paths and key paths are plain; quote and escape minimally.
            (string-append "\""
                           (string-concatenate
@@ -198,7 +211,7 @@
                                     ((#\") "\\\"")
                                     ((#\\) "\\\\")
                                     (else (string character))))
-                                (string->list string)))
+                                (string->list text)))
                           "\""))
 
          (define claude-json
@@ -232,14 +245,34 @@
              (chmod temporary #o600)
              (rename-file temporary file)))
 
-         ;; Root reads the exposed key...
-         (define key
-           (let ((source (string-append #$%claude-source
-                                        "/anthropic-api-key")))
+         (define (secrets-with-token token)
+           ;; The secrets file with its CLAUDE_CODE_OAUTH_TOKEN line replaced,
+           ;; keeping every other line.
+           (let ((lines (if (file-exists? secrets-file)
+                            (remove (lambda (line)
+                                      (or (string-null? line)
+                                          (string-prefix?
+                                           "CLAUDE_CODE_OAUTH_TOKEN=" line)))
+                                    (string-split
+                                     (call-with-input-file secrets-file
+                                       get-string-all)
+                                     #\newline))
+                            '())))
+             (string-join
+              (append lines
+                      (list (string-append "CLAUDE_CODE_OAUTH_TOKEN=" token)))
+              "\n" 'suffix)))
+
+         (define (read-exposed name)
+           ;; Root reads the exposed credential NAME, or #f.
+           (let ((source (string-append #$%claude-source "/" name)))
              (and (file-exists? source)
-                  (let ((key (string-trim-both
-                              (call-with-input-file source get-string-all))))
-                    (and (not (string-null? key)) key)))))
+                  (let ((value (string-trim-both
+                                (call-with-input-file source get-string-all))))
+                    (and (not (string-null? value)) value)))))
+
+         (define token (read-exposed "claude-oauth-token"))
+         (define key (and (not token) (read-exposed "anthropic-api-key")))
 
          ;; ...and writes nothing itself.  The account exists already:
          ;; account activation runs before services.
@@ -255,6 +288,9 @@
                   (mkdir-p (string-append home "/.claude"))
                   (chmod (string-append home "/.claude") #o700)
                   (write-file (string-append home "/.claude.json") claude-json)
+                  (when token
+                    (mkdir-p (dirname secrets-file))
+                    (write-file secrets-file (secrets-with-token token)))
                   (when key
                     (write-file key-file (string-append key "\n"))
                     (write-file (string-append home "/.claude/settings.json")
