@@ -13,6 +13,7 @@
 (define-module (test-r0man-guix-services-gascity)
   #:use-module (gnu services shepherd)
   #:use-module (gnu system accounts)
+  #:use-module (guix diagnostics)
   #:use-module (guix gexp)
   #:use-module (r0man guix services gascity)
   #:use-module (r0man guix toml)
@@ -705,6 +706,83 @@ without extra-config"
                    (shepherd-service-provision (car provisions)))
            (equal? '(gascity-provision-b)
                    (shepherd-service-provision (cadr provisions)))))))
+
+
+;;;
+;;; Hardening hooks: requirements, environment, git config, groups.
+;;;
+
+(test-group "supervisor hardening"
+  (define (environment config)
+    "Return the source of the supervisor's environment gexp, as a string."
+    (format #f "~s" (gexp->approximate-sexp
+                     (gascity-supervisor-environment config))))
+
+  (define (error-message thunk)
+    (guard (c ((formatted-message? c)
+               (apply format #f (formatted-message-string c)
+                      (formatted-message-arguments c))))
+      (thunk)
+      #f))
+
+  (test-equal "shepherd-requirement extends both services"
+    '((user-processes networking sops-secret-gascity)
+      (user-processes networking gascity-provision sops-secret-gascity))
+    (map shepherd-service-requirement
+         (gascity-supervisor-shepherd-services
+          (list (gascity-supervisor-configuration
+                 (shepherd-requirement '(sops-secret-gascity)))))))
+
+  (test-assert "shepherd-requirement must be a list of symbols"
+    (string-contains
+     (error-message
+      (lambda ()
+        (gascity-supervisor-configurations
+         (list (gascity-supervisor-configuration
+                (shepherd-requirement "sops"))))))
+     "list of symbols"))
+
+  (let ((source (environment (gascity-supervisor-configuration))))
+    (test-assert "the environment exports the CA bundle variables"
+      (and (string-contains source "SSL_CERT_FILE=")
+           (string-contains source "SSL_CERT_DIR=")
+           (string-contains source "GIT_SSL_CAINFO=")
+           (string-contains source "/etc/ssl/certs/ca-certificates.crt")))
+    (test-assert "the environment has a private TMPDIR"
+      (string-contains source "TMPDIR=\" \"/var/lib/gascity/tmp"))
+    (test-assert "git never prompts"
+      (string-contains source "GIT_TERMINAL_PROMPT=0"))
+    (test-assert "no GIT_CONFIG_GLOBAL without git-config"
+      (not (string-contains source "GIT_CONFIG_GLOBAL"))))
+
+  (test-assert "git-config is exported as GIT_CONFIG_GLOBAL"
+    (string-contains
+     (environment (gascity-supervisor-configuration
+                   (git-config (plain-file "gitconfig" "[user]\n"))))
+     "GIT_CONFIG_GLOBAL="))
+
+  (test-assert "the provision program creates TMPDIR and pins git"
+    (let ((source (format #f "~s"
+                          (gexp->approximate-sexp
+                           (program-file-gexp
+                            (gascity-supervisor-provision-program
+                             (gascity-supervisor-configuration
+                              (git-config "/etc/gascity/gitconfig"))))))))
+      (and (string-contains source "/var/lib/gascity/tmp")
+           (string-contains source "GIT_TERMINAL_PROMPT")
+           (string-contains source "/etc/gascity/gitconfig"))))
+
+  (test-assert "a privileged group is rejected"
+    (string-contains
+     (error-message
+      (lambda ()
+        (gascity-supervisor-configurations
+         (list (gascity-supervisor-configuration (group "docker"))))))
+     "privileged group"))
+
+  (test-assert "an own group is accepted"
+    (gascity-supervisor-configurations
+     (list (gascity-supervisor-configuration (group "gascity-a"))))))
 
 
 ;;;
