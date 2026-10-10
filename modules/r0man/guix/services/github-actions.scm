@@ -681,7 +681,8 @@ overrides the API base URL for testing."
   ;; with gnutls-not-available.
   (program-file "github-actions-runner-mint-registration-token"
                 (with-extensions (list guile-json-4 guile-gnutls)
-                  (with-imported-modules '((r0man guix services
+                  (with-imported-modules '((r0man guix github-api)
+                                          (r0man guix services
                                            github-actions-vm-mint))
                     #~(begin
                       (use-modules (ice-9 match)
@@ -742,6 +743,7 @@ environment, as Shepherd's clean service environment requires."
      "github-actions-runner-token-mint"
      (with-extensions (list guile-json-4 guile-gnutls)
        (with-imported-modules '((guix build utils)
+                                (r0man guix github-api)
                                 (r0man guix services github-actions-vm-mint))
          #~(begin
              (use-modules (guix build utils)
