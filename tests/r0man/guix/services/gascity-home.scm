@@ -202,6 +202,14 @@ A #f VALUE unsets NAME.  The previous environment is restored afterwards."
    (service-named 'home-gascity-supervisor-a
                   (home-shepherd-services (list (supervisor #:id "a"))))))
 
+(test-equal "the home services also require the shepherd-requirement"
+  '((sops-secrets) (home-gascity-provision sops-secrets))
+  (map shepherd-service-requirement
+       (home-shepherd-services
+        (list (gascity-supervisor-configuration
+               (port 8372)
+               (shepherd-requirement '(sops-secrets)))))))
+
 (test-assert "the home provision one-shot is a one-shot"
   (shepherd-service-one-shot?
    (service-named 'home-gascity-provision
