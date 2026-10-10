@@ -117,7 +117,8 @@ PAT-FILE, a repository/organization URL, and a runner NAME as
 arguments, and removes the runner (best effort)."
   (program-file "github-actions-vm-remove-runner"
                 (with-extensions (list guile-json-4 guile-gnutls)
-                  (with-imported-modules '((r0man guix services github-actions-vm-mint))
+                  (with-imported-modules '((r0man guix github-api)
+                                           (r0man guix services github-actions-vm-mint))
                     #~(begin
                       (use-modules (ice-9 match)
                                    (r0man guix services github-actions-vm-mint))
@@ -159,7 +160,8 @@ as arguments.  Subcommands:
 GITHUB_API_BASE overrides the API base URL for testing."
   (program-file "github-actions-vm-workflow"
                 (with-extensions (list guile-json-4 guile-gnutls)
-                  (with-imported-modules '((r0man guix services github-actions-vm-mint))
+                  (with-imported-modules '((r0man guix github-api)
+                                           (r0man guix services github-actions-vm-mint))
                     #~(begin
                       (use-modules (ice-9 match)
                                    (r0man guix services github-actions-vm-mint))
