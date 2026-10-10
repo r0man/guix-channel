@@ -68,6 +68,8 @@
             gascity-supervisor-configuration-dolt-user-name
             gascity-supervisor-configuration-dolt-user-email
             gascity-supervisor-configuration-cities
+            gascity-supervisor-configuration-shepherd-requirement
+            gascity-supervisor-configuration-git-config
             gascity-supervisor-settings-configuration
             gascity-supervisor-settings-configuration?
             gascity-supervisor-settings-configuration-port
@@ -736,6 +738,8 @@ requirement: those only exist in the system Shepherd."
     "Provision a Gas City city as a user service: genesis, site binding, \
 packs and registry.")
    (provision (list (home-gascity-supervisor-provision config)))
+   (requirement
+    (gascity-supervisor-configuration-shepherd-requirement config))
    (one-shot? #t)
    (start #~(lambda args
               (zero? (spawn-command
@@ -752,7 +756,9 @@ the current user, with no `#:user'/`#:group' and no networking requirement."
      (documentation
       "Run a Gas City supervisor as a user service (gc supervisor run).")
      (provision (list (home-gascity-supervisor-shepherd-service-name config)))
-     (requirement (list (home-gascity-supervisor-provision config)))
+     (requirement
+      (cons (home-gascity-supervisor-provision config)
+            (gascity-supervisor-configuration-shepherd-requirement config)))
      (start #~(make-forkexec-constructor
                (list #$(gascity-supervisor-program config))
                #:directory #$home

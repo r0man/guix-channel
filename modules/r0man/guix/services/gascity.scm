@@ -137,6 +137,8 @@
             gascity-supervisor-configuration-dolt-user-name
             gascity-supervisor-configuration-dolt-user-email
             gascity-supervisor-configuration-cities
+            gascity-supervisor-configuration-shepherd-requirement
+            gascity-supervisor-configuration-git-config
 
             gascity-supervisor-settings-configuration
             gascity-supervisor-settings-configuration?
@@ -1051,7 +1053,18 @@ emission."
   (dolt-user-email     gascity-supervisor-configuration-dolt-user-email
                        (default 'unset))            ;string or 'unset
   (cities              gascity-supervisor-configuration-cities
-                       (default '())))              ;list of city records
+                       (default '()))               ;list of city records
+  ;; Extra Shepherd services the provision one-shot and the supervisor
+  ;; require, for example the sops-guix service that decrypts the secrets
+  ;; file or a GitHub token minter.
+  (shepherd-requirement
+   gascity-supervisor-configuration-shepherd-requirement
+   (default '()))                                   ;list of symbols
+  ;; A read-only git configuration, exported as GIT_CONFIG_GLOBAL, so the
+  ;; agents cannot replace the identity and credential helper they commit
+  ;; and push with.  When unset, git reads `~/.config/git/config'.
+  (git-config          gascity-supervisor-configuration-git-config
+                       (default 'unset)))           ;file-like or 'unset
 
 ;; The `[supervisor]' fields and the settings record as a whole are service
 ;; configuration: only the settings record owns a TOML document.
@@ -3401,6 +3414,8 @@ non-empty string of letters, digits, '.', '_', and '-')")
            configs)
           configs)))
 
+  (for-each gascity-validate-supervisor-hardening normalized)
+
   (let ((duplicates (gascity-find-duplicates
                      (map gascity-supervisor-provision normalized))))
     (unless (null? duplicates)
@@ -3429,6 +3444,40 @@ the Shepherd service '~a'; give each instance a distinct 'id'")
               (car (car duplicates)) (cdr (car duplicates))))))
 
   normalized)
+
+(define %gascity-privileged-groups
+  ;; Groups that hand their members root, devices or other users' data.  The
+  ;; agents run anything their account can, so a Gas City account never
+  ;; joins one.
+  '("root" "wheel" "sudo" "docker" "libvirt" "kvm" "video" "input" "netdev"
+    "disk"))
+
+(define (gascity-validate-supervisor-hardening config)
+  "Raise a `formatted-message' when the supervisor instance CONFIG would run
+its agents in a privileged group, or when its `shepherd-requirement' or
+`git-config' fields are malformed."
+  (let ((group (gascity-supervisor-group config)))
+    (when (and (member group %gascity-privileged-groups)
+               (not (string=? "root" (gascity-supervisor-user config))))
+      (raise (formatted-message
+              (G_ "gascity: ~a runs its agents in the privileged group ~s; \
+give it a group of its own")
+              (gascity-supervisor-shepherd-service-name config) group))))
+  (let ((requirement
+         (gascity-supervisor-configuration-shepherd-requirement config)))
+    (unless (and (list? requirement) (every symbol? requirement))
+      (raise (formatted-message
+              (G_ "gascity: 'shepherd-requirement' must be a list of \
+symbols, got ~s")
+              requirement))))
+  (let ((git-config (gascity-supervisor-configuration-git-config config)))
+    (unless (or (eq? git-config 'unset)
+                (file-like? git-config)
+                (string? git-config))
+      (raise (formatted-message
+              (G_ "gascity: 'git-config' must be a file-like object or a \
+file name, got ~s")
+              git-config)))))
 
 (define-syntax-rule (gascity-service-config field ...)
   "Return a service value holding a single
@@ -3662,30 +3711,64 @@ would be invisible and genesis would fail (§2.5)."
       (gascity-supervisor-configuration-packages config)
       (list coreutils git sed gawk which bash sqlite netcat)))))
 
+(define (gascity-supervisor-tmp-directory config)
+  "Return the private TMPDIR of the supervisor instance CONFIG,
+`<state-directory>/tmp', which the provision one-shot creates 0700."
+  (string-append (gascity-supervisor-state-directory config) "/tmp"))
+
+(define %gascity-ca-environment
+  ;; A gexp lowering to the CA bundle variables, resolved where the service
+  ;; starts: the variable Shepherd itself was started with, otherwise the
+  ;; system bundle when it exists.  git, gh, curl and Go read different ones.
+  #~(let* ((bundle "/etc/ssl/certs/ca-certificates.crt")
+           (file (or (getenv "SSL_CERT_FILE")
+                     (and (file-exists? bundle) bundle)))
+           (directory (or (getenv "SSL_CERT_DIR")
+                          (and (file-exists? "/etc/ssl/certs")
+                               "/etc/ssl/certs"))))
+      (append (if file
+                  (list (string-append "SSL_CERT_FILE=" file)
+                        (string-append "GIT_SSL_CAINFO=" file))
+                  '())
+              (if directory
+                  (list (string-append "SSL_CERT_DIR=" directory))
+                  '()))))
+
 (define (gascity-supervisor-environment config)
   "Return a gexp lowering to the Shepherd environment-variables list of the
 supervisor instance CONFIG: HOME, DOLT_ROOT_PATH (pinned to the state
 directory, the account's home, so Dolt reads the activation-materialized
 `<state-directory>/.dolt/config_global.json' author identity), GC_HOME,
 XDG_RUNTIME_DIR (pinned to `gc-home' so an isolated supervisor never touches
-the host socket, §16.2), GC_SUPERVISOR_PRESERVE_SESSIONS_ON_SIGNAL, PATH, and
-the operator's non-secret `environment-variables'."
+the host socket, §16.2), GC_SUPERVISOR_PRESERVE_SESSIONS_ON_SIGNAL, PATH, a
+private TMPDIR, GIT_TERMINAL_PROMPT=0 (a git that wants a password fails
+instead of hanging an agent), the CA bundle variables, GIT_CONFIG_GLOBAL when
+`git-config' is set, and the operator's non-secret `environment-variables'."
   (let ((home (gascity-supervisor-state-directory config))
         (gc-home (gascity-supervisor-gc-home config))
         (packages (gascity-supervisor-path-packages config))
+        (git-config (gascity-supervisor-configuration-git-config config))
         (extra (gascity-supervisor-configuration-environment-variables config)))
-    #~(list (string-append "HOME=" #$home)
-            (string-append "DOLT_ROOT_PATH=" #$home)
-            (string-append "GC_HOME=" #$gc-home)
-            (string-append "XDG_RUNTIME_DIR=" #$gc-home)
-            "GC_SUPERVISOR_PRESERVE_SESSIONS_ON_SIGNAL=1"
-            (string-append "PATH="
-                           (string-join
-                            (list #$@(map (lambda (package)
-                                            (file-append package "/bin"))
-                                          packages))
-                            ":"))
-            #$@extra)))
+    #~(append
+       (list (string-append "HOME=" #$home)
+             (string-append "DOLT_ROOT_PATH=" #$home)
+             (string-append "GC_HOME=" #$gc-home)
+             (string-append "XDG_RUNTIME_DIR=" #$gc-home)
+             "GC_SUPERVISOR_PRESERVE_SESSIONS_ON_SIGNAL=1"
+             (string-append "PATH="
+                            (string-join
+                             (list #$@(map (lambda (package)
+                                             (file-append package "/bin"))
+                                           packages))
+                             ":"))
+             (string-append "TMPDIR="
+                            #$(gascity-supervisor-tmp-directory config))
+             "GIT_TERMINAL_PROMPT=0")
+       #$%gascity-ca-environment
+       #$(if (eq? git-config 'unset)
+             #~'()
+             #~(list (string-append "GIT_CONFIG_GLOBAL=" #$git-config)))
+       (list #$@extra))))
 
 
 ;;;
@@ -3695,20 +3778,30 @@ the operator's non-secret `environment-variables'."
 (define* (gascity-supervisor-activation-program config #:key (chown? #t))
   "Return a Guile program, as a file-like object, that materializes the
 files of the supervisor instance CONFIG: it creates the state, log and
-gc-home directories 0700 and materializes each enabled city's generated
+gc-home directories and materializes each enabled city's generated
 `city.toml', `pack.toml' and `files'/`rig-files' (preserving executable
 bits) and each instance's `supervisor.toml'.  Unchanged generated files are
 left alone, so a reconfigure that changes nothing does not perturb a running
 controller.  It never runs `gc init' (that is the provision one-shot's job).
 
-When CHOWN? is true (the default) it also chowns everything to the service
-user and group, which is what system activation needs (it runs as root and
-cannot switch user, §16.1).  The Home activation passes CHOWN? #f: it runs as
-the user that owns the Home environment, so the files are already theirs."
+When CHOWN? is true (the default) the program runs as root, which is what
+system activation does (§16.1).  Everything below the state directory is
+owned by the service user, and the agents that run as that user can plant
+symbolic links there, so root never writes below it: root only creates the
+state and log directories (refusing a symbolic link and a parent that is not
+root's), pre-creates the provision log, and then forks and drops privileges
+to the service user before it writes anything else.  The log directory stays
+root's, because Shepherd opens the supervisor's `#:log-file' as root and
+follows symbolic links.
+
+The Home activation passes CHOWN? #f: it runs as the user that owns the Home
+environment, so it writes everything in-process."
   (let ((user (gascity-supervisor-user config))
         (group (gascity-supervisor-group config))
         (state-directory (gascity-supervisor-state-directory config))
         (log-directory (gascity-supervisor-log-directory config))
+        (log-file (gascity-supervisor-log-file config))
+        (provision-log-file (gascity-supervisor-provision-log-file config))
         (gc-home (gascity-supervisor-gc-home config))
         (supervisor-toml (gascity-supervisor-toml-string config))
         (dolt-config-file (gascity-supervisor-dolt-config-file config))
@@ -3721,29 +3814,25 @@ the user that owns the Home environment, so the files are already theirs."
      (with-imported-modules '((guix build utils))
        #~(begin
            (use-modules (guix build utils)
+                        (ice-9 match)
                         (ice-9 textual-ports))
 
            (define user #$user)
            (define group #$group)
 
-           (define (owner)
-             ;; Resolve the ids at run time: the account exists by the time
-             ;; activation runs.
-             (let ((account (getpwnam user))
-                   (grp (getgrnam group)))
-               (cons (if account (passwd:uid account) 0)
-                     (if grp (group:gid grp) 0))))
+           (define (fatal fmt . args)
+             (apply format (current-error-port)
+                    (string-append "gascity[" user "]: " fmt "~%")
+                    args)
+             (exit 1))
 
-           (define (own file)
-             #$(if chown?
-                   #~(let ((ids (owner)))
-                       (chown file (car ids) (cdr ids)))
-                   #~#t))
+           ;;
+           ;; The service user's part: everything below the state directory.
+           ;;
 
            (define (ensure-directory directory)
              (mkdir-p directory)
-             (chmod directory #o700)
-             (own directory))
+             (chmod directory #o700))
 
            (define (install-file file content mode)
              (let ((same? (and (file-exists? file)
@@ -3753,81 +3842,199 @@ the user that owns the Home environment, so the files are already theirs."
                (unless same?
                  (call-with-output-file file
                    (lambda (port) (display content port))))
-               (chmod file mode)
-               (own file)))
+               (chmod file mode)))
 
            (define (install-static-file file source)
              ;; copy-file preserves the executable bit of scripts.
              (mkdir-p (dirname file))
-             (copy-file source file)
-             (own file))
+             (copy-file source file))
 
-           (ensure-directory #$state-directory)
-           (ensure-directory #$log-directory)
-           (ensure-directory #$gc-home)
+           (define (materialize)
+             (ensure-directory #$gc-home)
 
-           (install-file (string-append #$gc-home "/supervisor.toml")
-                         #$supervisor-toml #o600)
+             (install-file (string-append #$gc-home "/supervisor.toml")
+                           #$supervisor-toml #o600)
 
-           ;; Dolt requires a commit author identity, and `gc init' of a
-           ;; managed bd store fails at genesis without one.  It reads
-           ;; `$HOME/.dolt/config_global.json' (the service user's home is
-           ;; the state directory).  The same decision as
-           ;; `gascity-supervisor-dolt-config-global': an explicit operator
-           ;; identity always wins, while the default identity is written
-           ;; only when no file exists yet, so an operator- or
-           ;; sops-provided file is never clobbered.
-           (let ((dolt-config-file #$dolt-config-file))
-             (when (or #$dolt-identity-explicit?
-                       (not (file-exists? dolt-config-file)))
-               ;; Own the `.dolt' directory (not just the config file): Dolt
-               ;; writes its event/telemetry data to `<state>/.dolt/eventsData'
-               ;; when `gc init' runs as the service user, so a root-owned
-               ;; directory would make genesis fail with EACCES.
-               (ensure-directory (dirname dolt-config-file))
-               (install-file dolt-config-file #$dolt-config #o600)))
+             ;; Dolt requires a commit author identity, and `gc init' of a
+             ;; managed bd store fails at genesis without one.  It reads
+             ;; `$HOME/.dolt/config_global.json' (the service user's home is
+             ;; the state directory).  The same decision as
+             ;; `gascity-supervisor-dolt-config-global': an explicit operator
+             ;; identity always wins, while the default identity is written
+             ;; only when no file exists yet, so an operator- or
+             ;; sops-provided file is never clobbered.
+             (let ((dolt-config-file #$dolt-config-file))
+               (when (or #$dolt-identity-explicit?
+                         (not (file-exists? dolt-config-file)))
+                 ;; The service user owns the `.dolt' directory: Dolt writes
+                 ;; its event/telemetry data to `<state>/.dolt/eventsData'.
+                 (ensure-directory (dirname dolt-config-file))
+                 (install-file dolt-config-file #$dolt-config #o600)))
 
-           #$@(append-map
-               (lambda (city)
-                 (let* ((directory (gascity-city-directory config city))
-                        (city-toml (gascity-city->toml-string city))
-                        (pack (gascity-city-configuration-pack city))
-                        (files (gascity-city-configuration-files city))
-                        (rig-files (gascity-city-configuration-rig-files city))
-                        (rigs (gascity-city-configuration-rigs city))
-                        (rig-directories
-                         (filter-map
-                          (lambda (rig)
-                            (let ((path (gascity-rig-configuration-path rig)))
-                              (and (not (eq? path 'unset)) path)))
-                          (if (eq? rigs 'unset) '() rigs))))
-                   (append
-                    (list
-                     #~(begin
-                         (ensure-directory #$directory)
-                         (install-file (string-append #$directory "/city.toml")
-                                       #$city-toml #o600)
-                         #$@(if (eq? pack 'unset)
-                                '()
-                                (list
-                                 #~(install-file
-                                    (string-append #$directory "/pack.toml")
-                                    #$(gascity-pack->toml-string pack)
-                                    #o600)))))
-                    (map (lambda (entry)
-                           #~(install-static-file
-                              (string-append #$directory "/" #$(car entry))
-                              #$(cdr entry)))
-                         (if (list? files) files '()))
-                    (append-map
-                     (lambda (rig-directory)
-                       (map (lambda (entry)
-                              #~(install-static-file
-                                 (string-append #$rig-directory "/" #$(car entry))
-                                 #$(cdr entry)))
-                            (if (list? rig-files) rig-files '())))
-                     rig-directories))))
-               cities))))))
+             #$@(append-map
+                 (lambda (city)
+                   (let* ((directory (gascity-city-directory config city))
+                          (city-toml (gascity-city->toml-string city))
+                          (pack (gascity-city-configuration-pack city))
+                          (files (gascity-city-configuration-files city))
+                          (rig-files (gascity-city-configuration-rig-files city))
+                          (rigs (gascity-city-configuration-rigs city))
+                          (rig-directories
+                           (filter-map
+                            (lambda (rig)
+                              (let ((path (gascity-rig-configuration-path rig)))
+                                (and (not (eq? path 'unset)) path)))
+                            (if (eq? rigs 'unset) '() rigs))))
+                     (append
+                      (list
+                       #~(begin
+                           (ensure-directory #$directory)
+                           (install-file (string-append #$directory "/city.toml")
+                                         #$city-toml #o600)
+                           #$@(if (eq? pack 'unset)
+                                  '()
+                                  (list
+                                   #~(install-file
+                                      (string-append #$directory "/pack.toml")
+                                      #$(gascity-pack->toml-string pack)
+                                      #o600)))))
+                      (map (lambda (entry)
+                             #~(install-static-file
+                                (string-append #$directory "/" #$(car entry))
+                                #$(cdr entry)))
+                           (if (list? files) files '()))
+                      (append-map
+                       (lambda (rig-directory)
+                         (map (lambda (entry)
+                                #~(install-static-file
+                                   (string-append #$rig-directory "/" #$(car entry))
+                                   #$(cdr entry)))
+                              (if (list? rig-files) rig-files '())))
+                       rig-directories))))
+                 cities))
+
+           #$(if chown?
+                 #~(begin
+                     ;;
+                     ;; Root's part: only root-owned paths.
+                     ;;
+
+                     (define account
+                       ;; The account exists by the time activation runs.
+                       ;; Without it, refuse rather than write as root.
+                       (or (getpwnam user)
+                           (fatal "no such user; not activating")))
+
+                     (define uid (passwd:uid account))
+
+                     (define gid
+                       (let ((entry (getgrnam group)))
+                         (if entry
+                             (group:gid entry)
+                             (fatal "no such group ~a; not activating" group))))
+
+                     (define (ensure-root-parents file)
+                       ;; Make sure only root may replace any entry on the
+                       ;; way to FILE: every existing ancestor is a real
+                       ;; (non-symlink) root-owned directory that is neither
+                       ;; group- nor world-writable, and root creates the
+                       ;; missing ones.
+                       (let loop ((components
+                                   (string-tokenize (dirname file)
+                                                    (char-set-complement
+                                                     (char-set #\/))))
+                                  (directory ""))
+                         (unless (null? components)
+                           (let ((directory (string-append
+                                             directory "/" (car components))))
+                             (match (false-if-exception (lstat directory))
+                               (#f (mkdir directory #o755))
+                               (st
+                                (unless (and (eq? 'directory (stat:type st))
+                                             (zero? (stat:uid st))
+                                             (zero? (logand (stat:perms st)
+                                                            #o022)))
+                                  (fatal "~a is not a root-owned, non-writable \
+directory; refusing to manage ~a as root" directory file))))
+                             (loop (cdr components) directory)))))
+
+                     (define (secure-directory directory owner group mode)
+                       ;; Create DIRECTORY and give it to OWNER:GROUP with MODE
+                       ;; without ever following a symbolic link: the chown and
+                       ;; chmod go through a descriptor opened O_NOFOLLOW.
+                       (ensure-root-parents directory)
+                       (match (false-if-exception (lstat directory))
+                         (#f (mkdir directory mode))
+                         ((= stat:type 'directory) #t)
+                         (st (fatal "~a is a ~a, not a directory; refusing \
+to touch it" directory (stat:type st))))
+                       (let ((fd (open-fdes directory
+                                            (logior O_RDONLY O_DIRECTORY
+                                                    O_NOFOLLOW O_CLOEXEC))))
+                         (chown fd owner group)
+                         (chmod fd mode)
+                         (close-fdes fd)))
+
+                     (define (remove-unsafe-file file)
+                       ;; FILE lives in the root-owned log directory, so only
+                       ;; root can create it now; drop anything a previous
+                       ;; generation (whose log directory the service user
+                       ;; owned) may have left there in its place.
+                       (match (false-if-exception (lstat file))
+                         (#f #t)
+                         (st (unless (and (eq? 'regular (stat:type st))
+                                          (= 1 (stat:nlink st)))
+                               (delete-file file)))))
+
+                     (define (as-service-user thunk)
+                       ;; Run THUNK in a child process that has dropped every
+                       ;; privilege: no supplementary groups, then the
+                       ;; service user's group and user.
+                       (match (primitive-fork)
+                         (0
+                          (catch #t
+                            (lambda ()
+                              (setgroups #())
+                              (setgid gid)
+                              (setuid uid)
+                              (umask #o077)
+                              (setenv "HOME" #$state-directory)
+                              (thunk)
+                              (primitive-exit 0))
+                            (lambda args
+                              (format (current-error-port)
+                                      "gascity[~a]: activation failed: ~s~%"
+                                      user args)
+                              (force-output (current-error-port))
+                              (primitive-exit 1))))
+                         (pid
+                          (match (waitpid pid)
+                            ((_ . status)
+                             (unless (zero? status)
+                               (fatal "activation as the service user \
+failed (status ~a)" status)))))))
+
+                     (secure-directory #$state-directory uid gid #o700)
+                     ;; Shepherd opens the supervisor log as root, following
+                     ;; symbolic links, so the service user must not own the
+                     ;; directory it lives in.
+                     (secure-directory #$log-directory 0 gid #o750)
+                     (remove-unsafe-file #$log-file)
+                     (remove-unsafe-file #$provision-log-file)
+                     ;; The provision one-shot runs as the service user and
+                     ;; appends to its own log, which root creates for it.
+                     (let ((fd (open-fdes #$provision-log-file
+                                          (logior O_WRONLY O_CREAT O_APPEND
+                                                  O_NOFOLLOW O_CLOEXEC)
+                                          #o640)))
+                       (chown fd uid gid)
+                       (chmod fd #o640)
+                       (close-fdes fd))
+                     (as-service-user materialize))
+                 #~(begin
+                     (ensure-directory #$state-directory)
+                     (ensure-directory #$log-directory)
+                     (materialize))))))))
 
 (define (gascity-supervisor-provision-program config)
   "Return a Guile program, as a file-like object, that provisions the
@@ -3932,6 +4139,21 @@ earlier generation (with no stamp yet) upgrades without a spurious failure."
            (when (and (not (getenv "SSL_CERT_FILE"))
                       (file-exists? "/etc/ssl/certs/ca-certificates.crt"))
              (setenv "SSL_CERT_FILE" "/etc/ssl/certs/ca-certificates.crt"))
+           (when (and (not (getenv "GIT_SSL_CAINFO"))
+                      (getenv "SSL_CERT_FILE"))
+             (setenv "GIT_SSL_CAINFO" (getenv "SSL_CERT_FILE")))
+           (setenv "GIT_TERMINAL_PROMPT" "0")
+           #$@(let ((git-config
+                     (gascity-supervisor-configuration-git-config config)))
+                (if (eq? git-config 'unset)
+                    '()
+                    (list #~(setenv "GIT_CONFIG_GLOBAL" #$git-config))))
+           ;; A private TMPDIR, so the agents' temporary files never land in
+           ;; the shared /tmp.  The supervisor's environment points at it.
+           (let ((tmp #$(gascity-supervisor-tmp-directory config)))
+             (mkdir-p tmp)
+             (chmod tmp #o700)
+             (setenv "TMPDIR" tmp))
            (when (and (not (getenv "GUIX_LOCPATH"))
                       (file-exists? "/run/current-system/locale"))
              (setenv "GUIX_LOCPATH" "/run/current-system/locale"))
@@ -4250,7 +4472,9 @@ return before genesis finished and let the supervisor start too early
      (documentation
       "Provision a Gas City city: genesis, site binding, packs and registry.")
      (provision (list (gascity-supervisor-provision config)))
-     (requirement '(user-processes networking))
+     (requirement
+      (append '(user-processes networking)
+              (gascity-supervisor-configuration-shepherd-requirement config)))
      (one-shot? #t)
      (start #~(lambda args
                 (zero? (spawn-command
@@ -4269,8 +4493,10 @@ CONFIG: the secrets-loading wrapper that execs `gc supervisor run'."
      (documentation
       "Run a Gas City machine-wide supervisor (gc supervisor run).")
      (provision (list (gascity-supervisor-shepherd-service-name config)))
-     (requirement `(user-processes networking
-                    ,(gascity-supervisor-provision config)))
+     (requirement
+      (append `(user-processes networking
+                ,(gascity-supervisor-provision config))
+              (gascity-supervisor-configuration-shepherd-requirement config)))
      (start #~(make-forkexec-constructor
                (list #$(gascity-supervisor-program config))
                #:user #$user
@@ -4312,6 +4538,20 @@ group).  Root is left to the operator."
   (define groups
     (delete-duplicates (map gascity-supervisor-group configs)))
 
+  ;; Instances that share a user share every credential that user can read
+  ;; (token files, the secrets file, Claude Code's login): give each city
+  ;; that should have its own identity a user of its own.
+  (for-each (lambda (user)
+              (let ((instances
+                     (filter (lambda (config)
+                               (string=? user (gascity-supervisor-user config)))
+                             configs)))
+                (when (> (length instances) 1)
+                  (warning (G_ "gascity: ~a supervisor instances run as the \
+user ~s and share its credentials~%")
+                           (length instances) user))))
+            users)
+
   (append
    (map (lambda (name)
           (user-group (name name) (system? #t)))
@@ -4346,13 +4586,21 @@ group).  Root is left to the operator."
 
 (define (gascity-supervisor-activation value)
   "Return the activation gexp of VALUE: run each instance's activation
-program as root (the activation service runs as root)."
+program as root (the activation service runs as root).  An instance whose
+activation fails or refuses an unsafe path is reported and skipped, so it
+cannot abort the activation of the rest of the system at boot."
   (define configs
     (gascity-supervisor-configurations value))
   #~(begin
-      (use-modules (guix build utils))
       #$@(map (lambda (config)
-                #~(invoke #$(gascity-supervisor-activation-program config)))
+                #~(unless (zero? (system*
+                                  #$(gascity-supervisor-activation-program
+                                     config)))
+                    (format (current-error-port)
+                            "gascity: activation of ~a failed; see the \
+messages above~%"
+                            '#$(gascity-supervisor-shepherd-service-name
+                                config))))
               configs)))
 
 (define (gascity-supervisor-profile value)
