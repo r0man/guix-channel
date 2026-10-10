@@ -832,7 +832,7 @@ The =bright-lights= example has a system counterpart,
 =gascity-service-type= in a fresh, ephemeral system image.  It mirrors
 =examples/gascity/system.scm= (one supervisor, the =bright-lights= city, the
 builtin =claude= provider, the pinned builtin =core=/=bd= imports) and adds
-=claude-code= and the API key install described below.
+=claude-code= and the credential install described below.
 
 =scripts/gascity-system-container= wraps the invocation.  By default it builds
 and runs a *system container* with =sudo guix system container --network= (the
@@ -882,24 +882,38 @@ exits.
 (=~/.claude/.credentials.json=, =~/.claude.json=).  The agents run with
 =--dangerously-skip-permissions= on untrusted input and can read everything
 their user can, so they get a credential of their own.  In *container mode*
-the wrapper exposes *read-only* the file named by
-=GASCITY_ANTHROPIC_API_KEY_FILE=: a Console API key created for this city
-alone, with a spend limit.
+the wrapper exposes *read-only* one of:
+  - the file named by =GASCITY_CLAUDE_OAUTH_TOKEN_FILE=, holding a token from
+    =claude setup-token=, which uses your Claude subscription (preferred);
+  - the file named by =GASCITY_ANTHROPIC_API_KEY_FILE=, a Console API key
+    created for this city alone, with a spend limit.
+
+  #+begin_src sh
+  claude setup-token                 # once, on the host; copy the token
+  install -m 600 /dev/stdin ~/.config/gascity-demo-token   # paste it, then C-d
+  GASCITY_CLAUDE_OAUTH_TOKEN_FILE=~/.config/gascity-demo-token \
+      scripts/gascity-system-container
+  #+end_src
 - At boot a one-shot Shepherd service, which =user-processes= (and hence the
-supervisor) waits for, installs it.  Root only reads the exposed key, then
-forks and drops to the =gascity= account, which writes
-=~gascity/.claude/anthropic-api-key= (=0600=), a =~gascity/.claude/settings.json=
-whose =apiKeyHelper= prints it, and a generated, minimal =~gascity/.claude.json=:
-onboarding done plus =projects[<rig>].hasTrustDialogAccepted= for each
-declared rig, so =claude= does not stop at the first-run trust dialog, whose
-default answer exits a non-interactive session.  The install cannot run in the
-activation phase, which precedes every file-system mount.
+supervisor) waits for, installs it.  Root only reads the exposed file, then
+forks and drops to the =gascity= account, which writes a generated, minimal
+=~gascity/.claude.json= (onboarding done plus
+=projects[<rig>].hasTrustDialogAccepted= for each declared rig, so =claude=
+does not stop at the first-run trust dialog, whose default answer exits a
+non-interactive session) and then:
+  - for a subscription token, a =CLAUDE_CODE_OAUTH_TOKEN== line in the
+    supervisor's =secrets-file= (=/var/lib/gascity/.gc/secrets.env=, =0600=),
+    which =gc= forwards to every agent session;
+  - for an API key, =~gascity/.claude/anthropic-api-key= (=0600=) and a
+    =~gascity/.claude/settings.json= whose =apiKeyHelper= prints it.
+
+  The install cannot run in the activation phase, which precedes every
+  file-system mount.
 - =guix system vm --expose= exports a *directory* (9p cannot export a single
-file), so =scripts/gascity-system-container= stages the key in a private
-temporary directory and exposes that instead; it is removed when the script
-exits.  Without =GASCITY_ANTHROPIC_API_KEY_FILE= the demo boots
-unauthenticated: run =claude login= as the =gascity= user with an account of
-its own.
+file), so =scripts/gascity-system-container= stages the credential in a
+private temporary directory and exposes that instead; it is removed when the
+script exits.  Without either variable the demo boots unauthenticated: run
+=claude login= as the =gascity= user.
 - The VM uses QEMU's user-mode network (=%qemu-static-networking=), which
 =claude= needs.
 - On aarch64 the serial console is the PL011 UART (=ttyAMA0=) and the example
@@ -1298,10 +1312,23 @@ Outside this channel, in the operator's own system configuration:
 ** Claude Code credentials
 
 Never copy the operator's =~/.claude/.credentials.json= or =~/.claude.json=
-into a service user's home.  Give each city its own Console API key (or its
-own account) with a spend limit, and generate a minimal =~/.claude.json= with
-only the onboarding flag and the trust entries of its rigs.
-=examples/gascity/bright-lights-system.scm= does exactly that.
+into a service user's home: that hands the agents your interactive login,
+refresh token included.  Give each city a credential of its own instead:
+
+- *Subscription (preferred for personal cities).*  Run =claude setup-token=
+  once and put =CLAUDE_CODE_OAUTH_TOKEN=<token>= in the city's
+  =secrets-file= (through sops-guix in a real system).  The supervisor loads
+  it into its environment, and =gc= passes =CLAUDE_CODE_OAUTH_TOKEN= on to
+  every agent session by itself; no =GC_SUPERVISOR_ENV= entry is needed.  It
+  costs nothing extra, but has no spend limit: the agents draw on the same
+  rate limits as your own Claude Code use.
+- *Console API key.*  Billed per token, with a hard spend limit per key.
+  Deliver it the same way as =ANTHROPIC_API_KEY=, or through an
+  =apiKeyHelper= in the service user's =~/.claude/settings.json=.
+
+Either way, generate a minimal =~/.claude.json= with only the onboarding flag
+and the trust entries of the city's rigs.
+=examples/gascity/bright-lights-system.scm= does both.
 
 ** Revocation runbook
 
@@ -1312,7 +1339,8 @@ When a city misbehaves or a credential may have leaked:
 2. Delete the App's private key on its settings page.
 3. Stop the city: =herd stop gascity-supervisor= (or the instance's
    suffixed name), then kill its tmux sessions (=pkill -u gascity tmux=).
-4. Revoke the machine user's token and the city's Claude API key.
+4. Revoke the machine user's token and the city's Claude credential (the
+   =setup-token= token or the Console API key).
 5. Keep the state directory as it is, for forensics.
 
 * Lifecycle and ownership
