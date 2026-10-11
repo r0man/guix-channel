@@ -35,9 +35,21 @@
                              (number->string (getpid)) ".scm")))
     (call-with-output-file file
       (lambda (port)
-        (write (gexp->approximate-sexp
-                (program-file-gexp
-                 (gascity-supervisor-activation-program %config)))
+        (write (let loop ((thing (gexp->approximate-sexp
+                                  (program-file-gexp
+                                   (gascity-supervisor-activation-program
+                                    %config)))))
+                 ;; Approximate nested gexps too.  The `gc' executable and
+                 ;; the packages on PATH cannot be approximated; they are
+                 ;; never run here.
+                 (cond ((gexp? thing) (loop (gexp->approximate-sexp thing)))
+                       ((or (equal? thing '(*approximate*))
+                            (file-like? thing)
+                            (file-append? thing))
+                        "/nonexistent")
+                       ((pair? thing) (cons (loop (car thing))
+                                            (loop (cdr thing))))
+                       (else thing)))
                port)))
     file))
 

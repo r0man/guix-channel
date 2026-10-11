@@ -70,6 +70,9 @@
             gascity-supervisor-configuration-cities
             gascity-supervisor-configuration-shepherd-requirement
             gascity-supervisor-configuration-git-config
+            gascity-git-config-text
+            gascity-sync-packs
+            gascity-soft-reload
             gascity-supervisor-settings-configuration
             gascity-supervisor-settings-configuration?
             gascity-supervisor-settings-configuration-port
@@ -126,6 +129,10 @@
             gascity-city-configuration-pricing
             gascity-city-configuration-files
             gascity-city-configuration-rig-files
+            gascity-city-configuration-soft-reload?
+            gascity-symlink
+            gascity-symlink?
+            gascity-symlink-target
             gascity-city-configuration-extra-config
             gascity-city-configuration-extra-toml
             gascity-city-configuration-include

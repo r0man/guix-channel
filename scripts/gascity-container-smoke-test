@@ -36,7 +36,14 @@
 #           falls back to the QEMU VM, which boots the same OS with the same
 #           assertions and needs no privileges.
 #
-#   all     home, then system.
+#   parity  Run tests/r0man/guix/services/gascity-parity-home.scm with
+#           `guix home container' and check, with the real `gc', what the
+#           burningswell migration relies on: genesis succeeds with a
+#           read-only `git-config', a directory source and a symbolic link
+#           are installed, and the controller initializes the beads store of
+#           a declared rig without `gc rig add'.
+#
+#   all     home, parity, then system.
 #
 # The script must run from anywhere: it locates the repository root from $0.
 # It exits non-zero as soon as any check fails and prints PASS or FAIL.
@@ -47,7 +54,7 @@ script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 root=$(CDPATH= cd -- "$script_dir/.." && pwd)
 
 usage() {
-    echo "usage: $0 [home|system|all]" >&2
+    echo "usage: $0 [home|parity|system|all]" >&2
 }
 
 require_guix() {
@@ -151,6 +158,138 @@ echo "home-gascity-supervisor: Started"
 
 echo "PASS: home"
 CHECK
+}
+
+parity_check_body() {
+    cat <<'CHECK'
+set -eu
+
+state="${XDG_STATE_HOME:-$HOME/.local/state}"
+city="$state/gascity/parity"
+rig="$state/rig"
+fail() {
+    printf 'FAIL: %s\n' "$1" >&2
+    echo "----- $state/gascity/supervisor-provision.log -----" >&2
+    cat "$state/gascity/supervisor-provision.log" >&2 2>/dev/null || true
+    echo "----- $state/gascity/supervisor.log (tail) -----" >&2
+    tail -n 40 "$state/gascity/supervisor.log" >&2 2>/dev/null || true
+    exit 1
+}
+
+# files: a directory source at "." lands in the city root, 0644, recorded in
+# the manifest.
+[ -f "$city/formulas/parity-check.toml" ] \
+    || fail "the directory source's formula is missing"
+[ -f "$city/prompts/parity.md" ] || fail "the directory source's prompt is missing"
+[ "$(stat -c %a "$city/prompts/parity.md")" = 644 ] \
+    || fail "the installed prompt is not 0644"
+case "$(cat "$city/.gc/gascity-files.manifest")" in
+    *formulas/parity-check.toml*prompts/parity.md*) ;;
+    *) fail "the city manifest does not list the installed files" ;;
+esac
+echo "files: directory source installed"
+
+# rig-files: a file and a symbolic link in the rig root, and the site binding
+# that names the rig path (written by the activation, before city.toml).
+[ -f "$rig/README.md" ] || fail "the rig file is missing"
+[ "$(readlink "$rig/.gc/scripts/parity.md")" = "$city/prompts/parity.md" ] \
+    || fail "the rig symbolic link is missing or wrong"
+case "$(cat "$city/.gc/site.toml")" in
+    *"$rig"*) ;;
+    *) fail ".gc/site.toml does not bind the rig path" ;;
+esac
+echo "rig-files: file and symbolic link installed"
+
+# Genesis ran with GIT_CONFIG_GLOBAL a read-only store file: gc's bd script
+# writes `beads.role' only when the global configuration lacks it, and the
+# generated configuration declares it.  The supervisor only starts after a
+# successful provision.
+i=0
+running=no
+while [ "$i" -lt 180 ]; do
+    status=$(herd status home-gascity-supervisor 2>&1 || true)
+    case "$status" in
+        *running*|*started*) running=yes; break ;;
+    esac
+    sleep 1
+    i=$((i + 1))
+done
+[ "$running" = yes ] || fail "home-gascity-supervisor did not reach Started"
+echo "genesis with a read-only git-config: OK"
+
+# The supervisor starts the city, and the controller initializes the beads
+# store of every rig the site binding gives a path.
+i=0
+while [ ! -e "$rig/.beads/metadata.json" ] && [ "$i" -lt 180 ]; do
+    sleep 1
+    i=$((i + 1))
+done
+[ -e "$rig/.beads/metadata.json" ] \
+    || fail "the controller did not initialize the rig's beads store"
+echo "rig beads store: initialized"
+
+# gc's bd lifecycle script (city genesis, rig init) runs `git config --global
+# beads.role maintainer' when the global configuration lacks the key.  On a
+# real system GIT_CONFIG_GLOBAL is a read-only store file and that write fails
+# the init; here the container's /gnu/store is writable, so instead check that
+# the file the supervisor runs with is still exactly what Guix generated: the
+# declared [beads] section first, then the include, and nothing appended.
+git_config=
+for p in /proc/[0-9]*; do
+    case "$(tr '\0' ' ' < "$p/cmdline" 2>/dev/null)" in
+        *"supervisor run"*)
+            for kv in $(tr '\0' '\n' < "$p/environ"); do
+                case "$kv" in
+                    GIT_CONFIG_GLOBAL=*) git_config=${kv#GIT_CONFIG_GLOBAL=} ;;
+                esac
+            done ;;
+    esac
+done
+[ -n "$git_config" ] || fail "the supervisor runs without GIT_CONFIG_GLOBAL"
+lines=0
+first=
+while IFS= read -r line; do
+    [ -n "$first" ] || first=$line
+    lines=$((lines + 1))
+done < "$git_config"
+[ "$first" = "[beads]" ] && [ "$lines" = 4 ] \
+    || fail "gc wrote into the read-only git config $git_config: $(cat "$git_config")"
+echo "beads.role: declared, never written"
+
+# The commands the activation and the provision run against a running city,
+# in the supervisor's environment: the import check (the bundled pins are
+# pre-seeded, so it passes offline) and the soft reload.
+export GC_HOME="$HOME/.gc" XDG_RUNTIME_DIR="$HOME/.gc"
+gc import check --city "$city" || fail "gc import check failed"
+echo "gc import check: OK"
+# The controller socket appears once the city finished starting.
+i=0
+until gc reload --soft --async "$city"; do
+    [ "$i" -lt 120 ] \
+        || fail "gc reload --soft --async failed against the running controller"
+    sleep 1
+    i=$((i + 1))
+done
+echo "gc reload --soft: OK"
+
+echo "PASS: parity"
+CHECK
+}
+
+run_parity() {
+    file="$root/tests/r0man/guix/services/gascity-parity-home.scm"
+    tmp=$(mktemp -d "${TMPDIR:-/tmp}/gascity-parity-smoke.XXXXXX")
+    trap 'rm -rf "$tmp"' EXIT INT TERM
+    state="$tmp/state"
+
+    check="export XDG_STATE_HOME='$state'
+$(parity_check_body)"
+
+    echo "building and running the parity Home container..."
+    # See run_home for `--expose=/bin=/bin'.
+    XDG_STATE_HOME="$state" \
+        guix home container -L "$root/modules" --expose=/bin=/bin \
+        "$file" -- "$check"
 }
 
 run_home() {
@@ -356,8 +495,9 @@ run_system() {
 action=${1:-all}
 case "$action" in
     home)   require_guix; run_home ;;
+    parity) require_guix; run_parity ;;
     system) require_guix; run_system ;;
-    all)    require_guix; run_home; run_system ;;
+    all)    require_guix; run_home; run_parity; run_system ;;
     -h|--help) usage; exit 0 ;;
     *) usage; exit 2 ;;
 esac
