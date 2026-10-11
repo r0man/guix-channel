@@ -1299,12 +1299,12 @@ enabling embedded version-controlled SQL databases in Go applications.")
 
 
 (define-public go-github-com-dolthub-driver-v2
-  ;; The v2 driver tracks the dolt v2 release line and requires the newer
-  ;; fslock 0.0.5 API, so it propagates the -for-dolt package variants.
+  ;; The v2 driver tracks the dolt v2 release line, so it propagates the
+  ;; -for-dolt package variants.
   (package
     (inherit go-github-com-dolthub-driver)
     (name "go-github-com-dolthub-driver-v2")
-    (version "2.1.4")
+    (version "2.4.1")
     (source
      (origin
        (method git-fetch)
@@ -1313,7 +1313,7 @@ enabling embedded version-controlled SQL databases in Go applications.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "116zhrm6djkm1qp0xv1krc6bcpjq9lca72zqf1f2mvbgvanv15y3"))))
+        (base32 "1bav7hgxx5qw7mr94m799s9kl2m19rqjbs61sb8zprlijjw8q3jn"))))
     (arguments
      (list
       #:import-path "github.com/dolthub/driver/v2"
