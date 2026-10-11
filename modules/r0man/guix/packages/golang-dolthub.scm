@@ -202,10 +202,11 @@ on Unix systems.")
     (license license:lgpl3)))
 
 (define-public go-github-com-dolthub-fslock-for-dolt
-  ;; The standalone dolt v2 CLI tracks a newer fslock whose New returns
-  ;; (*Lock, error) and adds Lock.Close.  go-github-com-dolthub-dolt-go
-  ;; (pinned at 1.88.1 for beads) still uses the single-return 0.0.4 API,
-  ;; so this 0.0.5 variant is scoped to the dolt package only.
+  ;; fslock 0.0.5 changed New to return (*Lock, error) and added
+  ;; Lock.Close.  go-github-com-dolthub-dolt-go (pinned at 1.88.1 for
+  ;; beads) still uses the single-return 0.0.4 API.  dolt 2.4.0 and later
+  ;; moved to go-github-com-dolthub-file-locks; this 0.0.5 variant is still
+  ;; needed by go-github-com-dolthub-eventkit.
   (package
     (inherit go-github-com-dolthub-fslock)
     (name "go-github-com-dolthub-fslock-for-dolt")
@@ -1016,7 +1017,7 @@ AI assistants to interact with Dolt version-controlled SQL databases.")
     (name "dolt")
     ;; Decoupled from go-github-com-dolthub-dolt-go (pinned at 1.88.1 for
     ;; beads): the standalone CLI tracks the dolt v2 release line.
-    (version "2.3.5")
+    (version "2.4.2")
     (source
      (origin
        (method git-fetch)
@@ -1025,7 +1026,7 @@ AI assistants to interact with Dolt version-controlled SQL databases.")
              (commit (string-append "v" version))))
        (file-name (git-file-name "dolt" version))
        (sha256
-        (base32 "1798a0p7prm6934a0yqd43pb4mbfmn7adny5gyx0c5vxvkyqnis2"))
+        (base32 "1p6zmffv2ip7hs95ryxrhya7nvd5r5mp6rx3mmjxydvv0n7nzxg3"))
        (modules '((guix build utils)))
        (snippet
         ;; Replace google.golang.org/grpc/experimental/credentials
@@ -1093,7 +1094,7 @@ AI assistants to interact with Dolt version-controlled SQL databases.")
                     go-github-com-dolthub-aws-sdk-go-ini-parser
                     go-github-com-dolthub-eventsapi-schema
                     go-github-com-dolthub-flatbuffers
-                    go-github-com-dolthub-fslock-for-dolt
+                    go-github-com-dolthub-file-locks
                     go-github-com-dolthub-go-mysql-server-for-dolt
                     go-github-com-dolthub-gozstd
                     go-github-com-dolthub-vitess-for-dolt
@@ -1191,7 +1192,7 @@ a CLI for managing versioned databases with full MySQL compatibility.")
        (delete "go-github-com-dolthub-fslock"
                "go-github-com-dolthub-go-mysql-server"
                "go-github-com-dolthub-vitess")
-       (prepend go-github-com-dolthub-fslock-for-dolt
+       (prepend go-github-com-dolthub-file-locks
                 go-github-com-dolthub-go-mysql-server-for-dolt
                 go-github-com-dolthub-vitess-for-dolt)))))
 
