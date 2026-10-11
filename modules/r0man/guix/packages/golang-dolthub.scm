@@ -220,6 +220,34 @@ on Unix systems.")
        (sha256
         (base32 "06akb0m5cikp6z5r5yl0y3yrshw9pwa7wsmy1lq4lz17x519njkf"))))))
 
+(define-public go-github-com-dolthub-file-locks
+  ;; Successor of github.com/dolthub/fslock, used by dolt 2.4.0 and later.
+  ;; It keeps the fslock 0.0.5 API under a new import path.
+  (package
+    (name "go-github-com-dolthub-file-locks")
+    (version "0.1.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/dolthub/file-locks")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0zm2vmgysba16d61cckdp6sxfpqain30kacf9733qpbqizvmczap"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/dolthub/file-locks"))
+    (propagated-inputs (list go-golang-org-x-sys))
+    (home-page "https://github.com/dolthub/file-locks")
+    (synopsis "Cross-platform file locking library for Go")
+    (description
+     "This package provides a cross-process mutex based on file locks that
+works on Windows and Unix platforms.  It uses LockFileEx on Windows and flock
+on Unix systems.")
+    (license license:asl2.0)))
+
 
 (define-public go-github-com-dolthub-jsonpath
   (package
