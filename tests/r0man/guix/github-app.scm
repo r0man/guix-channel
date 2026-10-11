@@ -36,7 +36,7 @@
   (generate-x509-private-key pk-algorithm/rsa 2048 '()))
 
 (define %private-key
-  (x509-private-key->private-key %x509-key '()))
+  (x509-private-key->private-key %x509-key (list privkey/import-copy)))
 
 (define (write-key-file directory)
   "Write the test key as a PEM file in DIRECTORY and return its name."
