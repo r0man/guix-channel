@@ -992,17 +992,17 @@ AI assistants to interact with Dolt version-controlled SQL databases.")
   (package
     (inherit go-github-com-dolthub-go-mysql-server)
     (name "go-github-com-dolthub-go-mysql-server-for-dolt")
-    (version "0.20.1-0.20260915233322-a939809e084d")
+    (version "0.20.1-0.20261003020513-77662b650e46")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
              (url "https://github.com/dolthub/go-mysql-server")
-             (commit "a939809e084d3d67214c53b5d2830771e34e7279")))
+             (commit "77662b650e46e11df9850dac5cea4d095e84f8d6")))
        (file-name (git-file-name "go-github-com-dolthub-go-mysql-server"
-                                 "0.20.1-0.20260915233322-a939809e084d"))
+                                 "0.20.1-0.20261003020513-77662b650e46"))
        (sha256
-        (base32 "1kg3hvphk2z3av8dwzcragkqjpbljybyhqsi0vcv6pjhd0ckbyk4"))))
+        (base32 "19x1zljs2kaa2idvyfpz5ry24k163zwa4hi7pqpa3mnqkjmwdy3l"))))
     (propagated-inputs
      (modify-inputs (package-propagated-inputs
                      go-github-com-dolthub-go-mysql-server)
