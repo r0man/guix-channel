@@ -975,17 +975,17 @@ AI assistants to interact with Dolt version-controlled SQL databases.")
   (package
     (inherit go-github-com-dolthub-vitess)
     (name "go-github-com-dolthub-vitess-for-dolt")
-    (version "0.0.0-20260914165732-909aa98f55b7")
+    (version "0.0.0-20260930232419-a6b7b0c65d17")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
              (url "https://github.com/dolthub/vitess")
-             (commit "909aa98f55b72751f16d2b0de72fe300d17bbbc4")))
+             (commit "a6b7b0c65d17a8d7deaf3d466d76da9481ade19e")))
        (file-name (git-file-name "go-github-com-dolthub-vitess"
-                                 "0.0.0-20260914165732-909aa98f55b7"))
+                                 "0.0.0-20260930232419-a6b7b0c65d17"))
        (sha256
-        (base32 "0wcppsr9wbbk0qapij4hzwj37q7qpvvp0hl7ailv832zax5yx5bs"))))))
+        (base32 "1904c8vmmgylv5hsjyp9sx8ck6r95sq4lmajvlqjiahww2qrz7ax"))))))
 
 
 (define-public go-github-com-dolthub-go-mysql-server-for-dolt
