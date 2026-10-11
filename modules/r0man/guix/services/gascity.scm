@@ -90,6 +90,7 @@
   #:use-module (r0man guix packages task-management)
   #:use-module (r0man guix toml)
   #:use-module (srfi srfi-1)
+  #:use-module (srfi srfi-9)
   #:use-module (srfi srfi-13)
   #:use-module (srfi srfi-14)
   #:use-module (srfi srfi-34)
@@ -139,6 +140,9 @@
             gascity-supervisor-configuration-cities
             gascity-supervisor-configuration-shepherd-requirement
             gascity-supervisor-configuration-git-config
+            gascity-git-config-text
+            gascity-sync-packs
+            gascity-soft-reload
 
             gascity-supervisor-settings-configuration
             gascity-supervisor-settings-configuration?
@@ -197,9 +201,14 @@
             gascity-city-configuration-pricing
             gascity-city-configuration-files
             gascity-city-configuration-rig-files
+            gascity-city-configuration-soft-reload?
             gascity-city-configuration-extra-config
             gascity-city-configuration-extra-toml
             gascity-city-configuration-include
+
+            gascity-symlink
+            gascity-symlink?
+            gascity-symlink-target
 
             gascity-pack-configuration
             gascity-pack-configuration?
@@ -1228,7 +1237,8 @@ emission."
 ;;;
 
 ;; The identity fields (`name', `directory', `package', `user', `enabled?',
-;; `genesis?', `install-packs?', `register?', `files', `rig-files') are service
+;; `genesis?', `install-packs?', `register?', `soft-reload?', `files',
+;; `rig-files') are service
 ;; configuration and are not emitted to `city.toml'; the rest are the City
 ;; schema fields, in schema order.
 
@@ -1250,6 +1260,8 @@ emission."
   (install-packs?    gascity-city-configuration-install-packs?
                      (default #f))
   (register?         gascity-city-configuration-register?
+                     (default #t))
+  (soft-reload?      gascity-city-configuration-soft-reload?
                      (default #t))
   (pack              gascity-city-configuration-pack
                      (default 'unset))
@@ -3338,6 +3350,98 @@ supervisor instance CONFIG: `gascity-provision', suffixed with its id."
 
 
 ;;;
+;;; `files' and `rig-files' entries.
+;;;
+;;; Each entry is `(DESTINATION . SOURCE)'.  SOURCE is a file-like object or
+;;; an absolute file name, naming a file or a directory (whose files are
+;;; installed below DESTINATION), or a `gascity-symlink' (DESTINATION becomes
+;;; a symbolic link to its target).  The activation records what it installed
+;;; in a manifest per root and removes what a later generation no longer
+;;; declares.
+
+(define-record-type <gascity-symlink>
+  (gascity-symlink target)
+  gascity-symlink?
+  ;; A string, or a file-like object or `file-append' lowering to a file name.
+  (target gascity-symlink-target))
+
+(define %gascity-files-manifest
+  ;; Where, relative to a city or rig root, the activation records the
+  ;; `files'/`rig-files' paths it manages.
+  ".gc/gascity-files.manifest")
+
+(define %gascity-reserved-destinations
+  ;; Paths below a city root the service writes itself.
+  (list "city.toml" "pack.toml" ".gc/site.toml" %gascity-files-manifest))
+
+(define (gascity-valid-destination? destination)
+  "Return true when DESTINATION is `.' (the root itself, for a directory
+source) or a non-empty relative file name whose components are neither empty,
+`.' nor `..', so it cannot escape its root."
+  (and (string? destination)
+       (or (string=? destination ".")
+           (and (not (string-null? destination))
+                (not (string-prefix? "/" destination))
+                (every (lambda (component)
+                         (not (member component '("" "." ".."))))
+                       (string-split destination #\/))))))
+
+(define (gascity-validate-files city field entries)
+  "Raise a `formatted-message' unless ENTRIES, the FIELD (`files' or
+`rig-files') of CITY, is a list of (DESTINATION . SOURCE) pairs with valid,
+distinct, non-reserved destinations and a file-like, absolute file name or
+`gascity-symlink' source."
+  (define name (gascity-city-configuration-name city))
+  (unless (and (list? entries) (every pair? entries))
+    (raise (formatted-message
+            (G_ "gascity: city ~s: '~a' must be a list of (destination . \
+source) pairs, got ~s")
+            name field entries)))
+  (for-each
+   (lambda (entry)
+     (let ((destination (car entry))
+           (source (cdr entry)))
+       (unless (gascity-valid-destination? destination)
+         (raise (formatted-message
+                 (G_ "gascity: city ~s: '~a' destination ~s must be \".\" or \
+a relative file name without empty, '.' or '..' components")
+                 name field destination)))
+       (when (member destination %gascity-reserved-destinations)
+         (raise (formatted-message
+                 (G_ "gascity: city ~s: '~a' destination ~s is written by the \
+service itself")
+                 name field destination)))
+       (unless (or (file-like? source)
+                   (gexp? source)
+                   (and (string? source) (string-prefix? "/" source))
+                   (and (gascity-symlink? source)
+                        (let ((target (gascity-symlink-target source)))
+                          (or (and (string? target)
+                                   (not (string-null? target)))
+                              (file-like? target)
+                              (gexp? target)))))
+         (raise (formatted-message
+                 (G_ "gascity: city ~s: '~a' source for ~s must be a \
+file-like object, an absolute file name or a gascity-symlink, got ~s")
+                 name field destination source)))))
+   entries)
+  (let ((duplicates (gascity-find-duplicates (map car entries))))
+    (unless (null? duplicates)
+      (raise (formatted-message
+              (G_ "gascity: city ~s: '~a' declares ~s more than once")
+              name field (car duplicates))))))
+
+(define (gascity-files-entry->gexp entry)
+  "Return a gexp lowering to the (DESTINATION KIND SOURCE) list the
+activation program installs for ENTRY, a `files'/`rig-files' pair."
+  (let ((destination (car entry))
+        (source (cdr entry)))
+    (if (gascity-symlink? source)
+        #~(list #$destination 'symlink #$(gascity-symlink-target source))
+        #~(list #$destination 'file #$source))))
+
+
+;;;
 ;;; Validation and normalization.
 ;;;
 
@@ -3415,6 +3519,17 @@ non-empty string of letters, digits, '.', '_', and '-')")
           configs)))
 
   (for-each gascity-validate-supervisor-hardening normalized)
+
+  (for-each (lambda (config)
+              (for-each (lambda (city)
+                          (gascity-validate-files
+                           city "files"
+                           (gascity-city-configuration-files city))
+                          (gascity-validate-files
+                           city "rig-files"
+                           (gascity-city-configuration-rig-files city)))
+                        (gascity-supervisor-configuration-cities config)))
+            normalized)
 
   (let ((duplicates (gascity-find-duplicates
                      (map gascity-supervisor-provision normalized))))
@@ -3619,6 +3734,46 @@ of every other section, in particular `[[rigs]]' and
 
 
 ;;;
+;;; Bringing a running city up to date.
+;;;
+;;; The activation and the provision program share these: GC is the `gc'
+;;; executable, DIRECTORY the city root and LOG a `format'-style procedure.
+;;; Neither ever fails its caller: the generated files are correct on disk
+;;; either way, and `gc' applies them on its next reload or start.
+
+(define gascity-city-sync-forms
+  '((define (gascity-sync-packs gc directory log)
+      "Make the installed imports of the city in DIRECTORY match its
+declaration: run `gc import install' when `gc import check' reports drift.
+Return true when the imports are in sync."
+      (or (zero? (system* gc "import" "check" "--city" directory))
+          (begin
+            (log "imports of ~a differ from the declaration; running gc \
+import install" directory)
+            (or (zero? (system* gc "import" "install" "--city" directory))
+                (begin
+                  (log "gc import install failed for ~a; the city keeps its \
+previous configuration until the next attempt" directory)
+                  #f)))))
+
+    (define (gascity-soft-reload gc directory log)
+      "Ask the controller of the city in DIRECTORY to reload its
+configuration and to accept the config drift of its open sessions instead of
+draining them.  Return true when the controller accepted the request."
+      ;; `--async' returns once the controller accepted the request (gc
+      ;; refuses it together with `--timeout').
+      (or (zero? (system* gc "reload" "--soft" "--async" directory))
+          (begin
+            (log "gc reload --soft of ~a did not complete (no running \
+controller?); it picks the change up when it next loads" directory)
+            #f)))))
+
+(for-each (lambda (form)
+            (eval form (current-module)))
+          gascity-city-sync-forms)
+
+
+;;;
 ;;; `.gc/site.toml'.
 ;;;
 ;;; Site bindings moved out of `city.toml' in schema 2: the machine-local
@@ -3767,8 +3922,81 @@ instead of hanging an agent), the CA bundle variables, GIT_CONFIG_GLOBAL when
        #$%gascity-ca-environment
        #$(if (eq? git-config 'unset)
              #~'()
-             #~(list (string-append "GIT_CONFIG_GLOBAL=" #$git-config)))
+             #~(list (string-append "GIT_CONFIG_GLOBAL="
+                                    #$(gascity-supervisor-git-config-file
+                                       config))))
        (list #$@extra))))
+
+(define %gascity-git-config-defaults
+  ;; Settings `gc' writes to the global git configuration when they are
+  ;; unset.  Its bundled bd lifecycle script runs `git config --global
+  ;; beads.role maintainer' at init and fails the init when that write fails,
+  ;; which it does when GIT_CONFIG_GLOBAL is a read-only store file.
+  ;; Declaring the value up front makes the write unnecessary.
+  "[beads]\n\trole = maintainer\n")
+
+(define (gascity-git-config-text git-config)
+  "Return the list of strings and file-likes whose concatenation is the
+global git configuration of a supervisor whose `git-config' is GIT-CONFIG:
+`%gascity-git-config-defaults' followed by an include of GIT-CONFIG, so a
+value GIT-CONFIG sets wins."
+  (list %gascity-git-config-defaults
+        "[include]\n\tpath = " git-config "\n"))
+
+(define (gascity-supervisor-git-config-file config)
+  "Return the read-only global git configuration (GIT_CONFIG_GLOBAL) of the
+supervisor instance CONFIG, whose `git-config' must be set: its `git-config'
+plus the settings `gc' would otherwise try to write there."
+  (apply mixed-text-file "gascity-git-config"
+         (gascity-git-config-text
+          (gascity-supervisor-configuration-git-config config))))
+
+(define (gascity-supervisor-program-environment config)
+  "Return a gexp that sets up, in the program running it, the environment
+the supervisor instance CONFIG runs `gc' with: HOME, DOLT_ROOT_PATH, GC_HOME,
+XDG_RUNTIME_DIR, PATH, the CA bundle, GIT_TERMINAL_PROMPT, GIT_CONFIG_GLOBAL,
+a private TMPDIR (created 0700) and GUIX_LOCPATH."
+  (let ((state-directory (gascity-supervisor-state-directory config))
+        (gc-home (gascity-supervisor-gc-home config))
+        (packages (gascity-supervisor-path-packages config))
+        (git-config (gascity-supervisor-configuration-git-config config)))
+    #~(begin
+        (setenv "HOME" #$state-directory)
+        ;; Pin Dolt's global configuration root to the account's home (the
+        ;; state directory) so `gc init' reads the author identity the
+        ;; activation materialized as `<state>/.dolt/config_global.json'.
+        (setenv "DOLT_ROOT_PATH" #$state-directory)
+        (setenv "GC_HOME" #$gc-home)
+        (setenv "XDG_RUNTIME_DIR" #$gc-home)
+        (setenv "PATH"
+                (string-join
+                 (list #$@(map (lambda (package)
+                                 (file-append package "/bin"))
+                               packages))
+                 ":"))
+        (when (and (not (getenv "SSL_CERT_DIR"))
+                   (file-exists? "/etc/ssl/certs"))
+          (setenv "SSL_CERT_DIR" "/etc/ssl/certs"))
+        (when (and (not (getenv "SSL_CERT_FILE"))
+                   (file-exists? "/etc/ssl/certs/ca-certificates.crt"))
+          (setenv "SSL_CERT_FILE" "/etc/ssl/certs/ca-certificates.crt"))
+        (when (and (not (getenv "GIT_SSL_CAINFO"))
+                   (getenv "SSL_CERT_FILE"))
+          (setenv "GIT_SSL_CAINFO" (getenv "SSL_CERT_FILE")))
+        (setenv "GIT_TERMINAL_PROMPT" "0")
+        #$@(if (eq? git-config 'unset)
+               '()
+               (list #~(setenv "GIT_CONFIG_GLOBAL"
+                               #$(gascity-supervisor-git-config-file config))))
+        ;; A private TMPDIR, so the agents' temporary files never land in
+        ;; the shared /tmp.  The supervisor's environment points at it.
+        (let ((tmp #$(gascity-supervisor-tmp-directory config)))
+          (mkdir-p tmp)
+          (chmod tmp #o700)
+          (setenv "TMPDIR" tmp))
+        (when (and (not (getenv "GUIX_LOCPATH"))
+                   (file-exists? "/run/current-system/locale"))
+          (setenv "GUIX_LOCPATH" "/run/current-system/locale")))))
 
 
 ;;;
@@ -3778,11 +4006,16 @@ instead of hanging an agent), the CA bundle variables, GIT_CONFIG_GLOBAL when
 (define* (gascity-supervisor-activation-program config #:key (chown? #t))
   "Return a Guile program, as a file-like object, that materializes the
 files of the supervisor instance CONFIG: it creates the state, log and
-gc-home directories and materializes each enabled city's generated
-`city.toml', `pack.toml' and `files'/`rig-files' (preserving executable
-bits) and each instance's `supervisor.toml'.  Unchanged generated files are
-left alone, so a reconfigure that changes nothing does not perturb a running
-controller.  It never runs `gc init' (that is the provision one-shot's job).
+gc-home directories and materializes each enabled city's `.gc/site.toml'
+(first, so a reload the new `city.toml' triggers sees the rig paths), its
+generated `city.toml' and `pack.toml', and its `files'/`rig-files' (removing
+what a previous generation installed and this one no longer declares), and
+each instance's `supervisor.toml'.  Unchanged files are left alone, so a
+reconfigure that changes nothing does not perturb a running controller.  For a
+running city whose files it did change, it re-syncs the imports
+(`install-packs?') and asks the controller for a soft reload
+(`soft-reload?'), neither of which can fail the activation.  It never runs `gc
+init' (that is the provision one-shot's job).
 
 When CHOWN? is true (the default) the program runs as root, which is what
 system activation does (§16.1).  Everything below the state directory is
@@ -3814,11 +4047,22 @@ environment, so it writes everything in-process."
      (with-imported-modules '((guix build utils))
        #~(begin
            (use-modules (guix build utils)
+                        (ice-9 binary-ports)
                         (ice-9 match)
-                        (ice-9 textual-ports))
+                        (ice-9 textual-ports)
+                        (srfi srfi-1))
 
            (define user #$user)
            (define group #$group)
+
+           (for-each (lambda (form)
+                       (eval form (current-module)))
+                     '#$gascity-city-sync-forms)
+
+           ;; The `gc' executable, bound once.
+           (define gc #$(file-append (gascity-supervisor-configuration-package
+                                      config)
+                                     "/bin/gc"))
 
            (define (fatal fmt . args)
              (apply format (current-error-port)
@@ -3834,20 +4078,230 @@ environment, so it writes everything in-process."
              (mkdir-p directory)
              (chmod directory #o700))
 
+           (define changed?
+             ;; Whether this activation changed a file of the city it is
+             ;; materializing; reset per city.
+             #f)
+
            (define (install-file file content mode)
+             ;; Write CONTENT to FILE unless it already holds it, and record
+             ;; whether it did.
              (let ((same? (and (file-exists? file)
                                (let ((old (call-with-input-file file
                                             get-string-all)))
                                  (string=? old content)))))
                (unless same?
                  (call-with-output-file file
-                   (lambda (port) (display content port))))
+                   (lambda (port) (display content port)))
+                 (set! changed? #t))
                (chmod file mode)))
 
-           (define (install-static-file file source)
-             ;; copy-file preserves the executable bit of scripts.
-             (mkdir-p (dirname file))
-             (copy-file source file))
+           ;;
+           ;; `files' and `rig-files': converge each root to its entries.
+           ;;
+
+           (define (warn fmt . args)
+             (apply format (current-error-port)
+                    (string-append "gascity[" user "]: " fmt "~%")
+                    args))
+
+           (define (file-type file)
+             (let ((st (false-if-exception (lstat file))))
+               (and st (stat:type st))))
+
+           (define (directory? file)
+             ;; Whether FILE is a directory, following symbolic links (a
+             ;; store directory source is reached through one).
+             (let ((st (stat file #f)))
+               (and st (eq? 'directory (stat:type st)))))
+
+           (define (file-bytes file)
+             (call-with-input-file file get-bytevector-all #:binary #t))
+
+           (define (converge-file file source)
+             ;; Make FILE a copy of SOURCE, mode 0755 when SOURCE is
+             ;; executable and 0644 otherwise.  A store file is read-only, so
+             ;; the copy is written to a temporary file and renamed into
+             ;; place; a file that already matches is left alone.
+             (let ((mode (if (zero? (logand (stat:perms (stat source)) #o111))
+                             #o644
+                             #o755)))
+               (case (file-type file)
+                 ((directory)
+                  (warn "~a is a directory; not replacing it" file))
+                 ((regular)
+                  (if (equal? (file-bytes file) (file-bytes source))
+                      (unless (= mode (stat:perms (stat file)))
+                        (chmod file mode)
+                        (set! changed? #t))
+                      (replace-file file source mode)))
+                 (else
+                  (replace-file file source mode)))))
+
+           (define (replace-file file source mode)
+             (let ((temporary (string-append file ".gascity-new")))
+               (mkdir-p (dirname file))
+               (when (file-type temporary)
+                 (delete-file temporary))
+               (copy-file source temporary)
+               (chmod temporary mode)
+               (rename-file temporary file)
+               (set! changed? #t)))
+
+           (define (converge-symlink file target)
+             (unless (and (eq? 'symlink (file-type file))
+                          (string=? (readlink file) target))
+               (set! changed? #t))
+             (case (file-type file)
+               ((symlink)
+                (unless (string=? (readlink file) target)
+                  (delete-file file)
+                  (symlink target file)))
+               ((directory)
+                (warn "~a is a directory; not replacing it" file))
+               ((#f)
+                (mkdir-p (dirname file))
+                (symlink target file))
+               (else
+                (delete-file file)
+                (symlink target file))))
+
+           (define (expand-entries entries)
+             ;; Return ENTRIES with every directory source replaced by one
+             ;; entry per file below it, as (DESTINATION KIND SOURCE) lists,
+             ;; KIND being `file' or `symlink'.
+             (append-map
+              (match-lambda
+                ((destination 'symlink target)
+                 (list (list destination 'symlink target)))
+                ((destination 'file source)
+                 (if (directory? source)
+                     (map (lambda (file)
+                            (let ((relative (string-drop
+                                             file
+                                             (+ 1 (string-length source)))))
+                              (list (if (string=? destination ".")
+                                        relative
+                                        (string-append destination "/"
+                                                       relative))
+                                    'file file)))
+                          (find-files source #:stat stat))
+                     (list (list destination 'file source)))))
+              entries))
+
+           (define (reserved? entry)
+             ;; A file of a directory source must not replace what the
+             ;; service writes itself.
+             (and (member (car entry) '#$%gascity-reserved-destinations)
+                  (begin
+                    (warn "not installing ~a over a file the service writes"
+                          (car entry))
+                    #t)))
+
+           (define (read-manifest file)
+             ;; The manifest lives where the agents can write, so keep only
+             ;; entries that cannot name a file outside the root.
+             (if (file-exists? file)
+                 (filter (lambda (entry)
+                           (and (not (string-null? entry))
+                                (not (string-prefix? "/" entry))
+                                (every (lambda (component)
+                                         (not (member component
+                                                      '("" "." ".."))))
+                                       (string-split entry #\/))))
+                         (string-split (call-with-input-file file
+                                         get-string-all)
+                                       #\newline))
+                 '()))
+
+           (define (prune-directories directory root)
+             ;; Remove DIRECTORY and its parents up to, not including, ROOT
+             ;; while they are empty.
+             (let loop ((directory directory))
+               (when (and (string-prefix? (string-append root "/") directory)
+                          (false-if-exception (rmdir directory)))
+                 (loop (dirname directory)))))
+
+           (define (converge-root root entries)
+             ;; Install ENTRIES below ROOT, then remove what the previous
+             ;; generation installed there and ENTRIES no longer declares.
+             ;; Return the absolute file names of the removed entries.
+             (let* ((expanded (remove reserved? (expand-entries entries)))
+                    (manifest (string-append root "/" #$%gascity-files-manifest))
+                    (previous (read-manifest manifest))
+                    (current (sort (delete-duplicates (map car expanded))
+                                   string<?)))
+               (for-each
+                (match-lambda
+                  ((destination 'file source)
+                   (converge-file (string-append root "/" destination) source))
+                  ((destination 'symlink target)
+                   (converge-symlink (string-append root "/" destination)
+                                     target)))
+                expanded)
+               (let ((removed
+                      (filter-map
+                       (lambda (destination)
+                         (let ((file (string-append root "/" destination)))
+                           (and (not (member destination current))
+                                (memq (file-type file) '(regular symlink))
+                                (begin
+                                  (delete-file file)
+                                  (set! changed? #t)
+                                  (warn "removed ~a (no longer declared)" file)
+                                  (prune-directories (dirname file) root)
+                                  file))))
+                       previous)))
+                 (cond
+                  ((pair? current)
+                   (mkdir-p (dirname manifest))
+                   (install-file manifest
+                                 (string-append (string-join current "\n")
+                                                "\n")
+                                 #o600))
+                  ((file-exists? manifest)
+                   (delete-file manifest)))
+                 removed)))
+
+           (define (remove-dangling-formula-links roots removed)
+             ;; `gc' stages `.beads/formulas/' as links to the winning file
+             ;; of each formula; a link to a file this activation removed
+             ;; would dangle until gc rebuilds the directory.
+             (for-each
+              (lambda (root)
+                (let ((directory (string-append root "/.beads/formulas")))
+                  (when (directory? directory)
+                    (for-each
+                     (lambda (link)
+                       (when (and (eq? 'symlink (file-type link))
+                                  (not (file-exists? link))
+                                  (member (readlink link) removed))
+                         (delete-file link)
+                         (warn "removed dangling formula link ~a" link)))
+                     (find-files directory
+                                 (lambda (file stat)
+                                   (eq? 'symlink (stat:type stat))))))))
+              roots))
+
+           (define environment-ready? #f)
+
+           (define (update-running-city directory install-packs? soft-reload?)
+             ;; Bring the city in DIRECTORY up to date with the files this
+             ;; activation changed: re-sync its imports, then ask its
+             ;; controller for a soft reload, which accepts the config drift
+             ;; of open sessions instead of draining them (the session that
+             ;; drives this reconfigure may be one of them).  A city that was
+             ;; never provisioned is left to the provision one-shot.
+             (when (and changed?
+                        (file-exists? (string-append directory "/.gc/runtime"))
+                        (or install-packs? soft-reload?))
+               (unless environment-ready?
+                 #$(gascity-supervisor-program-environment config)
+                 (set! environment-ready? #t))
+               (when install-packs?
+                 (gascity-sync-packs gc directory warn))
+               (when soft-reload?
+                 (gascity-soft-reload gc directory warn))))
 
            (define (materialize)
              (ensure-directory #$gc-home)
@@ -3888,7 +4342,17 @@ environment, so it writes everything in-process."
                      (append
                       (list
                        #~(begin
+                           (set! changed? #f)
                            (ensure-directory #$directory)
+                           ;; The site binding first: a controller reload that
+                           ;; the new city.toml triggers must already see the
+                           ;; paths of the rigs it declares, or it skips them
+                           ;; (and gc does not reload for a site.toml change).
+                           (ensure-directory (string-append #$directory "/.gc"))
+                           (install-file (string-append #$directory
+                                                        "/.gc/site.toml")
+                                         #$(gascity-city-site->toml-string city)
+                                         #o600)
                            (install-file (string-append #$directory "/city.toml")
                                          #$city-toml #o600)
                            #$@(if (eq? pack 'unset)
@@ -3898,19 +4362,27 @@ environment, so it writes everything in-process."
                                       (string-append #$directory "/pack.toml")
                                       #$(gascity-pack->toml-string pack)
                                       #o600)))))
-                      (map (lambda (entry)
-                             #~(install-static-file
-                                (string-append #$directory "/" #$(car entry))
-                                #$(cdr entry)))
-                           (if (list? files) files '()))
-                      (append-map
-                       (lambda (rig-directory)
-                         (map (lambda (entry)
-                                #~(install-static-file
-                                   (string-append #$rig-directory "/" #$(car entry))
-                                   #$(cdr entry)))
-                              (if (list? rig-files) rig-files '())))
-                       rig-directories))))
+                      (list
+                       #~(let ((removed
+                                (append
+                                 (converge-root
+                                  #$directory
+                                  (list #$@(map gascity-files-entry->gexp
+                                                files)))
+                                 #$@(map (lambda (rig-directory)
+                                           #~(converge-root
+                                              #$rig-directory
+                                              (list #$@(map gascity-files-entry->gexp
+                                                            rig-files))))
+                                         rig-directories))))
+                           (remove-dangling-formula-links
+                            (list #$directory #$@rig-directories)
+                            removed)))
+                      (list
+                       #~(update-running-city
+                          #$directory
+                          #$(gascity-city-configuration-install-packs? city)
+                          #$(gascity-city-configuration-soft-reload? city))))))
                  cities))
 
            #$(if chown?
@@ -4040,11 +4512,11 @@ failed (status ~a)" status)))))))
   "Return a Guile program, as a file-like object, that provisions the
 supervisor instance CONFIG as the service user: for each enabled city it
 writes `.gc/site.toml', runs `gc init --file ... --preserve-existing
---no-start --skip-provider-readiness', optionally runs `gc import install'
-(`install-packs?'), and then flock-guarded read-merge-writes
-`<gc-home>/cities.toml', reloading a running supervisor when the registry
-changed.  It performs no network access unless a city opts into
-`install-packs?'.
+--no-start --skip-provider-readiness', and then flock-guarded
+read-merge-writes `<gc-home>/cities.toml', reloading a running supervisor when
+the registry changed.  On every run it then re-syncs the imports of each
+`install-packs?' city (`gascity-sync-packs'), without failing for it.  It
+performs no network access unless a city opts into `install-packs?'.
 
 The run is idempotent.  `gc init' is *not* idempotent: a second run refuses
 with `gc init: already initialized' (exit code 2).  Because Shepherd forgets
@@ -4082,7 +4554,11 @@ earlier generation (with no stamp yet) upgrades without a spurious failure."
            ;; package graph.
            (for-each (lambda (form)
                        (eval form (current-module)))
-                     '#$gascity-cities-toml-merge-forms)
+                     '(#$@gascity-cities-toml-merge-forms
+                       #$@gascity-city-sync-forms))
+
+           ;; The `gc' executable, bound once.
+           (define gc #$gc)
 
            ;; The one-shot redirects its own diagnostics to the provision log
            ;; (the log directory is owned by the service user): shepherd
@@ -4120,43 +4596,7 @@ earlier generation (with no stamp yet) upgrades without a spurious failure."
                    (lambda (port) (display content port))))
                (chmod file mode)))
 
-           (setenv "HOME" #$state-directory)
-           ;; Pin Dolt's global configuration root to the account's home (the
-           ;; state directory) so `gc init' reads the author identity the
-           ;; activation materialized as `<state>/.dolt/config_global.json'.
-           (setenv "DOLT_ROOT_PATH" #$state-directory)
-           (setenv "GC_HOME" #$gc-home)
-           (setenv "XDG_RUNTIME_DIR" #$gc-home)
-           (setenv "PATH"
-                   (string-join
-                    (list #$@(map (lambda (package)
-                                    (file-append package "/bin"))
-                                  packages))
-                    ":"))
-           (when (and (not (getenv "SSL_CERT_DIR"))
-                      (file-exists? "/etc/ssl/certs"))
-             (setenv "SSL_CERT_DIR" "/etc/ssl/certs"))
-           (when (and (not (getenv "SSL_CERT_FILE"))
-                      (file-exists? "/etc/ssl/certs/ca-certificates.crt"))
-             (setenv "SSL_CERT_FILE" "/etc/ssl/certs/ca-certificates.crt"))
-           (when (and (not (getenv "GIT_SSL_CAINFO"))
-                      (getenv "SSL_CERT_FILE"))
-             (setenv "GIT_SSL_CAINFO" (getenv "SSL_CERT_FILE")))
-           (setenv "GIT_TERMINAL_PROMPT" "0")
-           #$@(let ((git-config
-                     (gascity-supervisor-configuration-git-config config)))
-                (if (eq? git-config 'unset)
-                    '()
-                    (list #~(setenv "GIT_CONFIG_GLOBAL" #$git-config))))
-           ;; A private TMPDIR, so the agents' temporary files never land in
-           ;; the shared /tmp.  The supervisor's environment points at it.
-           (let ((tmp #$(gascity-supervisor-tmp-directory config)))
-             (mkdir-p tmp)
-             (chmod tmp #o700)
-             (setenv "TMPDIR" tmp))
-           (when (and (not (getenv "GUIX_LOCPATH"))
-                      (file-exists? "/run/current-system/locale"))
-             (setenv "GUIX_LOCPATH" "/run/current-system/locale"))
+           #$(gascity-supervisor-program-environment config)
 
            (define city-entries
              (list #$@(map (lambda (city)
@@ -4218,7 +4658,7 @@ earlier generation (with no stamp yet) upgrades without a spurious failure."
                 "site.toml\n" site "\n")))
 
            (define (provision-manifest)
-             (string-append "gc " #$gc "\n"
+             (string-append "gc " gc "\n"
                             (apply string-append
                                    (map city-manifest city-entries))))
 
@@ -4270,7 +4710,6 @@ skipping")
                     (let ((directory (list-ref entry 0))
                           (site (list-ref entry 1))
                           (genesis? (list-ref entry 2))
-                          (install-packs? (list-ref entry 3))
                           (name (list-ref entry 5)))
                       (log "provisioning city ~a in ~a" name directory)
                       (mkdir-p (string-append directory "/.gc"))
@@ -4279,7 +4718,7 @@ skipping")
                                     site #o600)
                       (when genesis?
                         (let ((status
-                               (system* #$gc "init"
+                               (system* gc "init"
                                         "--file"
                                         (string-append directory "/city.toml")
                                         "--preserve-existing"
@@ -4289,11 +4728,7 @@ skipping")
                           (unless (or (zero? status)
                                       (already-initialized? status))
                             (fail "gc init failed for city ~a (exit ~a)"
-                                  name (status:exit-val status)))))
-                      (when install-packs?
-                        (unless (zero? (system* #$gc "import" "install"
-                                                "--city" directory))
-                          (fail "gc import install failed for city ~a" name)))))
+                                  name (status:exit-val status)))))))
                   city-entries)
 
                  (let* ((original (if (file-exists? registry)
@@ -4329,10 +4764,22 @@ skipping")
                                       (string-append #$gc-home
                                                      "/supervisor.sock")))
                        (false-if-exception
-                        (system* #$gc "supervisor" "reload")))))
+                        (system* gc "supervisor" "reload")))))
 
                  (install-file stamp-file manifest #o600)
-                 (log "provisioning complete"))))))))
+                 (log "provisioning complete")))
+
+           ;; Every run, stamp or not: the imports of an `install-packs?' city
+           ;; must match its declaration before the supervisor loads it, and
+           ;; `gc import check' tells without the network.  A failure leaves
+           ;; that city down and the others running, so it is not fatal.
+           (for-each (lambda (entry)
+                       (let ((directory (list-ref entry 0)))
+                         (when (and (list-ref entry 3)
+                                    (file-exists?
+                                     (string-append directory "/city.toml")))
+                           (gascity-sync-packs gc directory log))))
+                     city-entries))))))
 
 (define (gascity-supervisor-program config)
   "Return a Guile program, as a file-like object, that loads the dotenv

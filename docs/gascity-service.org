@@ -224,6 +224,7 @@ fields (emitted):
 | =genesis?= | =gascity-city-configuration-genesis?= | no (default =#t=) |
 | =install-packs?= | =gascity-city-configuration-install-packs?= | no (default =#f=) |
 | =register?= | =gascity-city-configuration-register?= | no (default =#t=) |
+| =soft-reload?= | =gascity-city-configuration-soft-reload?= | no (default =#t=) |
 | =files= | =gascity-city-configuration-files= | no (copied into the city root) |
 | =rig-files= | =gascity-city-configuration-rig-files= | no (copied into each rig root) |
 | =extra-config= | =gascity-city-configuration-extra-config= | layered over the generated nodes |
@@ -623,8 +624,46 @@ never emitted to TOML.  This is how prompt templates, formulas, orders, skills,
  (rig-files (list (cons "scripts/gate.sh" (local-file "gates/gate.sh")))))
 #+end_src
 
-Destinations are relative to the root and may not escape it; executable bits
-are preserved.
+Destinations are relative to the root and may not escape it (no empty, =.= or
+=..= components; a lone ="."= names the root itself, for a directory source),
+may not be declared twice, and may not name a file the service writes itself
+(=city.toml=, =pack.toml=, =.gc/site.toml=; a file of a directory source that
+would land there is skipped with a warning).  A source is one of:
+
+- a file-like object, or an absolute file name, naming a *file*: copied to
+  the destination, mode =0755= when the source is executable and =0644=
+  otherwise;
+- a file-like object, or an absolute file name, naming a *directory*: every
+  file below it is copied below the destination the same way, so a whole pack
+  tree ships as one =(local-file "city" #:recursive? #t)=;
+- =(gascity-symlink TARGET)=: the destination becomes a symbolic link to
+  TARGET, a string or a file-like object such as a =file-append= into a
+  package (for helpers that must resolve files relative to their own location).
+
+#+begin_src scheme
+(gascity-city-configuration
+ (name "burningswell")
+ (files (list (cons "." (local-file "gascity" "city-pack" #:recursive? #t))))
+ (rig-files
+  (list (cons ".gc/scripts/checks" (file-append packs "/gascity/assets/scripts/checks"))
+        (cons ".gc/scripts/artifacts.py"
+              (gascity-symlink
+               (file-append packs "/gascity/assets/scripts/artifacts.py"))))))
+#+end_src
+
+Each activation converges every root to its entries: a file that already
+matches is left alone, a changed or read-only copy is replaced atomically, a
+drifted mode is repaired, and a symbolic link in place of a file is replaced
+by the file.  A directory in place of an entry is never replaced (the
+activation logs it and goes on).
+
+The managed paths of each root are recorded in =.gc/gascity-files.manifest=
+below it.  An entry a later generation no longer declares is removed, with the
+directories it leaves empty; files the service did not install (a log an
+order writes, a note an agent leaves) are never touched.  When a removed file
+was a formula, the links =gc= staged for it in =.beads/formulas/= of the city
+and its rigs would dangle until =gc= rebuilds that directory, so the
+activation removes those links too.
 
 * Running the examples
 
@@ -1187,6 +1226,16 @@ Both identities hand the consumers the same thing, a token file:
   is only the fallback for interactive sessions as the user, since the agents
   can rewrite it.
 
+Whatever =git-config= is, =GIT_CONFIG_GLOBAL= names a generated file that first
+declares the settings =gc= would otherwise write there and then includes
+=git-config=, so a value =git-config= sets wins.  Today that is
+=beads.role = maintainer=: =gc='s bundled bd lifecycle script runs =git config
+--global beads.role maintainer= at every bead store init when the key is unset,
+and fails the init when the write fails, as it does on a read-only store file.
+Guix itself ships no git configuration service (only gitolite's), so the file
+is the configuration: =github-git-config=, or any =plain-file= or
+=mixed-text-file=.
+
 All three live in =(r0man guix services github-token)=, which works from both
 system and Home configurations.  The worked examples are
 =examples/gascity/github-app.scm= and =examples/gascity/github-machine-user.scm=.
@@ -1350,10 +1399,14 @@ every derived path is keyed off it.  Two phases:
 
 - Activation (root for system, the user for home) materializes *declarative
   files* only: it creates the state, log and =gc-home= directories, writes each
-  enabled city's generated =city.toml= and =pack.toml= (unchanged files are
-  left alone, so a no-op reconfigure does not perturb a running controller),
-  copies =files=/=rig-files= (preserving executable bits), and writes each
-  instance's =supervisor.toml= (=0600=).  It never runs =gc=.
+  enabled city's =.gc/site.toml= and then its generated =city.toml= and
+  =pack.toml= (unchanged files are left alone, so a no-op reconfigure does not
+  perturb a running controller),
+  converges =files=/=rig-files= (see [[*files and rig-files]]), and writes each
+  instance's =supervisor.toml= (=0600=).  It runs =gc= only for a city that
+  is already running and whose files it changed: =gc import check=/=install=
+  for =install-packs?= and =gc reload --soft= for =soft-reload?= (see
+  [[*Reload and restart]]); it never runs =gc init=.
 
   For the system service, root never writes below the state directory.  The
   agents run as the service user and can plant symbolic links anywhere it owns
@@ -1379,8 +1432,10 @@ every derived path is keyed off it.  Two phases:
   =gc init --file <city>/city.toml --preserve-existing --no-start
   --skip-provider-readiness= for each city (=genesis?=), optionally runs =gc
   import install --city <city>= (=install-packs?=), then read-merge-writes the
-  =cities.toml= registry (=register?=).  It performs no network access unless a
-  city opts into =install-packs?=.  The program is *re-runnable*: a stamp under
+  =cities.toml= registry (=register?=).  On every run, stamp or not, it then
+  re-syncs the imports of each =install-packs?= city (see
+  [[*Imports and packs.lock]]).  It performs no network access unless a city
+  opts into =install-packs?=.  The program is *re-runnable*: a stamp under
   =GC_HOME= short-circuits a rerun whose generated inputs are unchanged, so a
   supervisor stop/start or =herd restart= within one boot does not re-run
   genesis (see below).
@@ -1456,8 +1511,9 @@ deleted on disk.  Re-enabling or re-adding a city re-registers it.
 | Field | Default | Meaning |
 |-------+---------+---------|
 | =genesis?= | =#t= | run the idempotent =gc init ... --preserve-existing= for the city |
-| =install-packs?= | =#f= | run =gc import install --city <city>= (network-dependent; opt-in so the default system is offline) |
+| =install-packs?= | =#f= | keep the city's installed imports in step with its declaration: =gc import check=, then =gc import install= on drift (see [[*Imports and packs.lock]]) |
 | =register?= | =#t= | include the city in the declared =[[cities]]= set of the instance's registry |
+| =soft-reload?= | =#t= | after an activation changed the city's files, ask its controller for =gc reload --soft= (see [[*Reload and restart]]) |
 
 A city with =register? #f= is materialized and genesis-ed but never registered
 (useful for a city another supervisor owns).  =install-packs? #t= makes the
@@ -1474,14 +1530,59 @@ multi-instance value must set =port= explicitly, and two instances that share a
 ephemeral port.  The service forwards =[supervisor].port= into the generated
 =supervisor.toml=.
 
+** Rigs
+
+A rig needs no =gc rig add=.  Declare it in the city's =rigs= with its =path=:
+the path goes to =.gc/site.toml= (schema 2) and the rest to =city.toml=.  Each
+time a city controller starts the city or applies a changed configuration, it
+initializes the beads store of every rig =.gc/site.toml= gives a path, and
+keeps an existing store: a checkout whose =.beads/= already carries the rig's
+=prefix= is adopted as it is, so its bead IDs survive.  =gc init= itself never
+touches rigs.
+
+The activation writes =.gc/site.toml= *before* =city.toml=.  The controller
+does not reload for a change to =.gc/site.toml= alone (its watcher ignores
+=.gc/=, and the file is not part of the config revision), so a reload that the
+new =city.toml= triggers must already find the new rig's path; otherwise it
+would skip the rig until the next restart.  For the same reason, changing only
+an existing rig's =path= takes effect at the next =herd restart= of the
+supervisor.
+
+** Imports and packs.lock
+
+A city loads a remote import only when =packs.lock= in its root has an entry
+for it and the pinned checkout is in the cache under =GC_HOME=; otherwise the
+city fails to load and keeps its previous configuration.  =gc init= installs
+the imports of a new city.  For an existing city, =install-packs? #t= keeps
+them in step with the declaration:
+
+- the activation, for a running city whose files it changed (a new =version=
+  pin in =pack.toml=, for example), and
+- the provision one-shot, on every run,
+
+run =gc import check --city <city>= (offline) and, only when it reports drift,
+=gc import install --city <city>=.  A failed install is logged and never fails
+the activation or the provision: the other cities keep running and the next
+activation or supervisor start retries.  With =install-packs? #f= the imports
+are left to =gc= (the bundled packs at the binary's own pins need no install).
+
 ** Reload and restart
 
-=city.toml=/=pack.toml= changes are picked up by each city controller's own
-=fsnotify= watcher; the service does not force city reloads.  It issues =gc
-supervisor reload= only when the registry or supervisor settings changed; a
-=port=/=bind= change restarts the supervisor instead of reloading.  All of this
-is non-fatal, never touches the network, and never drains the session driving
-the reconfigure.
+The activation writes =city.toml=, =pack.toml=, =.gc/site.toml= and the
+=files= of each city, and when any of them changed in a city that is running,
+it runs =gc reload --soft --async <city>= (=soft-reload?=, on by default).  The
+controller's own file watcher would reload a changed =city.toml= too, but as a
+plain reload: every open session whose configuration changed is then drained
+and restarted, including the agent session that may be driving this very
+reconfigure.  A soft reload accepts that drift instead, and cancels drains the
+watcher already began, so open sessions keep running and pick the new
+configuration up when they next start.  With =soft-reload? #f= the service
+leaves the change to the watcher, and drifted sessions are drained.
+
+The supervisor itself is reloaded (=gc supervisor reload=) only when the
+registry or supervisor settings changed; a =port=/=bind= change restarts it
+instead.  All of this is non-fatal, and none of it touches the network unless
+=install-packs?= asks for an import install.
 
 * Migrating from burningswell
 
@@ -1501,13 +1602,16 @@ How the awk-converging activation maps onto this service:
 
 | burningswell idiom | Gas City service |
 |--------------------+------------------|
-| SCAFFOLD phase (stamp-guarded: =gc init=, =gc import install=, =gc rig add=, =gc register=) | the provision one-shot: =gc init --preserve-existing= (=genesis?=), =gc import install= (=install-packs?=), and the locked =[[cities]]= read-merge-write (=register?=); stamp-guarded under =GC_HOME= |
+| SCAFFOLD phase (stamp-guarded: =gc init=, =gc import install=, =gc rig add=, =gc register=) | the provision one-shot: =gc init --preserve-existing= (=genesis?=) and the locked =[[cities]]= read-merge-write (=register?=), stamp-guarded under =GC_HOME=; rigs need no =gc rig add= (see [[*Rigs]]) |
+| =gc import check= / =gc import install= on drift | =install-packs? #t=: the activation and the provision re-sync on drift, non-fatally |
+| =converge_rig_checks= (pack check scripts copied into the rig, helpers symlinked) | =rig-files= with a directory source and =gascity-symlink= entries |
+| a writable =~/.gitconfig= for =beads.role= | the generated =GIT_CONFIG_GLOBAL= declares =beads.role=; the git configuration stays read-only |
 | CONVERGE phase (=converge_kv= restates declared =city.toml= keys every activation) | the declarative generator: activation writes whole generated =city.toml=/=pack.toml= only when they differ; the record is the source of truth |
 | =converge_block=/=converge_tree= fenced regions and whole files | =files= / =rig-files= and the typed records; whole files, no fenced markers |
 | whole generated files | =city.toml= from the city record, =pack.toml= from the city's =pack= field |
 | the list of cities and rigs | the supervisor's =cities= list and each city's =rigs= |
 | derived paths (=~/burningswell=, =%gascity-github-token-path=) | =directory=, =gc-home=, =state-directory=, =log-directory=, and =secrets-file= |
-| =gc reload --soft= when a key changed | the supervisor reload the one-shot issues when the registry/settings changed; city =city.toml= changes reload via the controller's watcher |
+| =gc reload --soft= when a key changed | =soft-reload? #t= (the default): the activation runs =gc reload --soft --async= for a running city whose files it changed |
 | the city is provisioned by a Home activation | the derived =home-gascity-service-type=, or the system service |
 
 The two-phase split is the same insight: creation and machine-local
