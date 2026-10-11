@@ -29,6 +29,25 @@
   (eval (gexp->approximate-sexp x)
         (current-module)))
 
+(define (approximate-deeply thing)
+  "Return the approximate S-expression of THING, a gexp, with nested gexps
+approximated too and store items replaced by a placeholder file name."
+  (cond ((gexp? thing) (approximate-deeply (gexp->approximate-sexp thing)))
+        ((or (equal? thing '(*approximate*))
+             (file-like? thing)
+             (file-append? thing))
+         "/nonexistent")
+        ((pair? thing) (cons (approximate-deeply (car thing))
+                             (approximate-deeply (cdr thing))))
+        (else thing)))
+
+(define (git-output . arguments)
+  "Return the standard output of git run with ARGUMENTS."
+  (let* ((port (apply open-pipe* OPEN_READ "git" arguments))
+         (output (read-string port)))
+    (close-pipe port)
+    output))
+
 (define (render document)
   "Return the TOML text that DOCUMENT lowers to."
   (eval-gexp (toml-document->string document)))
@@ -763,14 +782,82 @@ without extra-config"
 
   (test-assert "the provision program creates TMPDIR and pins git"
     (let ((source (format #f "~s"
-                          (gexp->approximate-sexp
+                          (approximate-deeply
                            (program-file-gexp
                             (gascity-supervisor-provision-program
                              (gascity-supervisor-configuration
                               (git-config "/etc/gascity/gitconfig"))))))))
       (and (string-contains source "/var/lib/gascity/tmp")
            (string-contains source "GIT_TERMINAL_PROMPT")
-           (string-contains source "/etc/gascity/gitconfig"))))
+           (string-contains source "GIT_CONFIG_GLOBAL"))))
+
+  (test-equal "the global git config declares beads.role, then includes git-config"
+    '("[beads]\n\trole = maintainer\n" "[include]\n\tpath = "
+      "/etc/gascity/gitconfig" "\n")
+    (gascity-git-config-text "/etc/gascity/gitconfig"))
+
+  ;; These two run git; `guix shell -D -f guix.scm --pure' has none.
+  (unless (search-path (parse-path (getenv "PATH")) "git")
+    (test-skip 2))
+
+  (test-assert "gc's beads.role write is unnecessary with a read-only git-config"
+    ;; gc's bd lifecycle script runs `git config --global beads.role' and
+    ;; writes the value only when that fails.  With the generated global
+    ;; configuration the read succeeds, and a value git-config sets wins.
+    (let* ((directory (string-append (or (getenv "TMPDIR") "/tmp")
+                                     "/gascity-git-config-"
+                                     (number->string (getpid))))
+           (user-config (string-append directory "/user"))
+           (global (string-append directory "/global")))
+      (mkdir directory)
+      (call-with-output-file user-config
+        (lambda (port) (display "[user]\n\tname = Agent\n" port)))
+      (call-with-output-file global
+        (lambda (port)
+          (for-each (lambda (piece) (display piece port))
+                    (gascity-git-config-text user-config))))
+      ;; Read-only like the store: git writes through a lock file in the
+      ;; same directory.
+      (chmod global #o444)
+      (chmod directory #o555)
+      (setenv "GIT_CONFIG_GLOBAL" global)
+      (let ((role (git-output "config" "--global" "beads.role"))
+            ;; Git follows the include for every read but `--global'
+            ;; without `--includes', which is the read gc makes.
+            (name (git-output "config" "--includes" "--global" "user.name"))
+            (write-status (status:exit-val
+                           (system* "git" "config" "--global"
+                                    "beads.role" "maintainer"))))
+        (unsetenv "GIT_CONFIG_GLOBAL")
+        (chmod directory #o755)
+        (for-each delete-file (list user-config global))
+        (rmdir directory)
+        (and (string=? role "maintainer\n")
+             (string=? name "Agent\n")
+             ;; The file really is read-only: a write would have failed.
+             (not (zero? write-status))))))
+
+  (test-equal "a beads.role in git-config wins over the default"
+    "contributor\n"
+    (let* ((directory (string-append (or (getenv "TMPDIR") "/tmp")
+                                     "/gascity-git-role-"
+                                     (number->string (getpid))))
+           (user-config (string-append directory "/user"))
+           (global (string-append directory "/global")))
+      (mkdir directory)
+      (call-with-output-file user-config
+        (lambda (port) (display "[beads]\n\trole = contributor\n" port)))
+      (call-with-output-file global
+        (lambda (port)
+          (for-each (lambda (piece) (display piece port))
+                    (gascity-git-config-text user-config))))
+      (setenv "GIT_CONFIG_GLOBAL" global)
+      (let ((role (git-output "config" "--includes" "--global"
+                              "beads.role")))
+        (unsetenv "GIT_CONFIG_GLOBAL")
+        (for-each delete-file (list user-config global))
+        (rmdir directory)
+        role)))
 
   (test-assert "a privileged group is rejected"
     (string-contains

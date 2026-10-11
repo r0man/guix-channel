@@ -83,6 +83,8 @@ UNIT_TESTS = \
   tests/r0man/guix/services/github-token.scm \
   tests/r0man/guix/services/gascity.scm \
   tests/r0man/guix/services/gascity-activation.scm \
+  tests/r0man/guix/services/gascity-files.scm \
+  tests/r0man/guix/services/gascity-lifecycle.scm \
   tests/r0man/guix/services/gascity-home.scm \
   tests/r0man/guix/services/gascity-records.scm \
   tests/r0man/guix/services/gascity-toml.scm \
@@ -123,6 +125,7 @@ EXTRA_DIST =					\
   examples/gascity/home.scm			\
   examples/gascity/system.scm			\
   scripts/gascity-container-smoke-test		\
+  tests/r0man/guix/services/gascity-parity-home.scm	\
   scripts/gascity-home-container			\
   scripts/gascity-system-container		\
   scripts/github-actions-vm-smoke-test		\
