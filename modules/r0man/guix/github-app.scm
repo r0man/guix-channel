@@ -146,9 +146,12 @@ permission the App was granted, so both are mandatory here."
   "Return the GitHub App private key stored in FILE, a PEM file as GitHub
 generates it (PKCS#1 \"RSA PRIVATE KEY\"), as a gnutls private key."
   (let ((pem (call-with-input-file file get-bytevector-all #:binary #t)))
+    ;; Copy the key: without `privkey/import-copy' the private key only
+    ;; borrows the x509 key, which the garbage collector may free while the
+    ;; private key is still in use ("Public key signing has failed").
     (x509-private-key->private-key
      (import-x509-private-key pem x509-certificate-format/pem)
-     '())))
+     (list privkey/import-copy))))
 
 (define* (github-app-jwt private-key client-id #:key (now (current-time)))
   "Return a JSON Web Token, as a string, that authenticates the GitHub App
