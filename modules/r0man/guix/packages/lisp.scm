@@ -342,6 +342,33 @@ antialiased TrueType font rendering using CLX and XRender extension.")
 (define-public cl-rove-next
   (sbcl-package->cl-source-package sbcl-rove-next))
 
+(define-public sbcl-yason-next
+  ;; YASON:FALSE only became a variable after the 0.8.5 release, and cl-mcp
+  ;; evaluates it throughout its sources and tests.
+  (let ((commit "0c84b29a32c284f6b4be6f8587ff89b5702a6fda")
+        (revision "0"))
+    (package
+      (inherit sbcl-yason)
+      (name "sbcl-yason-next")
+      (version (git-version "0.8.5" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/phmarek/yason")
+               (commit commit)))
+         (file-name (git-file-name "cl-yason" version))
+         (sha256
+          (base32 "1bbkqsd7qfih089zs1fpkq8lb4z6xgjj8qswhwd8kgb5wax78lbn"))))
+      ;; The system is still called "yason"; only the Guix package is renamed.
+      (arguments
+       (list
+        #:asd-systems ''("yason")))
+      (native-inputs (list sbcl-unit-test)))))
+
+(define-public cl-yason-next
+  (sbcl-package->cl-source-package sbcl-yason-next))
+
 (define-public sbcl-cl-mcp
   (package
     (name "sbcl-cl-mcp")
