@@ -372,7 +372,7 @@ antialiased TrueType font rendering using CLX and XRender extension.")
 (define-public sbcl-cl-mcp
   (package
     (name "sbcl-cl-mcp")
-    (version "2.3.1")
+    (version "3.0.2")
     (source
      (origin
        (method git-fetch)
@@ -381,79 +381,97 @@ antialiased TrueType font rendering using CLX and XRender extension.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0ykjzkkx97wq5smhldbnwr1phqddyxk3lb73j4fx9i12svyrwvv5"))))
+        (base32 "1rs2rhlabgfjympjblghz54lzclyrsbwlbjygpxznjgdv28qj03r"))))
     (build-system asdf-build-system/sbcl)
     (arguments
-     (list #:asd-systems ''("cl-mcp")
-           #:phases
-           #~(modify-phases %standard-phases
-               (add-after 'unpack 'require-asdf-in-worker
-                 ;; Worker children are spawned with bare SBCL, whose image has
-                 ;; no ASDF, yet the very next argument is an ASDF form.
-                 ;; Upstream gets away with it because it runs under Roswell or
-                 ;; Quicklisp, both of which preload ASDF.
-                 (lambda _
-                   (substitute* "src/worker-client.lisp"
-                     (("\\(list \"--noinform\" \"--non-interactive\"")
-                      "(list \"--noinform\" \"--non-interactive\"
+     (list
+      #:asd-systems ''("cl-mcp")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'require-asdf-in-worker
+            ;; Worker children are spawned with bare SBCL, whose image has
+            ;; no ASDF, yet the very next argument is an ASDF form.
+            ;; Upstream gets away with it because it runs under Roswell or
+            ;; Quicklisp, both of which preload ASDF.
+            (lambda _
+              (substitute* "src/worker-client.lisp"
+                (("\\(list \"--noinform\" \"--non-interactive\"")
+                 "(list \"--noinform\" \"--non-interactive\"
            \"--eval\" \"(require :asdf)\""))))
-               (add-after 'unpack 'quote-yason-false
-                 ;; YASON:FALSE only became a variable after the 0.8.5 release;
-                 ;; the symbol itself is what the encoder dispatches on, so
-                 ;; quoting it works with both old and new YASON.
-                 (lambda _
-                   (substitute* "src/tools/helpers.lisp"
-                     (("\\(if value t yason:false\\)")
-                      "(if value t 'yason:false)"))))
-               (add-after 'unpack 'disable-store-specific-tests
-                 ;; Tests run against the installed copy of the sources, which
-                 ;; is in the read-only store.  Two tests cannot hold there:
-                 ;; LOAD-SYSTEM-WARNING-FIELDS expects reloading an already
-                 ;; loaded system to warn zero times, but with the compilation
-                 ;; output directory in the store ASDF:LOAD-SYSTEM recompiles
-                 ;; and reloads on every call, emitting hundreds of
-                 ;; redefinition warnings; and
-                 ;; SPAWN-WORKER-INCLUDES-CHILD-STDERR-IN-ERROR writes a stub
-                 ;; sbcl script into the project root before spawning it.
-                 (lambda _
-                   (substitute* "tests/system-loader-test.lisp"
-                     (("\\(deftest load-system-warning-fields")
-                      "#+(or) (deftest load-system-warning-fields"))
-                   (substitute* "tests/worker-test.lisp"
-                     (("\\(deftest spawn-worker-includes-child-stderr-in-error")
-                      "#+(or) (deftest spawn-worker-includes-child-stderr-in-error"))))
-               (add-after 'unpack 'relocate-throwaway-project-root
-                 ;; Tests use /var/tmp as a throwaway project root: it exists
-                 ;; on a normal system and, unlike /tmp, is not on cl-mcp's
-                 ;; deny list of overly broad roots.  The build container has
-                 ;; no /var/tmp and will not let us create one, so point those
-                 ;; tests at a directory inside the build tree instead.
-                 (lambda _
-                   (let ((root (string-append (getcwd) "/.test-project-root")))
-                     (mkdir-p root)
-                     (substitute* (list "tests/pool-test.lisp"
-                                        "tests/utils-paths-test.lisp"
-                                        "tests/worker-test.lisp")
-                       (("/var/tmp") root)))))
-               (add-after 'unpack 'fail-on-test-failure
-                 ;; The TEST-OP method drops ROVE:RUN's boolean result, so
-                 ;; ASDF:TEST-SYSTEM reports success even when tests fail.
-                 (lambda _
-                   (substitute* "tests.lisp"
-                     (("\\(rove:run test-packages\\)")
-                      "(unless (rove:run test-packages)
+          (add-after 'unpack 'patch-test-shell
+            ;; The build container has no /bin/sh.
+            (lambda* (#:key native-inputs inputs #:allow-other-keys)
+              (substitute* "tests/worker-leaked-thread-test.lisp"
+                (("\"/bin/sh\"")
+                 (string-append "\""
+                                (search-input-file (or native-inputs inputs)
+                                                   "/bin/sh") "\"")))))
+          (add-after 'unpack 'disable-store-specific-tests
+            ;; Tests run against the installed copy of the sources, which
+            ;; is in the read-only store, so some of them cannot hold:
+            ;; LOAD-SYSTEM-WARNING-FIELDS expects reloading an already
+            ;; loaded system to warn zero times, but with the compilation
+            ;; output directory in the store ASDF:LOAD-SYSTEM recompiles
+            ;; and reloads on every call, emitting hundreds of
+            ;; redefinition warnings, and clearing FASLs of a subsystem
+            ;; does not clear them from its primary system's directory;
+            ;; SPAWN-WORKER-INCLUDES-CHILD-STDERR-IN-ERROR writes a stub
+            ;; sbcl script into the project root before spawning it; the
+            ;; staleness and source matching tests compare the write
+            ;; dates of source files, which the store resets to the
+            ;; epoch; and the project root is the installed directory
+            ;; rather than the current one.
+            (lambda _
+              (define (disable file . tests)
+                (for-each (lambda (test)
+                            (substitute* file
+                              (((string-append "^\\(deftest " test))
+                               (string-append "#+(or) (deftest " test))))
+                          tests))
+              (disable "tests/system-loader-test.lisp"
+               "load-system-warning-fields"
+               "load-system-clear-fasls-on-a-subsystem-clears-its-primary")
+              (disable "tests/worker-test.lisp"
+                       "spawn-worker-includes-child-stderr-in-error")
+              (disable "tests/code-test.lisp"
+               "definition-source-location-reports-path-line-and-staleness")
+              (disable "tests/clos-describe-integration-test.lisp"
+               "clos-describe-agrees-across-pool-and-no-pool-paths"
+               "clos-describe-matches-a-quoted-eql-keyword-over-the-worker-rpc")
+              (disable "tests/fs-test.lisp"
+                       "fs-set-project-root-converts-relative-to-absolute"
+                       "fs-set-project-root-relative-path-subdirectory")))
+          (add-after 'unpack 'relocate-throwaway-project-root
+            ;; Tests use /var/tmp as a throwaway project root: it exists
+            ;; on a normal system and, unlike /tmp, is not on cl-mcp's
+            ;; deny list of overly broad roots.  The build container has
+            ;; no /var/tmp and will not let us create one, so point those
+            ;; tests at a directory inside the build tree instead.
+            (lambda _
+              (let ((root (string-append (getcwd) "/.test-project-root")))
+                (mkdir-p root)
+                (substitute* (list "tests/pool-test.lisp"
+                                   "tests/utils-paths-test.lisp"
+                                   "tests/worker-test.lisp")
+                  (("/var/tmp")
+                   root)))))
+          (add-after 'unpack 'fail-on-test-failure
+            ;; The TEST-OP method drops ROVE:RUN's boolean result, so
+            ;; ASDF:TEST-SYSTEM reports success even when tests fail.
+            (lambda _
+              (substitute* "tests.lisp"
+                (("\\(rove:run test-packages\\)")
+                 "(unless (rove:run test-packages)
       (error \"cl-mcp test suite failed\"))")))))))
-    (inputs
-     (list sbcl-alexandria
-           sbcl-bordeaux-threads
-           sbcl-cl-ppcre
-           sbcl-eclector
-           sbcl-hunchentoot
-           sbcl-usocket
-           sbcl-yason))
-    (native-inputs
-     (list sbcl-fiveam
-           sbcl-rove-next))
+    (inputs (list sbcl-alexandria
+                  sbcl-bordeaux-threads
+                  sbcl-cl-ppcre
+                  sbcl-eclector
+                  sbcl-hunchentoot
+                  sbcl-named-readtables
+                  sbcl-usocket
+                  sbcl-yason-next))
+    (native-inputs (list sbcl-fiveam sbcl-rove-next))
     (home-page "https://github.com/cl-ai-project/cl-mcp")
     (synopsis "Model Context Protocol server for Common Lisp")
     (description
