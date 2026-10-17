@@ -12,7 +12,7 @@
 ;; GitHub release (the canonical, signed upstream source) and patchelfs
 ;; the native ELF to use Guix's glibc.
 
-(define %claude-code-version "2.1.301")
+(define %claude-code-version "2.1.302")
 
 (define (claude-code-binary arch hash)
   (origin
@@ -30,9 +30,9 @@
      (let-system system
        (if (string-prefix? "aarch64" system)
            (claude-code-binary
-            "arm64" "18yldvpq3hiz0j1hf40f2fiyhjxh25z4dq7b76d489c1gx37b651")
+            "arm64" "1hv0fybfdf4dapyiq0crgc1n8lh5zz18cyz5dnxcq6zr5dwi0al1")
            (claude-code-binary
-            "x64" "10l0fahxmpj63vz9aq6m2sfx1vmdzlxgky69hgb9wgm4fjywplj0"))))
+            "x64" "1p75iafppr3vpz5x4wdzgd7ssb08rvf7nkwxmcqygwj9zq85z1hd"))))
     (build-system binary-build-system)
     (arguments
      (list
