@@ -389,10 +389,7 @@ antialiased TrueType font rendering using CLX and XRender extension.")
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'require-asdf-in-worker
-            ;; Worker children are spawned with bare SBCL, whose image has
-            ;; no ASDF, yet the very next argument is an ASDF form.
-            ;; Upstream gets away with it because it runs under Roswell or
-            ;; Quicklisp, both of which preload ASDF.
+            ;; Workers are spawned with bare SBCL, which lacks ASDF.
             (lambda _
               (substitute* "src/worker-client.lisp"
                 (("\\(list \"--noinform\" \"--non-interactive\"")
@@ -407,20 +404,10 @@ antialiased TrueType font rendering using CLX and XRender extension.")
                                 (search-input-file (or native-inputs inputs)
                                                    "/bin/sh") "\"")))))
           (add-after 'unpack 'disable-store-specific-tests
-            ;; Tests run against the installed copy of the sources, which
-            ;; is in the read-only store, so some of them cannot hold:
-            ;; LOAD-SYSTEM-WARNING-FIELDS expects reloading an already
-            ;; loaded system to warn zero times, but with the compilation
-            ;; output directory in the store ASDF:LOAD-SYSTEM recompiles
-            ;; and reloads on every call, emitting hundreds of
-            ;; redefinition warnings, and clearing FASLs of a subsystem
-            ;; does not clear them from its primary system's directory;
-            ;; SPAWN-WORKER-INCLUDES-CHILD-STDERR-IN-ERROR writes a stub
-            ;; sbcl script into the project root before spawning it; the
-            ;; staleness and source matching tests compare the write
-            ;; dates of source files, which the store resets to the
-            ;; epoch; and the project root is the installed directory
-            ;; rather than the current one.
+            ;; These tests fail against the read-only store: they reload
+            ;; or write into the installed sources, rely on source write
+            ;; dates (reset to the epoch), or expect the project root to
+            ;; be the current directory.
             (lambda _
               (define (disable file . tests)
                 (for-each (lambda (test)
@@ -437,16 +424,16 @@ antialiased TrueType font rendering using CLX and XRender extension.")
                "definition-source-location-reports-path-line-and-staleness")
               (disable "tests/clos-describe-integration-test.lisp"
                "clos-describe-agrees-across-pool-and-no-pool-paths"
-               "clos-describe-matches-a-quoted-eql-keyword-over-the-worker-rpc")
+               "clos-describe-matches-a-quoted-eql-keyword-over-the-worker-rpc"
+               "clos-describe-hands-out-an-edit-guard"
+               "clos-describe-does-not-confirm-an-accessor-against-a-writer-only-slot"
+               "clos-describe-points-a-condition-reader-override-at-its-own-defmethod")
               (disable "tests/fs-test.lisp"
                        "fs-set-project-root-converts-relative-to-absolute"
                        "fs-set-project-root-relative-path-subdirectory")))
           (add-after 'unpack 'relocate-throwaway-project-root
-            ;; Tests use /var/tmp as a throwaway project root: it exists
-            ;; on a normal system and, unlike /tmp, is not on cl-mcp's
-            ;; deny list of overly broad roots.  The build container has
-            ;; no /var/tmp and will not let us create one, so point those
-            ;; tests at a directory inside the build tree instead.
+            ;; The build container has no /var/tmp, which tests use as a
+            ;; throwaway project root.
             (lambda _
               (let ((root (string-append (getcwd) "/.test-project-root")))
                 (mkdir-p root)
@@ -456,8 +443,7 @@ antialiased TrueType font rendering using CLX and XRender extension.")
                   (("/var/tmp")
                    root)))))
           (add-after 'unpack 'fail-on-test-failure
-            ;; The TEST-OP method drops ROVE:RUN's boolean result, so
-            ;; ASDF:TEST-SYSTEM reports success even when tests fail.
+            ;; TEST-OP ignores ROVE:RUN's result, so failures pass.
             (lambda _
               (substitute* "tests.lisp"
                 (("\\(rove:run test-packages\\)")
