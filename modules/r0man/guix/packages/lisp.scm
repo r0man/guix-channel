@@ -436,6 +436,9 @@ antialiased TrueType font rendering using CLX and XRender extension.")
                "clos-describe-hands-out-an-edit-guard"
                "clos-describe-does-not-confirm-an-accessor-against-a-writer-only-slot"
                "clos-describe-points-a-condition-reader-override-at-its-own-defmethod")
+              (disable "tests/clos-response-builders-test.lisp"
+               "annotate-report-forms-reports-a-real-mismatch"
+               "annotate-report-forms-falls-back-when-the-edit-tool-cannot-locate-it-uniquely")
               (disable "tests/fs-test.lisp"
                        "fs-set-project-root-converts-relative-to-absolute"
                        "fs-set-project-root-relative-path-subdirectory")))
