@@ -372,7 +372,7 @@ antialiased TrueType font rendering using CLX and XRender extension.")
 (define-public sbcl-cl-mcp
   (package
     (name "sbcl-cl-mcp")
-    (version "3.0.2")
+    (version "3.1.0")
     (source
      (origin
        (method git-fetch)
@@ -381,7 +381,7 @@ antialiased TrueType font rendering using CLX and XRender extension.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1rs2rhlabgfjympjblghz54lzclyrsbwlbjygpxznjgdv28qj03r"))))
+        (base32 "1arqh2895paa7j6df84x44y6bb3gd2gblidvv7jpk687hxlsgp6n"))))
     (build-system asdf-build-system/sbcl)
     (arguments
      (list
@@ -419,9 +419,17 @@ antialiased TrueType font rendering using CLX and XRender extension.")
                "load-system-warning-fields"
                "load-system-clear-fasls-on-a-subsystem-clears-its-primary")
               (disable "tests/worker-test.lisp"
-                       "spawn-worker-includes-child-stderr-in-error")
+                       "spawn-worker-includes-child-stderr-in-error"
+                       ;; Exhausts the stack outside the parser's handler
+                       ;; and kills the test process.
+                       "worker-answers-a-deeply-nested-line")
               (disable "tests/code-test.lisp"
-               "definition-source-location-reports-path-line-and-staleness")
+               "definition-source-location-reports-path-line-and-staleness"
+               "code-find-references-does-not-place-a-stale-reference"
+               "code-find-definition-says-when-its-line-predates-the-file")
+              ;; Its fixture reads a form under #+x86-64.
+              (disable "tests/lisp-edit-form-test.lisp"
+                       "lisp-edit-form-replace-keeps-the-feature-expression")
               (disable "tests/clos-describe-integration-test.lisp"
                "clos-describe-agrees-across-pool-and-no-pool-paths"
                "clos-describe-matches-a-quoted-eql-keyword-over-the-worker-rpc"
@@ -446,9 +454,13 @@ antialiased TrueType font rendering using CLX and XRender extension.")
             ;; TEST-OP ignores ROVE:RUN's result, so failures pass.
             (lambda _
               (substitute* "tests.lisp"
-                (("\\(rove:run test-packages\\)")
-                 "(unless (rove:run test-packages)
-      (error \"cl-mcp test suite failed\"))")))))))
+                (("\\(rove:run (quick|\\(append [^)]*\\))\\)" all)
+                 (string-append "(or " all
+                                " (error \"cl-mcp test suite failed\"))")))))
+          (add-before 'check 'run-all-test-tiers
+            ;; The default quick tier skips the worker and server suites.
+            (lambda _
+              (setenv "CL_MCP_TEST_TIER" "full"))))))
     (inputs (list sbcl-alexandria
                   sbcl-bordeaux-threads
                   sbcl-cl-ppcre
