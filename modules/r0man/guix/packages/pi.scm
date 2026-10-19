@@ -7,7 +7,7 @@
   #:use-module (guix packages)
   #:use-module (nonguix build-system binary))
 
-(define %pi-coding-agent-version "1.0.2")
+(define %pi-coding-agent-version "1.3.0")
 
 (define (pi-coding-agent-binary arch hash)
   (origin
@@ -25,9 +25,9 @@
      (let-system system
                  (if (string-prefix? "aarch64" system)
                      (pi-coding-agent-binary "arm64"
-                      "0g01b99mxr6ck57ab20rimhk8r708s1b5njb4x96r3gk7zfcq89k")
+                      "0nx6gqdkj60ihdcy9j3wvc9ksjvwy2pblf3lykwyp453zhafmlkz")
                      (pi-coding-agent-binary "x64"
-                      "062x52daww4anigbacc908zfxs9wd0l6pjv4ys7sifpwm6k8fxhd"))))
+                      "1vaxa3ma68y56mybbyrlhjml6kwp06ari5k2hwvdmm36icrbxx94"))))
     (build-system binary-build-system)
     (arguments
      (list
