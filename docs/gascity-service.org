@@ -164,6 +164,7 @@ account, the directories and the paths.  Its =settings= field owns the
 | =package= | =gascity-supervisor-configuration-package= | the =gc= package (default =gascity-next=) |
 | =user= | =gascity-supervisor-configuration-user= | account (system only; default =gascity=) |
 | =group= | =gascity-supervisor-configuration-group= | group (system only; default =gascity=) |
+| =create-account?= | =gascity-supervisor-configuration-create-account?= | declare the user and its groups (system only; default =#t=); see below |
 | =gc-home= | =gascity-supervisor-configuration-gc-home= | =GC_HOME=/=XDG_RUNTIME_DIR= (default =<state-directory>/.gc=) |
 | =state-directory= | =gascity-supervisor-configuration-state-directory= | account home and parent of derived city dirs |
 | =log-directory= | =gascity-supervisor-configuration-log-directory= | supervisor and provision logs (root-owned for system; see [[*Lifecycle and ownership]]) |
@@ -178,6 +179,32 @@ account, the directories and the paths.  Its =settings= field owns the
 | =dolt-user-name= | =gascity-supervisor-configuration-dolt-user-name= | Dolt commit author name (default =Gas City=); see [[#dolt-identity]] |
 | =dolt-user-email= | =gascity-supervisor-configuration-dolt-user-email= | Dolt commit author email (default =gascity@localhost=); see [[#dolt-identity]] |
 | =cities= | =gascity-supervisor-configuration-cities= | =list= of =<gascity-city-configuration>= |
+
+The system service declares one system account per distinct =user=, with a
+real shell (tmux falls back to the account's login shell, so =nologin= would
+break every agent), and one system group per distinct =group= that an account
+it creates references; the account's home is the first instance's
+=state-directory=.
+
+Set =create-account?= to =#f= when the operating system already declares the
+account, for example in its own =user-account= record.  The service then
+declares neither that user nor any group only its instances reference, so it
+does not duplicate a name or allocate a second uid; the user and its groups
+must already exist, and the supervisor's activation still converges the state
+directory and its files as that user.  When several instances share a =user=,
+one instance asking for the account is enough.  =root= is never declared.
+
+#+begin_src scheme
+(service gascity-service-type
+         (gascity-service-config
+          (user "gascity")
+          (group "users")
+          (create-account? #f)          ; the OS declares this account
+          (state-directory "/home/gascity")
+          (cities (list (gascity-city-configuration
+                         (name "burningswell")
+                         (directory "/home/gascity/burningswell"))))))
+#+end_src
 
 The settings record (=gascity-supervisor-settings-configuration=) owns
 =supervisor.toml=, whose tables are =[supervisor]=, =[publication]=,
@@ -555,10 +582,11 @@ share a =gc-home= or a =(bind, port)=, evaluation fails with a =formatted-messag
 #+end_src
 
 The Home defaults: =state-directory= and =log-directory= under
-=$XDG_STATE_HOME/gascity=, =gc-home= under =$HOME/.gc=.  The =user= and =group=
-fields are ignored: the supervisor runs as the user who owns the Home
-environment.  Adding a system =gascity-service-type= configuration to a Home
-environment maps to =home-gascity-service-type= via
+=$XDG_STATE_HOME/gascity=, =gc-home= under =$HOME/.gc=.  The =user=, =group=
+and =create-account?= fields are ignored: a Home environment has no system
+accounts, and the supervisor runs as the user who owns it.  Adding a system
+=gascity-service-type= configuration to a Home environment maps to
+=home-gascity-service-type= via
 =define-service-type-mapping=.
 
 ** extra-config (structured escape hatch)

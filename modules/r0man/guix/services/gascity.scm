@@ -126,6 +126,7 @@
             gascity-supervisor-configuration-package
             gascity-supervisor-configuration-user
             gascity-supervisor-configuration-group
+            gascity-supervisor-configuration-create-account?
             gascity-supervisor-configuration-gc-home
             gascity-supervisor-configuration-state-directory
             gascity-supervisor-configuration-log-directory
@@ -1038,6 +1039,13 @@ emission."
                        (default 'unset))            ;string or 'unset
   (group               gascity-supervisor-configuration-group
                        (default 'unset))            ;string or 'unset
+  ;; Whether the service declares the instance's system account and the
+  ;; groups only it references.  Set it to #f when the operating system
+  ;; already declares them (a distribution-wide `user-account' record, for
+  ;; example): the service then leaves the user and those groups alone, so
+  ;; it does not duplicate a name or allocate a second uid.
+  (create-account?     gascity-supervisor-configuration-create-account?
+                       (default #t))                ;boolean
   (gc-home             gascity-supervisor-configuration-gc-home
                        (default 'unset))            ;string or 'unset
   (state-directory     gascity-supervisor-configuration-state-directory
@@ -3569,8 +3577,8 @@ the Shepherd service '~a'; give each instance a distinct 'id'")
 
 (define (gascity-validate-supervisor-hardening config)
   "Raise a `formatted-message' when the supervisor instance CONFIG would run
-its agents in a privileged group, or when its `shepherd-requirement' or
-`git-config' fields are malformed."
+its agents in a privileged group, or when its `shepherd-requirement',
+`git-config' or `create-account?' fields are malformed."
   (let ((group (gascity-supervisor-group config)))
     (when (and (member group %gascity-privileged-groups)
                (not (string=? "root" (gascity-supervisor-user config))))
@@ -3592,7 +3600,13 @@ symbols, got ~s")
       (raise (formatted-message
               (G_ "gascity: 'git-config' must be a file-like object or a \
 file name, got ~s")
-              git-config)))))
+              git-config))))
+  (let ((create-account?
+         (gascity-supervisor-configuration-create-account? config)))
+    (unless (boolean? create-account?)
+      (raise (formatted-message
+              (G_ "gascity: 'create-account?' must be a boolean, got ~s")
+              create-account?)))))
 
 (define-syntax-rule (gascity-service-config field ...)
   "Return a service value holding a single
@@ -4970,29 +4984,51 @@ requires it."
 
 (define (gascity-supervisor-accounts value)
   "Return the accounts and groups of the supervisor instances of VALUE: one
-system account per distinct user, with the state directory of its first
-instance as home, and one system group per distinct group.  Instances may
-share a user: the account's primary group is that of its first instance and
-its supplementary groups are the union of the groups of all its instances
-(so a user serving an instance with a distinct `group' still reaches that
-group).  Root is left to the operator."
+system account per distinct user whose instances create it (see
+`create-account?'), with the state directory of its first instance as home,
+and one system group per distinct group such an account references.  An
+instance whose `create-account?' is #f expects the operator to have declared
+its user and groups; when instances share a user, one instance asking for
+the account is enough.  Instances may share a user: the account's primary
+group is that of its first instance and its supplementary groups are the
+union of the groups of all its instances (so a user serving an instance with
+a distinct `group' still reaches that group).  Root is left to the operator."
   (define configs
     (gascity-supervisor-configurations value))
 
   (define users
     (delete-duplicates (map gascity-supervisor-user configs)))
 
-  (define groups
-    (delete-duplicates (map gascity-supervisor-group configs)))
+  (define (instances-of user)
+    (filter (lambda (config)
+              (string=? user (gascity-supervisor-user config)))
+            configs))
+
+  (define (creates-account? config)
+    (gascity-supervisor-configuration-create-account? config))
+
+  (define created-users
+    (filter (lambda (user)
+              (and (not (string=? user "root"))
+                   (any creates-account? (instances-of user))))
+            users))
+
+  ;; Declare only the groups an account the service creates references: a
+  ;; group the operator has already declared (the `users' of a #f instance,
+  ;; say) must not be duplicated either.
+  (define created-groups
+    (delete "root"
+            (delete-duplicates
+             (append-map (lambda (user)
+                           (map gascity-supervisor-group
+                                (instances-of user)))
+                         created-users))))
 
   ;; Instances that share a user share every credential that user can read
   ;; (token files, the secrets file, Claude Code's login): give each city
   ;; that should have its own identity a user of its own.
   (for-each (lambda (user)
-              (let ((instances
-                     (filter (lambda (config)
-                               (string=? user (gascity-supervisor-user config)))
-                             configs)))
+              (let ((instances (instances-of user)))
                 (when (> (length instances) 1)
                   (warning (G_ "gascity: ~a supervisor instances run as the \
 user ~s and share its credentials~%")
@@ -5002,14 +5038,11 @@ user ~s and share its credentials~%")
   (append
    (map (lambda (name)
           (user-group (name name) (system? #t)))
-        (delete "root" groups))
+        created-groups)
    (filter-map
     (lambda (user)
-      (and (not (string=? user "root"))
-           (let* ((instances
-                   (filter (lambda (config)
-                             (string=? user (gascity-supervisor-user config)))
-                           configs))
+      (and (member user created-users)
+           (let* ((instances (instances-of user))
                   (first (car instances))
                   (group (gascity-supervisor-group first)))
              (user-account
