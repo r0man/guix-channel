@@ -14,12 +14,19 @@
 ;;; contrast, cannot be built on aarch64 hosts), and the QEMU machine, CPU,
 ;;; and console differ per architecture.
 ;;;
-;;; The test boots a system with two supervisor instances, each with its own
+;;; The test boots a system with three supervisor instances, each with its own
 ;;; gc-home and port and one trivial city.  `install-packs?' is #f, so the
 ;;; provisioning one-shot never reaches the network.  It asserts that the
 ;;; paired `gascity-supervisor-<id>' Shepherd services run, that each
-;;; instance's `cities.toml' lists only its own city, and that the two
-;;; instances' control socket and lock paths differ (§16.2).
+;;; instance's `cities.toml' lists only its own city, and that the instances'
+;;; control socket and lock paths differ (§16.2).
+;;;
+;;; The third instance runs as `gascity-reuse', an account the operating
+;;; system itself declares, with `create-account?' #f.  The test asserts that
+;;; the service neither duplicates that account nor the `users' group it uses,
+;;; and that the instance's state directory belongs to the declared account:
+;;; the cutover an operator makes when reusing an account the OS already
+;;; declares (see the burningswell migration in the manual).
 
 (define-module (tests r0man guix services gascity-system)
   #:use-module (gnu bootloader)
@@ -27,7 +34,9 @@
   #:use-module (gnu services)
   #:use-module (gnu services base)
   #:use-module (gnu system)
+  #:use-module (gnu system accounts)
   #:use-module (gnu system linux-initrd)
+  #:use-module (gnu system shadow)
   #:use-module (gnu system vm)
   #:use-module (gnu tests)
   #:use-module (guix gexp)
@@ -63,9 +72,11 @@
     '("net.ifnames=0")
     %default-kernel-arguments)))
 
-;; Two supervisor instances, each with its own gc-home, port and one trivial
+;; Three supervisor instances, each with its own gc-home, port and one trivial
 ;; city.  The cities only need genesis and registration; no pack is fetched
-;; (install-packs? #f), so provisioning stays on the local machine.
+;; (install-packs? #f), so provisioning stays on the local machine.  Instance
+;; `c' runs as an account the OS declares and sets `create-account?' #f, so
+;; the service must leave that account and its `users' group alone.
 (define %gascity-os
   (operating-system
     (inherit
@@ -92,7 +103,27 @@
                                      (name "beta")
                                      (genesis? #t)
                                      (install-packs? #f)
+                                     (register? #t)))))
+                     (gascity-supervisor-configuration
+                      (id "c")
+                      (user "gascity-reuse")
+                      (group "users")
+                      (create-account? #f)
+                      (state-directory "/var/lib/gascity/c")
+                      (gc-home "/var/lib/gascity/c/.gc")
+                      (port 8374)
+                      (cities (list (gascity-city-configuration
+                                     (name "gamma")
+                                     (genesis? #t)
+                                     (install-packs? #f)
                                      (register? #t)))))))))
+    ;; The account instance `c' runs as.  Declaring it here (rather than
+    ;; letting the service create it) is what `create-account? #f' is for.
+    (users (cons* (user-account
+                   (name "gascity-reuse")
+                   (group "users")
+                   (home-directory "/home/gascity-reuse"))
+                  %base-user-accounts))
     ;; Make sure the virtio NIC driver is loaded before shepherd starts the
     ;; networking service; on aarch64 -M virt the NIC is virtio-net-pci.
     (initrd-modules (cons* "virtio_net" %base-initrd-modules))
@@ -107,7 +138,7 @@
   (define vm
     (virtual-machine
      (operating-system os)
-     (memory-size 1024)))
+     (memory-size 1536)))
 
   (define test
     (with-imported-modules '((gnu build marionette))
@@ -135,7 +166,26 @@
           (test-assert "the gascity account exists"
             (marionette-eval '(zero? (system* "id" "gascity")) marionette))
 
-          (test-assert "both supervisor services are running"
+          (test-assert "create-account? #f does not duplicate the OS account"
+            (marionette-eval
+             '(begin
+                (use-modules (ice-9 textual-ports) (srfi srfi-1))
+                (let* ((passwd (call-with-input-file "/etc/passwd"
+                                 get-string-all))
+                       (group (call-with-input-file "/etc/group"
+                                get-string-all))
+                       (lines (lambda (text)
+                                (string-split text #\newline)))
+                       (entries (lambda (text prefix)
+                                  (count (lambda (line)
+                                           (string-prefix? prefix line))
+                                         (lines text)))))
+                  (and (= 1 (entries passwd "gascity-reuse:"))
+                       (= 1 (entries group "users:"))
+                       (zero? (system* "id" "gascity-reuse")))))
+             marionette))
+
+          (test-assert "all three supervisor services are running"
             (eventually
              (lambda ()
                (marionette-eval
@@ -148,21 +198,24 @@
                        (close-pipe port)
                        (string-contains text "running")))
                    (and (running? "gascity-supervisor-a")
-                        (running? "gascity-supervisor-b")))
+                        (running? "gascity-supervisor-b")
+                        (running? "gascity-supervisor-c")))
                 marionette))))
 
-          (test-assert "state directories are owned by the gascity account"
+          (test-assert "state directories are owned by their service accounts"
             (marionette-eval
-             '(let ((uid (passwd:uid (getpwnam "gascity"))))
-                (and (= uid (stat:uid (stat "/var/lib/gascity/a")))
-                     (= uid (stat:uid (stat "/var/lib/gascity/b")))))
+             '(let ((gascity (passwd:uid (getpwnam "gascity")))
+                    (reuse (passwd:uid (getpwnam "gascity-reuse"))))
+                (and (= gascity (stat:uid (stat "/var/lib/gascity/a")))
+                     (= gascity (stat:uid (stat "/var/lib/gascity/b")))
+                     (= reuse (stat:uid (stat "/var/lib/gascity/c")))))
              marionette))
 
           (test-assert "each registry lists only its own city"
             (eventually
              (lambda ()
                (marionette-eval
-                '(let ((a #f) (b #f))
+                '(let ((a #f) (b #f) (c #f))
                    (false-if-exception
                     (set! a (call-with-input-file
                                 "/var/lib/gascity/a/.gc/cities.toml"
@@ -171,27 +224,43 @@
                     (set! b (call-with-input-file
                                 "/var/lib/gascity/b/.gc/cities.toml"
                               get-string-all)))
-                   (and a b
+                   (false-if-exception
+                    (set! c (call-with-input-file
+                                "/var/lib/gascity/c/.gc/cities.toml"
+                              get-string-all)))
+                   (and a b c
                         (string-contains a "alpha")
                         (not (string-contains a "beta"))
                         (string-contains b "beta")
-                        (not (string-contains b "alpha"))))
+                        (not (string-contains b "alpha"))
+                        (string-contains c "gamma")
+                        (not (string-contains c "alpha"))
+                        (not (string-contains c "beta"))))
                 marionette))))
 
-          (test-assert "the two supervisors' control sockets and locks differ"
+          (test-assert "the three supervisors' control sockets and locks differ"
             (eventually
              (lambda ()
                (marionette-eval
-                '(let ((sock-a "/var/lib/gascity/a/.gc/supervisor.sock")
-                       (sock-b "/var/lib/gascity/b/.gc/supervisor.sock")
-                       (lock-a "/var/lib/gascity/a/.gc/supervisor.lock")
-                       (lock-b "/var/lib/gascity/b/.gc/supervisor.lock"))
-                   (and (file-exists? sock-a)
-                        (file-exists? sock-b)
-                        (file-exists? lock-a)
-                        (file-exists? lock-b)
-                        (not (string=? sock-a sock-b))
-                        (not (string=? lock-a lock-b))))
+                '(begin
+                   (use-modules (srfi srfi-1))
+                   (let* ((paths (map (lambda (id)
+                                        (string-append
+                                         "/var/lib/gascity/" id
+                                         "/.gc/supervisor."))
+                                      '("a" "b" "c")))
+                          (files (lambda (suffix)
+                                   (map (lambda (path)
+                                          (string-append path suffix))
+                                        paths)))
+                          (sockets (files "sock"))
+                          (locks (files "lock")))
+                     (and (every file-exists? sockets)
+                          (every file-exists? locks)
+                          (= (length sockets)
+                             (length (delete-duplicates sockets)))
+                          (= (length locks)
+                             (length (delete-duplicates locks))))))
                 marionette))))
 
           (test-end))))
@@ -212,10 +281,11 @@
   (system-test
    (name "gascity-system")
    (description
-    "Boot a VM running two Gas City supervisor instances, each with its own
-gc-home, port and trivial city, and verify that both Shepherd services run,
-that each registry lists only its own city, and that the instances' control
-socket and lock paths differ.")
+    "Boot a VM running three Gas City supervisor instances, each with its own
+gc-home, port and trivial city, and verify that all three Shepherd services
+run, that each registry lists only its own city, that the instances' control
+socket and lock paths differ, and that an instance with `create-account?' #f
+reuses the account the OS declares without duplicating it or its group.")
    (value
     (if (member (%current-system) %supported-systems)
         (run-gascity-system-test)

@@ -56,6 +56,7 @@
             gascity-supervisor-configuration-package
             gascity-supervisor-configuration-user
             gascity-supervisor-configuration-group
+            gascity-supervisor-configuration-create-account?
             gascity-supervisor-configuration-gc-home
             gascity-supervisor-configuration-state-directory
             gascity-supervisor-configuration-log-directory
@@ -683,9 +684,9 @@ registry, settings, control socket and instance lock of a user supervisor."
 (define (home-gascity-supervisor-configuration config)
   "Return the <gascity-supervisor-configuration> CONFIG with the Home path
 defaults filled in: `state-directory' and `log-directory' default to
-$XDG_STATE_HOME/gascity, and `gc-home' to $HOME/.gc.  The `user' and `group'
-fields are ignored: the supervisor runs as the user that owns the Home
-environment."
+$XDG_STATE_HOME/gascity, and `gc-home' to $HOME/.gc.  The `user', `group' and
+`create-account?' fields are ignored: a Home environment has no system
+accounts, and the supervisor runs as the user that owns it."
   (gascity-supervisor-configuration
    (inherit config)
    (state-directory
