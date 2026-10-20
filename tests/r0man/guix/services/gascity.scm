@@ -679,7 +679,38 @@ without extra-config"
                                                     (port 8372))
                   (gascity-supervisor-configuration (id "b") (gc-home "/gc-b")
                                                     (port 8373) (group "extra"))))))
-      (user-account-supplementary-groups (car (filter user-account? created))))))
+      (user-account-supplementary-groups (car (filter user-account? created)))))
+
+  (test-assert "create-account? #f declares neither the account nor its group"
+    (null? (gascity-supervisor-accounts
+            (list (gascity-supervisor-configuration
+                   (user "gascity") (group "users")
+                   (create-account? #f))))))
+
+  (test-equal "create-account? #f leaves a pre-existing group to the operator"
+    '("gascity")
+    (map user-group-name
+         (filter user-group?
+                 (gascity-supervisor-accounts
+                  (list (gascity-supervisor-configuration
+                         (id "a") (gc-home "/gc-a") (port 8372))
+                        (gascity-supervisor-configuration
+                         (id "b") (gc-home "/gc-b") (port 8373)
+                         (user "operator") (group "users")
+                         (create-account? #f)))))))
+
+  (test-assert "one instance of a shared user creates the account"
+    (let ((created
+           (gascity-supervisor-accounts
+            (list (gascity-supervisor-configuration
+                   (id "a") (gc-home "/gc-a") (port 8372)
+                   (create-account? #f))
+                  (gascity-supervisor-configuration
+                   (id "b") (gc-home "/gc-b") (port 8373)
+                   (group "extra"))))))
+      (and (= 1 (length (filter user-account? created)))
+           (lset= equal? '("extra" "gascity")
+                  (map user-group-name (filter user-group? created)))))))
 
 (test-group "supervisor shepherd services"
   (define value
@@ -869,7 +900,15 @@ without extra-config"
 
   (test-assert "an own group is accepted"
     (gascity-supervisor-configurations
-     (list (gascity-supervisor-configuration (group "gascity-a"))))))
+     (list (gascity-supervisor-configuration (group "gascity-a")))))
+
+  (test-assert "create-account? must be a boolean"
+    (string-contains
+     (error-message
+      (lambda ()
+        (gascity-supervisor-configurations
+         (list (gascity-supervisor-configuration (create-account? 'yes))))))
+     "boolean")))
 
 
 ;;;
