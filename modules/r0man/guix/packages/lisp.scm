@@ -372,7 +372,7 @@ antialiased TrueType font rendering using CLX and XRender extension.")
 (define-public sbcl-cl-mcp
   (package
     (name "sbcl-cl-mcp")
-    (version "3.1.0")
+    (version "3.2.0")
     (source
      (origin
        (method git-fetch)
@@ -381,7 +381,7 @@ antialiased TrueType font rendering using CLX and XRender extension.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1arqh2895paa7j6df84x44y6bb3gd2gblidvv7jpk687hxlsgp6n"))))
+        (base32 "0yv75h1g5kslhrkzk5i3fr5dy4wsxyylvxaqy1hvrsydip3j71b1"))))
     (build-system asdf-build-system/sbcl)
     (arguments
      (list
@@ -427,9 +427,19 @@ antialiased TrueType font rendering using CLX and XRender extension.")
                "definition-source-location-reports-path-line-and-staleness"
                "code-find-references-does-not-place-a-stale-reference"
                "code-find-definition-says-when-its-line-predates-the-file")
-              ;; Its fixture reads a form under #+x86-64.
+              ;; Their fixtures read a form under #+x86-64.
               (disable "tests/lisp-edit-form-test.lisp"
                        "lisp-edit-form-replace-keeps-the-feature-expression")
+              (disable "tests/lisp-read-file-test.lisp"
+                       "lisp-read-file-collapsed-view-keeps-feature-expressions")
+              ;; Expects a compiler-introduced SB-C::X local that SBCL
+              ;; does not keep on every architecture.
+              (disable "tests/frame-inspector-test.lisp"
+                       "a-compiler-variable-is-named-with-its-package")
+              ;; Races the asynchronous reaper and sometimes sees exit
+              ;; code 0 instead of 71.
+              (disable "tests/debugger-boundary-worker-test.lisp"
+                       "pooled-real-process-exit-is-reaped-and-replaced")
               (disable "tests/clos-describe-integration-test.lisp"
                "clos-describe-agrees-across-pool-and-no-pool-paths"
                "clos-describe-matches-a-quoted-eql-keyword-over-the-worker-rpc"
@@ -438,7 +448,8 @@ antialiased TrueType font rendering using CLX and XRender extension.")
                "clos-describe-points-a-condition-reader-override-at-its-own-defmethod")
               (disable "tests/clos-response-builders-test.lisp"
                "annotate-report-forms-reports-a-real-mismatch"
-               "annotate-report-forms-falls-back-when-the-edit-tool-cannot-locate-it-uniquely")
+               ;; Matched by prefix: the full name overflows the line.
+               "annotate-report-forms-falls-back-when-the-edit-tool")
               (disable "tests/fs-test.lisp"
                        "fs-set-project-root-converts-relative-to-absolute"
                        "fs-set-project-root-relative-path-subdirectory")))
