@@ -314,6 +314,10 @@ TOKEN is either a registration token string, a file-like object holding
 the token, an absolute file name holding the token (read when the
 program starts, with carriage returns and newlines removed), or #f.
 
+The runner always registers with @option{--disableupdate}, so that
+GitHub never replaces the Guix-patched binaries with stock ones that
+cannot run on Guix.
+
 ENVIRONMENT-VARIABLES is a list of literal \"NAME=value\" strings, set
 after HOME, ACTIONS_RUNNER_DIR, and PATH, so they may override any of
 them.  No shell expansion takes place.
@@ -349,6 +353,9 @@ service and the accounts extensions, not by the start program)."
     (append (if name (list "--name" name) '())
             (if (null? labels) '() (list "--labels" (string-join labels ",")))
             (if replace? (list "--replace") '())
+            ;; Self-updates replace the Guix-patched binaries with
+            ;; stock ones that cannot run on Guix.
+            (list "--disableupdate")
             extra-registration-args))
 
   (program-file
@@ -365,7 +372,10 @@ service and the accounts extensions, not by the start program)."
                   (string-append "github-actions-runner"
                                  (if id (string-append "[" id "]") "")
                                  ": " fmt "~%")
-                  args))
+                  args)
+           ;; Shepherd's log is a pipe, which Guile buffers: without
+           ;; this, messages only show up when the program exits.
+           (force-output (current-error-port)))
 
          (define (touch file)
            (close-port (open-file file "a"))

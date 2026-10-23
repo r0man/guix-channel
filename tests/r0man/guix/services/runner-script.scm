@@ -189,6 +189,17 @@ exit status of the program."
 
 (call-with-work-dir
  (lambda (work-dir)
+   (test-assert "always passes --disableupdate"
+     (let* ((script (build-script
+                     work-dir
+                     #:url "https://github.com/example/example"
+                     #:token "abc123"))
+            (ok (run-script-ok? script work-dir))
+            (log (read-file (string-append work-dir "/fake.log"))))
+       (and ok (string-contains log "--disableupdate") #t)))))
+
+(call-with-work-dir
+ (lambda (work-dir)
    (test-assert "passes --replace when requested"
      (let* ((script (build-script
                      work-dir
