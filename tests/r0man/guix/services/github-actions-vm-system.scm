@@ -7,6 +7,8 @@
 ;;;    the scratch disk service, the shutdown watcher, and the runner
 ;;;    account come up, and that the runner (running without
 ;;;    registration credentials) reports that it is not registered.
+;;;    The check must happen within the 300 seconds the runner waits
+;;;    after that failure: then it powers the VM off.
 ;;;
 ;;; 2. github-actions-runner-vm-host -- builds the derivations the host
 ;;;    service produces (the QEMU boot scripts of the pool, the token
@@ -29,6 +31,7 @@
   #:use-module (gnu tests)
   #:use-module (guix gexp)
   #:use-module (guix utils)
+  #:use-module (r0man guix services github-actions)
   #:use-module (r0man guix services github-actions-vm)
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-64)
@@ -62,10 +65,26 @@ reports that it is not registered."
   (define config
     (github-actions-runner-vm-configuration
      (url "https://github.com/example/example")))
+  (define %runner-log "/var/log/github-actions-runner.log")
+  (define runner-os
+    ;; The runner logs to /dev/console, which the test cannot read from
+    ;; the guest; log to a file instead (the runner-log-tail service
+    ;; still copies it to the console).
+    (let ((os (github-actions-runner-vm-operating-system config)))
+      (operating-system
+        (inherit os)
+        (services
+         (modify-services (operating-system-user-services os)
+           (github-actions-runner-service-type
+            configs => (map (lambda (runner)
+                              (github-actions-runner-configuration
+                               (inherit runner)
+                               (log-file %runner-log)))
+                            configs)))))))
   (define os
     (marionette-operating-system
      (operating-system-with-gc-roots
-      (github-actions-runner-vm-operating-system config)
+      runner-os
       ;; Keep the runner package (a binary tarball) alive so that it is
       ;; not garbage-collected while the test VM boots.
       (list (github-actions-runner-vm-configuration-runner-package
@@ -118,15 +137,6 @@ reports that it is not registered."
              '(zero? (system* "herd" "status" "github-actions-vm-shutdown"))
              marionette))
 
-          (test-assert "runner service has exited (it is not registered)"
-            (marionette-eval
-             '(let loop ((attempt 0))
-                (or (not (zero? (system* "herd" "status"
-                                         "github-actions-runner")))
-                    (>= attempt 120)
-                    (begin (sleep 5) (loop (+ attempt 1)))))
-             marionette))
-
           (test-assert "start script reports missing registration"
             (let ((result
                    (marionette-eval
@@ -134,7 +144,7 @@ reports that it is not registered."
                     ;; import its own modules.
                     '(begin
                        (use-modules (ice-9 textual-ports))
-                       (let ((log "/var/log/github-actions-runner.log"))
+                       (let ((log #$%runner-log))
                          (let loop ((attempt 0))
                            (or (and (file-exists? log)
                                     (string-contains
@@ -151,8 +161,7 @@ reports that it is not registered."
                          '(begin
                             (use-modules (ice-9 textual-ports))
                             (false-if-exception
-                             (call-with-input-file
-                                 "/var/log/github-actions-runner.log"
+                             (call-with-input-file #$%runner-log
                                get-string-all)))
                          marionette)))
               result))
@@ -177,9 +186,12 @@ programs of the credential lifecycle, and assert their contents."
   (define mint (github-actions-runner-vm-mint-program))
   (define remove (github-actions-vm-remove-runner-program))
   (define test
-    (with-imported-modules '((guix build utils))
+    ;; (gnu build marionette) provides 'system-test-runner'.
+    (with-imported-modules '((gnu build marionette)
+                             (guix build utils))
       #~(begin
-          (use-modules (ice-9 textual-ports)
+          (use-modules (gnu build marionette)
+                       (ice-9 textual-ports)
                        (srfi srfi-64))
 
           (define (read-file file)
@@ -220,12 +232,11 @@ programs of the credential lifecycle, and assert their contents."
             (string-contains (read-file #$boot-1) "path=/gnu/store"))
 
           (test-assert "mint program mints and stores tokens"
-            (let ((program (read-file #$mint)))
-              (and (string-contains program
-                                    "mint-and-store-registration-token")
-                   ;; Tests point the program at a mock server via the
-                   ;; environment.
-                   (string-contains program "GITHUB_API_BASE"))))
+            ;; GITHUB_API_BASE, which points the program at a mock
+            ;; server, is read by (r0man guix services
+            ;; github-actions-vm-mint), not by the program itself.
+            (string-contains (read-file #$mint)
+                             "mint-and-store-registration-token"))
 
           (test-assert "remove program removes runners by name"
             (string-contains (read-file #$remove)
