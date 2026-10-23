@@ -13,7 +13,7 @@
   #:use-module (guix packages)
   #:use-module (nonguix build-system binary))
 
-(define %github-actions-runner-version "2.337.0")
+(define %github-actions-runner-version "2.338.1")
 
 (define (github-actions-runner-binary arch hash)
   (origin
@@ -32,9 +32,9 @@
      (let-system system
        (if (string-prefix? "aarch64" system)
            (github-actions-runner-binary
-            "arm64" "14q37v0ylbxz3543yaillmfv3gln901cyrs7r7ijc9a24q3cf7cv")
+            "arm64" "1pmy4krva2sjmd4c8p3r51lmrkxslm5ndf9705hi3dnkkwa0qpj7")
            (github-actions-runner-binary
-            "x64" "04v6h5ih0787d2448lmb5ya1r726qsjvr0l6h4l47bgqlh8hi4kh"))))
+            "x64" "0dsc2kmifhzxrwimzijwl5n2j408qd6n0csy9g16492dc2rwrs88"))))
     (build-system binary-build-system)
     (arguments
      (list
@@ -141,18 +141,35 @@
                             "else\n"
                             "    RUNNER_DIR=\"$PWD/actions-runner\"\n"
                             "fi\n\n"
-                            "if [ ! -x \"$RUNNER_DIR/bin/Runner.Listener\" ]; then\n"
-                            "    echo \"Initializing GitHub"
-                            " Actions runner in $RUNNER_DIR\"\n"
-                            "    mkdir -p \"$RUNNER_DIR\"\n"
-                            "    cp -a \"" template
-                            "/.\" \"$RUNNER_DIR/\"\n"
-                            "    chmod -R u+w \"$RUNNER_DIR\"\n"
-                            "fi\n\n"
                             "export PATH=\"" path-prefix ":" glibc-sbin ":$PATH\"\n"
                             "export LD_LIBRARY_PATH=\"" ld-path
                             ":${LD_LIBRARY_PATH:-}\"\n"
                             "export SSL_CERT_DIR=\"" cert-dir "\"\n\n"
+                            "# Re-install whenever the work directory holds\n"
+                            "# another template than this one: after a package\n"
+                            "# upgrade, and after a self-update of the runner,\n"
+                            "# which replaces the patched binaries with stock\n"
+                            "# ones that cannot run on Guix.  Registration\n"
+                            "# (.runner, .credentials*) and _work are kept.\n"
+                            "TEMPLATE=\"" template "\"\n"
+                            "STAMP=\"$RUNNER_DIR/.guix-template\"\n"
+                            "if [ ! -x \"$RUNNER_DIR/bin/Runner.Listener\" ] \\\n"
+                            "   || [ \"$(cat \"$STAMP\" 2>/dev/null)\" != \"$TEMPLATE\" ]; then\n"
+                            "    echo \"Installing GitHub"
+                            " Actions runner from $TEMPLATE into $RUNNER_DIR\"\n"
+                            "    mkdir -p \"$RUNNER_DIR\"\n"
+                            "    # Self-updates leave bin and externals as\n"
+                            "    # symlinks to bin.VERSION and externals.VERSION.\n"
+                            "    rm -rf \"$RUNNER_DIR\"/bin \"$RUNNER_DIR\"/bin.*"
+                            " \"$RUNNER_DIR\"/externals \"$RUNNER_DIR\"/externals.*\n"
+                            "    cp -a \"$TEMPLATE/.\" \"$RUNNER_DIR/\"\n"
+                            "    chmod u+w \"$RUNNER_DIR\"\n"
+                            "    for entry in \"$TEMPLATE\"/* \"$TEMPLATE\"/.[!.]*; do\n"
+                            "        [ -e \"$entry\" ] || continue\n"
+                            "        chmod -R u+w \"$RUNNER_DIR/${entry##*/}\"\n"
+                            "    done\n"
+                            "    echo \"$TEMPLATE\" > \"$STAMP\"\n"
+                            "fi\n\n"
                             "cd \"$RUNNER_DIR\"\n"
                             "exec \"./" script "\" \"$@\"\n")))
                      (with-output-to-file target
