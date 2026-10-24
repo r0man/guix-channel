@@ -56,6 +56,7 @@ SOURCES = \
   modules/r0man/guix/packages/java.scm \
   modules/r0man/guix/packages/lisp.scm \
   modules/r0man/guix/packages/node.scm \
+  modules/r0man/guix/packages/opencode.scm \
   modules/r0man/guix/packages/pi.scm \
   modules/r0man/guix/packages/task-management.scm \
   modules/r0man/guix/packages/wm.scm \

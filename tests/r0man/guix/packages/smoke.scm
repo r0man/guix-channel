@@ -86,6 +86,10 @@
                    (r0man guix packages node)
                    node-anthropic-ai-claude-code)
 
+(test-load-package "opencode"
+                   (r0man guix packages opencode)
+                   opencode)
+
 (test-load-package "pi"
                    (r0man guix packages pi)
                    pi-coding-agent)
