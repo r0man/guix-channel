@@ -16,6 +16,7 @@
   #:use-module (guix gexp)
   #:use-module (guix git-download)
   #:use-module (guix packages)
+  #:use-module (guix utils)
   #:use-module (r0man guix packages golang-xyz))
 
 ;; Google Cloud Go packages for Dolt storage support
@@ -989,6 +990,26 @@ AI assistants to interact with Dolt version-controlled SQL databases.")
         (base32 "1904c8vmmgylv5hsjyp9sx8ck6r95sq4lmajvlqjiahww2qrz7ax"))))))
 
 
+(define-public go-github-com-dolthub-vitess-for-dolt-next
+  ;; Newer vitess line required by dolt 2.6.  The stable dolt CLI (and the
+  ;; dolt-go-v2 library used by beads) stay on the older vitess package
+  ;; above.
+  (package
+    (inherit go-github-com-dolthub-vitess-for-dolt)
+    (name "go-github-com-dolthub-vitess-for-dolt-next")
+    (version "0.0.0-20261014211039-3e903c0f05d3")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/dolthub/vitess")
+             (commit "3e903c0f05d3f90c4d4d1aee6af778d7d0d3f1f9")))
+       (file-name (git-file-name "go-github-com-dolthub-vitess"
+                                 "0.0.0-20261014211039-3e903c0f05d3"))
+       (sha256
+        (base32 "150rv3k5xjgvkqr69hr5fv7yw06gk5bcm29gmmdqja4pc2ivhjbw"))))))
+
+
 (define-public go-github-com-dolthub-go-mysql-server-for-dolt
   (package
     (inherit go-github-com-dolthub-go-mysql-server)
@@ -1009,6 +1030,28 @@ AI assistants to interact with Dolt version-controlled SQL databases.")
                      go-github-com-dolthub-go-mysql-server)
        (delete "go-github-com-dolthub-vitess")
        (prepend go-github-com-dolthub-vitess-for-dolt)))))
+
+(define-public go-github-com-dolthub-go-mysql-server-for-dolt-next
+  ;; go-mysql-server revision required by dolt 2.6.
+  (package
+    (inherit go-github-com-dolthub-go-mysql-server-for-dolt)
+    (name "go-github-com-dolthub-go-mysql-server-for-dolt-next")
+    (version "0.20.1-0.20261024000501-c22d4b6df50c")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/dolthub/go-mysql-server")
+             (commit "c22d4b6df50cc2912bc13615b942fa0845b11567")))
+       (file-name (git-file-name "go-github-com-dolthub-go-mysql-server"
+                                 "0.20.1-0.20261024000501-c22d4b6df50c"))
+       (sha256
+        (base32 "11piiy8dxx1fi4wzgxncs5wli5ryyj1afiszwh48qb4ibn4zzxdh"))))
+    (propagated-inputs
+     (modify-inputs (package-propagated-inputs
+                     go-github-com-dolthub-go-mysql-server-for-dolt)
+       (delete "go-github-com-dolthub-vitess-for-dolt")
+       (prepend go-github-com-dolthub-vitess-for-dolt-next)))))
 
 
 (define-public dolt
@@ -1175,6 +1218,47 @@ AI assistants to interact with Dolt version-controlled SQL databases.")
 such as clone, branch, merge, push, and pull for data and schema.  It provides
 a CLI for managing versioned databases with full MySQL compatibility.")
     (license license:asl2.0)))
+
+
+(define-public dolt-next
+  ;; Tracks the dolt release line required by gascity-next.  The stable
+  ;; dolt package above stays at 2.4.2 because dolt-go-v2, which beads
+  ;; links against, shares its source tree.
+  (package
+    (inherit dolt)
+    (name "dolt-next")
+    (version "2.6.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/dolthub/dolt")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name "dolt" version))
+       (sha256
+        (base32 "08169czk2rd444vfjfp1da0x559yvsgpajzxx9i25q3s70jihsh8"))
+       (modules '((guix build utils)))
+       (snippet
+        '(begin
+           (substitute* "go/libraries/doltcore/env/grpc_dial_provider.go"
+             (("\texpcreds \"google.golang.org/grpc/experimental/credentials\"\n")
+              "")
+             (("expcreds\\.NewTLSWithALPNDisabled")
+              "credentials.NewTLS"))
+           (substitute* "go/libraries/doltcore/sqle/cluster/controller.go"
+             (("\texpcreds \"google.golang.org/grpc/experimental/credentials\"\n")
+              "")
+             (("expcreds\\.NewTLSWithALPNDisabled")
+              "credentials.NewTLS"))))))
+    (arguments
+     (substitute-keyword-arguments (package-arguments dolt)
+       ((#:go go-version #t) go-1.26)))
+    (native-inputs
+     (modify-inputs (package-native-inputs dolt)
+       (delete "go-github-com-dolthub-go-mysql-server-for-dolt"
+               "go-github-com-dolthub-vitess-for-dolt")
+       (prepend go-github-com-dolthub-go-mysql-server-for-dolt-next
+                go-github-com-dolthub-vitess-for-dolt-next)))))
 
 
 (define-public go-github-com-dolthub-dolt-go-v2

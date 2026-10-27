@@ -53,7 +53,7 @@
 (define-public beads
   (package
     (name "beads")
-    (version "1.3.1")
+    (version "1.3.2")
     (source
      (origin
        (method git-fetch)
@@ -62,7 +62,7 @@
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0r9zr1gb6ahn7kkbw5blxpi1j9nv29c19gkbcaxq6gjn875r8xck"))))
+        (base32 "032iy52w0wmla858ndka9dpji755mpc529jc98s34jm6vzksyzkz"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -454,16 +454,16 @@ project spaces called Rigs.")
 (define-public go-github-com-gastownhall-gascity-packs
   (package
     (name "go-github-com-gastownhall-gascity-packs")
-    (version "0.4.1-0.202610050155-33da48cd9ec4")
+    (version "0.3.1-0.20260617013242-33d3a430a67d")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
              (url "https://github.com/gastownhall/gascity-packs")
-             (commit "33da48cd9ec44e1de75fe598f520b9b9333ee469")))
+             (commit "33d3a430a67d1782ad364556cb566bdb01d0afe3")))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1w1k27qf1xbxm5maxyd9hpb7s84pym6hcf7kmpips0rg1k4ylndd"))))
+        (base32 "1dlj2plrnsxqn974qjfbj89pmwslzf6pkp1fk06zg1rx9bvd3lq8"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -479,6 +479,25 @@ project spaces called Rigs.")
 filesystems, so the @command{gc} binary can depend on released pack bytes
 through the Go module system instead of vendoring checked-in copies.")
     (license license:expat)))
+
+(define-public go-github-com-gastownhall-gascity-packs-next
+  ;; Tracks the pack pin of the main branch of Gas City.  The stable release
+  ;; embeds the June 2026 pack content (PublicGastownPackVersion), so the
+  ;; two lines must not share a source: gc resolves the embedded content by
+  ;; the canonical pin and rejects a cache entry built from another commit.
+  (package
+    (inherit go-github-com-gastownhall-gascity-packs)
+    (name "go-github-com-gastownhall-gascity-packs-next")
+    (version "0.3.1-0.20261023052836-66c672b5ed00")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/gastownhall/gascity-packs")
+             (commit "66c672b5ed00af143158b4eac960523c56b977ee")))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "153g9q0xdg0w6gybp8p8f749fpcznpm8b2llyw5sc52iwjxnz16c"))))))
 
 (define-public python-for-gascity
   ;; Gas City's gate runner (internal/convergence/condition.go) executes
@@ -551,7 +570,7 @@ per-city state.")
 (define-public gascity
   (package
     (name "gascity")
-    (version "1.5.0")
+    (version "1.5.1")
     (source
      (origin
        (method git-fetch)
@@ -560,7 +579,7 @@ per-city state.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "070kvrv73xqk2b56a715pfzm734n4pihfw53apy1rxrlvs5c5vwm"))))
+        (base32 "1kl85q3cd14wbq57pln6szv42nwn7z0zjnjd6216va3sdcf29wv6"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -685,14 +704,11 @@ per-city state.")
                     go-github-com-steveyegge-beads-next
                     go-github-com-stretchr-testify
                     go-go-opentelemetry-io-auto-sdk
-                    go-go-opentelemetry-io-otel
-                    go-go-opentelemetry-io-otel-exporters-otlp-otlplog-otlploghttp
-                    go-go-opentelemetry-io-otel-exporters-otlp-otlpmetric-otlpmetrichttp
-                    go-go-opentelemetry-io-otel-log
-                    go-go-opentelemetry-io-otel-metric
-                    go-go-opentelemetry-io-otel-sdk
-                    go-go-opentelemetry-io-otel-sdk-log
-                    go-go-opentelemetry-io-otel-sdk-metric
+                    ;; 1.5.1 moved to otel 1.45.0 / log 0.21.0, where the log
+                    ;; module's value types are aliases of the attribute
+                    ;; package.  The 1.42.0 packages keep the older, distinct
+                    ;; log value types used by beads.
+                    go-go-opentelemetry-io-otel-next
                     go-go-opentelemetry-io-proto-otlp
                     go-github-com-cenkalti-backoff-v4
                     go-github-com-cenkalti-backoff-v5
@@ -738,12 +754,12 @@ runtime backends including tmux, subprocess, exec, ACP, and Kubernetes.")
 
 (define-public gascity-next
   ;; Tracks the main branch of Gas City.
-  (let ((commit "aa8afe87c6f6044686c9e2a7359f999143e9c8b1")
+  (let ((commit "a1ff5e2ade785882a414bcdc71f5be32b599f094")
         (revision "0"))
     (package
       (inherit gascity)
       (name "gascity-next")
-      (version (git-version "1.5.0" revision commit))
+      (version (git-version "1.5.1" revision commit))
       (source
        (origin
          (method git-fetch)
@@ -752,20 +768,16 @@ runtime backends including tmux, subprocess, exec, ACP, and Kubernetes.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "1apn2wxc34rx1xpbf1icsl0nl7544clf3mm5wi7gj4dyyalm944f"))))
+          (base32 "1f747jqwrs7vrlflndpj33jvcj0ss4p24d28yz5ampdqjc3gldwp"))))
       (native-inputs
        (modify-inputs (package-native-inputs gascity)
-         ;; Upstream main moved to otel 1.45.0 / log 0.21.0, where the log
-         ;; module's value types are aliases of the attribute package.  Drop
-         ;; the 1.42.0 packages and pull the whole 1.45.0 monorepo tree in
-         ;; through the core module instead, so no stale copy leaks into the
-         ;; GOPATH union.
-         (delete "go-go-opentelemetry-io-otel"
-                 "go-go-opentelemetry-io-otel-exporters-otlp-otlplog-otlploghttp"
-                 "go-go-opentelemetry-io-otel-exporters-otlp-otlpmetric-otlpmetrichttp"
-                 "go-go-opentelemetry-io-otel-log"
-                 "go-go-opentelemetry-io-otel-metric"
-                 "go-go-opentelemetry-io-otel-sdk"
-                 "go-go-opentelemetry-io-otel-sdk-log"
-                 "go-go-opentelemetry-io-otel-sdk-metric")
-         (prepend go-go-opentelemetry-io-otel-next))))))
+         ;; Main pins the October 2026 pack content; the stable release embeds
+         ;; the June 2026 content, so each line gets its own pack package.
+         (delete "go-github-com-gastownhall-gascity-packs")
+         (prepend go-github-com-gastownhall-gascity-packs-next)))
+      (propagated-inputs
+       (modify-inputs (package-propagated-inputs gascity)
+         ;; Main requires dolt 2.6.0 or later; the stable release still works
+         ;; with the 2.4.2 CLI shared with the beads library line.
+         (delete "dolt")
+         (prepend dolt-next))))))

@@ -444,12 +444,11 @@ be used by bridges between existing logging libraries and OpenTelemetry.")
 protobuf payloads.")
     (license license:asl2.0)))
 
-;; OpenTelemetry packages required by gascity-next, which tracks the main
-;; branch of Gas City.  Upstream main moved to otel 1.45.0 / log 0.21.0,
-;; where the log module's value and attribute types are aliases of
-;; go.opentelemetry.io/otel/attribute.  The 1.42.0 packages above keep the
-;; older, distinct log value types still used by the stable gascity
-;; release, so the newer line is kept as a separate "-next" variant.
+;; OpenTelemetry packages required by Gas City 1.5.1 and later.  Upstream
+;; moved to otel 1.45.0 / log 0.21.0, where the log module's value and
+;; attribute types are aliases of go.opentelemetry.io/otel/attribute.  The
+;; 1.42.0 packages above keep the older, distinct log value types still used
+;; by beads, so the newer line is kept as a separate "-next" variant.
 (define otel-source/1.45
   (origin
     (method git-fetch)
