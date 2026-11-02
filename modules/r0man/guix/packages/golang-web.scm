@@ -36,7 +36,10 @@
     (build-system go-build-system)
     (arguments
      (list
-      #:import-path "github.com/aws/smithy-go"))
+      #:import-path "github.com/aws/smithy-go"
+      ;; TestIdentity compares pointers to a zero-size struct, whose
+      ;; equality is unspecified and no longer holds with newer Go.
+      #:test-flags #~(list "-skip" "TestIdentity")))
     (home-page "https://github.com/aws/smithy-go")
     (synopsis "Smithy code generators for Go")
     (description
@@ -95,7 +98,10 @@
     (arguments
      (list
       #:import-path "github.com/aws/aws-sdk-go-v2/config"
-      #:unpack-path "github.com/aws/aws-sdk-go-v2"))
+      #:unpack-path "github.com/aws/aws-sdk-go-v2"
+      ;; env_config.go passes an int64 to %q, which the go vet run by
+      ;; go test rejects with newer Go versions.
+      #:test-flags #~(list "-vet=off")))
     (propagated-inputs
      (list go-github-com-aws-smithy-go))
     (home-page "https://github.com/aws/aws-sdk-go-v2")
@@ -505,7 +511,11 @@ protobuf payloads.")
     (build-system go-build-system)
     (arguments
      (list
-      #:import-path "github.com/JohannesKaufmann/dom"))
+      #:import-path "github.com/JohannesKaufmann/dom"
+      ;; Newer golang.org/x/net/html renders attributes in a different
+      ;; order than this test expects.
+      #:test-flags
+      #~(list "-skip" "TestRenderRepresentation_MultipleAttributes")))
     (propagated-inputs (list go-golang-org-x-net))
     (home-page "https://github.com/JohannesKaufmann/dom")
     (synopsis "DOM utility functions for Go")

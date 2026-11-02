@@ -513,7 +513,7 @@ designed for use in Dolt, a version-controlled database.")
        (method git-fetch)
        (uri (git-reference
              (url "https://github.com/dolthub/dolt")
-             (commit "02e9f99a3a9b")))
+             (commit "02e9f99a3a9be4822078a1435267ce8884756d29")))
        (file-name (git-file-name name version))
        (sha256
         (base32 "0hmvdmx1j2fh7mcc965n2rxhkr4fnpxc5jyrgxd5h6a0digmqhn2"))))
@@ -743,6 +743,7 @@ logarithmic-time removal of both minimum and maximum elements.")
                         go-github-com-zeebo-xxh3
                         go-go-uber-org-zap
                         go-golang-org-x-crypto
+                        go-golang-org-x-exp
                         go-golang-org-x-net
                         go-golang-org-x-oauth2
                         go-golang-org-x-sync
@@ -835,10 +836,12 @@ command-line applications with auto-completion and command history.")
      (list
       #:import-path "github.com/google/go-github/v57"
       ;; The examples/ directory has extra dependencies.  The upload test
-      ;; requires network access.
+      ;; requires network access.  github_test.go passes a
+      ;; *strings.Reader to %q, which the go vet run by go test rejects
+      ;; with newer Go versions.
       #:test-subdirs #~'("github")
       #:test-flags
-      #~(list "-skip" "TestRepositoriesService_UploadReleaseAsset")
+      #~(list "-vet=off" "-skip" "TestRepositoriesService_UploadReleaseAsset")
       #:phases
       #~(modify-phases %standard-phases
           (delete 'build))))
@@ -1174,6 +1177,7 @@ AI assistants to interact with Dolt version-controlled SQL databases.")
                     go-github-com-zeebo-xxh3
                     go-go-uber-org-zap
                     go-golang-org-x-crypto
+                    go-golang-org-x-exp
                     go-golang-org-x-net
                     go-golang-org-x-oauth2
                     go-golang-org-x-sync
@@ -1632,7 +1636,10 @@ implementation for Go, supporting JWS, JWE, and JWT standards.")
     (arguments
      (list
       #:import-path "github.com/apache/thrift/lib/go/thrift"
-      #:unpack-path "github.com/apache/thrift"))
+      #:unpack-path "github.com/apache/thrift"
+      ;; protocol_test.go passes integers to %q, which the go vet run by
+      ;; go test rejects with newer Go versions.
+      #:test-flags #~(list "-vet=off")))
     (home-page "https://github.com/apache/thrift")
     (synopsis "Apache Thrift Go library")
     (description
