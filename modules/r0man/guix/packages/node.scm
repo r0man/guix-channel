@@ -211,15 +211,12 @@ agentic capabilities for building custom AI coding agents.")
               (let* ((lib (string-append #$output
                                          "/lib/node_modules"
                                          "/@zed-industries/claude-agent-acp"))
-                     (bin (string-append #$output "/bin"))
                      (nm (string-append lib "/node_modules")))
                 (mkdir-p lib)
-                (mkdir-p bin)
                 (copy-recursively "dist" (string-append lib "/dist"))
                 (copy-file "package.json" (string-append lib "/package.json"))
+                ;; The bin/ symlink is created by the 'link-bins' phase.
                 (chmod (string-append lib "/dist/index.js") #o555)
-                (symlink (string-append lib "/dist/index.js")
-                         (string-append bin "/claude-agent-acp"))
                 ;; Symlink runtime dependencies into node_modules
                 (mkdir-p (string-append nm "/@agentclientprotocol"))
                 (mkdir-p (string-append nm "/@anthropic-ai"))
