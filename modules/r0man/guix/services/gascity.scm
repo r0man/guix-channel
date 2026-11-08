@@ -88,6 +88,7 @@
   #:use-module (guix packages)
   #:use-module (guix records)
   #:use-module (r0man guix packages task-management)
+  #:use-module (r0man guix services gascity script)
   #:use-module (r0man guix toml)
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-9)
@@ -129,6 +130,7 @@
             gascity-supervisor-configuration-create-account?
             gascity-supervisor-configuration-gc-home
             gascity-supervisor-configuration-state-directory
+            gascity-supervisor-configuration-home-directory
             gascity-supervisor-configuration-log-directory
             gascity-supervisor-configuration-bind
             gascity-supervisor-configuration-port
@@ -142,8 +144,6 @@
             gascity-supervisor-configuration-shepherd-requirement
             gascity-supervisor-configuration-git-config
             gascity-git-config-text
-            gascity-sync-packs
-            gascity-soft-reload
 
             gascity-supervisor-settings-configuration
             gascity-supervisor-settings-configuration?
@@ -176,8 +176,6 @@
             gascity-city-configuration?
             gascity-city-configuration-name
             gascity-city-configuration-directory
-            gascity-city-configuration-package
-            gascity-city-configuration-user
             gascity-city-configuration-enabled?
             gascity-city-configuration-genesis?
             gascity-city-configuration-install-packs?
@@ -734,6 +732,7 @@
             gascity-supervisor-user
             gascity-supervisor-group
             gascity-supervisor-state-directory
+            gascity-supervisor-home-directory
             gascity-supervisor-log-directory
             gascity-supervisor-gc-home
             gascity-supervisor-port
@@ -749,11 +748,16 @@
             gascity-supervisor-environment
             gascity-city-directory
             gascity-city-site->toml-string
-            gascity-cities-toml-merge
             gascity-supervisor-activation-program
             gascity-supervisor-provision-program
             gascity-supervisor-provision-stamp-file
-            gascity-supervisor-program))
+            gascity-supervisor-program)
+  ;; The helpers the activation and provision programs import from
+  ;; (r0man guix services gascity script); re-exported so a caller of this
+  ;; module (and its unit tests) sees them where they always were.
+  #:re-export (gascity-cities-toml-merge
+               gascity-soft-reload
+               gascity-sync-packs))
 
 
 ;;;
@@ -1050,6 +1054,12 @@ emission."
                        (default 'unset))            ;string or 'unset
   (state-directory     gascity-supervisor-configuration-state-directory
                        (default 'unset))            ;string or 'unset
+  ;; The supervisor's HOME, i.e. the home directory its `gc' and its agents
+  ;; see.  It defaults to the state directory (the account's home, an
+  ;; isolated identity); the Home service defaults it to the real $HOME, so
+  ;; a user-level supervisor sees that user's own tools and credentials.
+  (home-directory      gascity-supervisor-configuration-home-directory
+                       (default 'unset))            ;string or 'unset
   (log-directory       gascity-supervisor-configuration-log-directory
                        (default 'unset))            ;string or 'unset
   (bind                gascity-supervisor-configuration-bind
@@ -1244,11 +1254,13 @@ emission."
 ;;; City record.
 ;;;
 
-;; The identity fields (`name', `directory', `package', `user', `enabled?',
-;; `genesis?', `install-packs?', `register?', `soft-reload?', `files',
-;; `rig-files') are service
-;; configuration and are not emitted to `city.toml'; the rest are the City
-;; schema fields, in schema order.
+;; The identity fields (`name', `directory', `enabled?', `genesis?',
+;; `install-packs?', `register?', `soft-reload?', `files', `rig-files') are
+;; service configuration and are not emitted to `city.toml'; the rest are the
+;; City schema fields, in schema order.  There is deliberately no per-city
+;; `package' or `user': one instance runs its `gc' and its agents as one
+;; account (see `gascity-supervisor-configuration'), so a field that looked
+;; like it could change them would be a lie.
 
 (define-record-type* <gascity-city-configuration>
   gascity-city-configuration
@@ -1256,10 +1268,6 @@ emission."
   gascity-city-configuration?
   (name              gascity-city-configuration-name)     ;string, required
   (directory         gascity-city-configuration-directory
-                     (default 'unset))
-  (package           gascity-city-configuration-package
-                     (default 'unset))
-  (user              gascity-city-configuration-user
                      (default 'unset))
   (enabled?          gascity-city-configuration-enabled?
                      (default #t))
@@ -3204,6 +3212,14 @@ its account and the parent of its derived city directories."
   (let ((directory (gascity-supervisor-configuration-state-directory config)))
     (if (eq? directory 'unset) %gascity-state-directory directory)))
 
+(define (gascity-supervisor-home-directory config)
+  "Return the HOME of the supervisor instance CONFIG: its `home-directory'
+field, the state directory (the account's home) otherwise."
+  (let ((directory (gascity-supervisor-configuration-home-directory config)))
+    (if (eq? directory 'unset)
+        (gascity-supervisor-state-directory config)
+        directory)))
+
 (define (gascity-supervisor-log-directory config)
   "Return the log directory of the supervisor instance CONFIG."
   (let ((directory (gascity-supervisor-configuration-log-directory config)))
@@ -3526,18 +3542,7 @@ non-empty string of letters, digits, '.', '_', and '-')")
            configs)
           configs)))
 
-  (for-each gascity-validate-supervisor-hardening normalized)
-
-  (for-each (lambda (config)
-              (for-each (lambda (city)
-                          (gascity-validate-files
-                           city "files"
-                           (gascity-city-configuration-files city))
-                          (gascity-validate-files
-                           city "rig-files"
-                           (gascity-city-configuration-rig-files city)))
-                        (gascity-supervisor-configuration-cities config)))
-            normalized)
+  (for-each gascity-validate-supervisor normalized)
 
   (let ((duplicates (gascity-find-duplicates
                      (map gascity-supervisor-provision normalized))))
@@ -3575,38 +3580,208 @@ the Shepherd service '~a'; give each instance a distinct 'id'")
   '("root" "wheel" "sudo" "docker" "libvirt" "kvm" "video" "input" "netdev"
     "disk"))
 
-(define (gascity-validate-supervisor-hardening config)
-  "Raise a `formatted-message' when the supervisor instance CONFIG would run
-its agents in a privileged group, or when its `shepherd-requirement',
-`git-config' or `create-account?' fields are malformed."
+(define (gascity-absolute-file-name? value)
+  "Return #t when VALUE is an absolute file name other than `/'.  The
+activation and provision programs create and write these paths, so a
+relative one would be resolved against the activation's current directory."
+  (and (string? value)
+       (string-prefix? "/" value)
+       (not (string=? value "/"))))
+
+(define (gascity-environment-variable-name? name)
+  "Return #t when NAME is a shell identifier: a letter or `_' followed by
+letters, digits and `_'."
+  (and (string? name)
+       (not (string-null? name))
+       (let ((first (string-ref name 0)))
+         (and (or (char-alphabetic? first) (char=? first #\_))
+              (string-every (lambda (character)
+                              (or (char-alphabetic? character)
+                                  (char-numeric? character)
+                                  (char=? character #\_)))
+                            name)))))
+
+(define (gascity-environment-variable? value)
+  "Return #t when VALUE is a `NAME=value' environment-variable entry."
+  (and (string? value)
+       (let ((equals (string-index value #\=)))
+         (and equals
+              (gascity-environment-variable-name?
+               (substring value 0 equals))))))
+
+(define (gascity-city-name? name)
+  "Return #t when NAME can be the registry name of a city and the last
+component of its default directory."
+  (and (string? name)
+       (not (string-null? name))
+       (not (member name '("." "..")))
+       (not (string-contains name "/"))))
+
+(define (gascity-validate-supervisor config)
+  "Raise a `formatted-message' unless the service-level fields of the
+supervisor instance CONFIG have the type and shape the rest of the service
+assumes, and unless the cities of CONFIG are well formed.
+
+Only the fields the service itself interprets are checked here: a
+`city.toml'/`pack.toml' field is validated by the TOML emitter, which rejects
+a value it cannot serialize.  Checking the fields the service consumes is
+what turns a typo (a string `port', a relative `state-directory', a literal
+secret in the environment) into an error at configuration time instead of a
+broken supervisor or an unparseable `supervisor.toml' at boot."
+  (define name (gascity-supervisor-shepherd-service-name config))
+  (define (check field value valid? expectation)
+    (unless (valid? value)
+      (raise (formatted-message
+              (G_ "gascity: ~a: '~a' must be ~a, got ~s")
+              name field expectation value))))
+  (define (maybe valid?)
+    (lambda (value) (or (eq? value 'unset) (valid? value))))
+  (define (non-empty-string? value)
+    (and (string? value) (not (string-null? value))))
+
+  (check 'package (gascity-supervisor-configuration-package config)
+         file-like? "a package or a file-like object")
+  (check 'user (gascity-supervisor-configuration-user config)
+         (maybe non-empty-string?) "a user name")
+  (check 'group (gascity-supervisor-configuration-group config)
+         (maybe non-empty-string?) "a group name")
+  (check 'create-account?
+         (gascity-supervisor-configuration-create-account? config)
+         boolean? "a boolean")
+  (check 'gc-home (gascity-supervisor-configuration-gc-home config)
+         (maybe gascity-absolute-file-name?) "an absolute file name")
+  (check 'state-directory
+         (gascity-supervisor-configuration-state-directory config)
+         (maybe gascity-absolute-file-name?) "an absolute file name")
+  (check 'home-directory
+         (gascity-supervisor-configuration-home-directory config)
+         (maybe gascity-absolute-file-name?) "an absolute file name")
+  (check 'log-directory
+         (gascity-supervisor-configuration-log-directory config)
+         (maybe gascity-absolute-file-name?) "an absolute file name")
+  (check 'bind (gascity-supervisor-configuration-bind config)
+         non-empty-string? "a host name or IP address")
+  (check 'port (gascity-supervisor-configuration-port config)
+         (maybe (lambda (port)
+                  (and (exact-integer? port) (< 0 port) (<= port 65535))))
+         "an integer between 1 and 65535")
+  (check 'settings (gascity-supervisor-configuration-settings config)
+         (maybe gascity-supervisor-settings-configuration?)
+         "a <gascity-supervisor-settings-configuration>")
+  (check 'packages (gascity-supervisor-configuration-packages config)
+         (lambda (packages)
+           (and (list? packages) (every file-like? packages)))
+         "a list of packages or file-like objects")
+  (check 'environment-variables
+         (gascity-supervisor-configuration-environment-variables config)
+         (lambda (entries)
+           (and (list? entries) (every gascity-environment-variable? entries)))
+         "a list of \"NAME=value\" strings")
+  ;; A literal secret must not reach the Shepherd environment (it would be
+  ;; part of the system generation and the store); the `$VAR' references the
+  ;; environment is meant to hold are not secrets, and the value itself
+  ;; belongs in the `secrets-file'.
+  (gascity-sanitize-and-validate
+   (gascity-supervisor-configuration-environment-variables config))
+  (check 'secrets-file (gascity-supervisor-configuration-secrets-file config)
+         (maybe (lambda (file)
+                  (or (gascity-absolute-file-name? file)
+                      (file-like? file)
+                      (gexp? file))))
+         "an absolute file name, a file-like object or a gexp")
+  (check 'dolt-user-name
+         (gascity-supervisor-configuration-dolt-user-name config)
+         (maybe non-empty-string?) "a non-empty string")
+  (check 'dolt-user-email
+         (gascity-supervisor-configuration-dolt-user-email config)
+         (maybe non-empty-string?) "a non-empty string")
+  (check 'cities (gascity-supervisor-configuration-cities config)
+         (lambda (cities)
+           (and (list? cities) (every gascity-city-configuration? cities)))
+         "a list of <gascity-city-configuration> records")
+  (check 'shepherd-requirement
+         (gascity-supervisor-configuration-shepherd-requirement config)
+         (lambda (requirement)
+           (and (list? requirement) (every symbol? requirement)))
+         "a list of symbols")
+  (check 'git-config (gascity-supervisor-configuration-git-config config)
+         (maybe (lambda (git-config)
+                  (or (file-like? git-config) (string? git-config))))
+         "a file-like object or a file name")
+
   (let ((group (gascity-supervisor-group config)))
     (when (and (member group %gascity-privileged-groups)
                (not (string=? "root" (gascity-supervisor-user config))))
       (raise (formatted-message
               (G_ "gascity: ~a runs its agents in the privileged group ~s; \
 give it a group of its own")
-              (gascity-supervisor-shepherd-service-name config) group))))
-  (let ((requirement
-         (gascity-supervisor-configuration-shepherd-requirement config)))
-    (unless (and (list? requirement) (every symbol? requirement))
+              name group))))
+
+  (for-each (lambda (city)
+              (gascity-validate-city config city))
+            (gascity-supervisor-configuration-cities config)))
+
+(define (gascity-validate-city config city)
+  "Raise a `formatted-message' unless the service-level fields of CITY, a
+<gascity-city-configuration> of the supervisor instance CONFIG, are well
+formed."
+  (define supervisor (gascity-supervisor-shepherd-service-name config))
+  (define name (gascity-city-configuration-name city))
+  (define (check field value valid? expectation)
+    (unless (valid? value)
       (raise (formatted-message
-              (G_ "gascity: 'shepherd-requirement' must be a list of \
-symbols, got ~s")
-              requirement))))
-  (let ((git-config (gascity-supervisor-configuration-git-config config)))
-    (unless (or (eq? git-config 'unset)
-                (file-like? git-config)
-                (string? git-config))
-      (raise (formatted-message
-              (G_ "gascity: 'git-config' must be a file-like object or a \
-file name, got ~s")
-              git-config))))
-  (let ((create-account?
-         (gascity-supervisor-configuration-create-account? config)))
-    (unless (boolean? create-account?)
-      (raise (formatted-message
-              (G_ "gascity: 'create-account?' must be a boolean, got ~s")
-              create-account?)))))
+              (G_ "gascity: ~a: city ~s: '~a' must be ~a, got ~s")
+              supervisor name field expectation value))))
+  (define (maybe valid?)
+    (lambda (value) (or (eq? value 'unset) (valid? value))))
+
+  (check 'name name gascity-city-name? "a non-empty name without '/'")
+  (check 'directory (gascity-city-configuration-directory city)
+         (maybe gascity-absolute-file-name?) "an absolute file name")
+  (for-each (lambda (field accessor)
+              (check field (accessor city) boolean? "a boolean"))
+            '(enabled? genesis? install-packs? register? soft-reload?)
+            (list gascity-city-configuration-enabled?
+                  gascity-city-configuration-genesis?
+                  gascity-city-configuration-install-packs?
+                  gascity-city-configuration-register?
+                  gascity-city-configuration-soft-reload?))
+  (check 'pack (gascity-city-configuration-pack city)
+         (maybe gascity-pack-configuration?)
+         "a <gascity-pack-configuration>")
+  (check 'rigs (gascity-city-configuration-rigs city)
+         (maybe (lambda (rigs)
+                  (and (list? rigs) (every gascity-rig-configuration? rigs))))
+         "a list of <gascity-rig-configuration> records")
+
+  (let ((rigs (gascity-city-configuration-rigs city)))
+    (unless (eq? rigs 'unset)
+      (for-each
+       (lambda (rig)
+         (let ((rig-name (gascity-rig-configuration-name rig)))
+           (unless (and (string? rig-name) (not (string-null? rig-name)))
+             (raise (formatted-message
+                     (G_ "gascity: ~a: city ~s: a rig 'name' must be a \
+non-empty string, got ~s")
+                     supervisor name rig-name)))
+           (let ((path (gascity-rig-configuration-path rig)))
+             (unless (or (eq? path 'unset) (gascity-absolute-file-name? path))
+               (raise (formatted-message
+                       (G_ "gascity: ~a: city ~s: rig ~s: 'path' must be \
+an absolute file name, got ~s")
+                       supervisor name rig-name path))))))
+       rigs)))
+
+  (gascity-validate-files city "files" (gascity-city-configuration-files city))
+  (gascity-validate-files city "rig-files"
+                          (gascity-city-configuration-rig-files city))
+
+  ;; `extra-toml' is appended verbatim, so it never goes through the document
+  ;; builders' secret guard.  A file-like source cannot be inspected here; a
+  ;; literal string can.
+  (let ((extra-toml (gascity-city-configuration-extra-toml city)))
+    (when (string? extra-toml)
+      (gascity-sanitize-and-validate extra-toml))))
 
 (define-syntax-rule (gascity-service-config field ...)
   "Return a service value holding a single
@@ -3624,168 +3799,10 @@ one-element list."
 ;;; preserved verbatim, so a reconfigure never clobbers a rig registration or
 ;;; an in-flight request (§16.3).
 ;;;
-;;; The transform is pure and depends only on Guile core plus SRFI-1/13, so
-;;; the very same code runs both at the top level (and in the unit tests) and
-;;; inside the provision program (the same forms are evaluated there, see
-;;; `gascity-cities-toml-merge-forms' below).
-
-(define gascity-cities-toml-merge-forms
-  ;; The pure transforms are kept as data and evaluated both here (for the
-  ;; unit tests and the service code) and inside the provision program (which
-  ;; cannot import this module, as it pulls in the whole Guix package graph).
-  '((define (gascity-toml-table-header line)
-      "Return (KIND . KEY) when LINE is a table header, #f otherwise.  KIND is
-`table' for `[KEY]' and `array' for `[[KEY]]'."
-      (let ((line (string-trim-both line)))
-        (cond
-         ((string-prefix? "[[" line)
-          (let ((end (string-index line #\])))
-            (and end (> end 2)
-                 (cons 'array (string-trim-both (substring line 2 end))))))
-         ((string-prefix? "[" line)
-          (let ((end (string-index line #\])))
-            (and end (> end 1)
-                 (cons 'table (string-trim-both (substring line 1 end))))))
-         (else #f))))
-
-    (define (gascity-toml-sections text)
-      "Return the sections of TEXT as a list of (HEADER . LINES): each header
-is (KIND . KEY) or #f for the preamble, and LINES are the raw lines of the
-section, in order."
-      (let loop ((lines (string-split (or text "") #\newline))
-                 (header #f)
-                 (current '())
-                 (sections '()))
-        (if (null? lines)
-            (reverse
-             (if (or header (pair? current))
-                 (cons (cons header (reverse current)) sections)
-                 sections))
-            (let* ((line (car lines))
-                   (found (gascity-toml-table-header line)))
-              (if found
-                  (loop (cdr lines) found (list line)
-                        (if (pair? current)
-                            (cons (cons header (reverse current)) sections)
-                            sections))
-                  (loop (cdr lines) header (cons line current) sections))))))
-
-    (define (gascity-toml-quote-string string)
-      "Return STRING as a TOML basic string literal, quotes included."
-      (call-with-output-string
-       (lambda (port)
-         (write-char #\" port)
-         (string-for-each
-          (lambda (character)
-            (case character
-              ((#\") (display "\\\"" port))
-              ((#\\) (display "\\\\" port))
-              ((#\newline) (display "\\n" port))
-              ((#\return) (display "\\r" port))
-              ((#\tab) (display "\\t" port))
-              (else (write-char character port))))
-          string)
-         (write-char #\" port))))
-
-    (define (gascity-cities->toml-lines cities)
-      "Return the lines of the `[[cities]]' blocks for CITIES, a list of
-(PATH . NAME) pairs, NAME being a string or `unset'."
-      (append-map
-       (lambda (city)
-         (let ((path (car city))
-               (name (cdr city)))
-           (append
-            (list "[[cities]]"
-                  (string-append "path = " (gascity-toml-quote-string path)))
-            (if (and (string? name) (not (string-null? name)))
-                (list (string-append "name = "
-                                     (gascity-toml-quote-string name)))
-                '()))))
-       cities))
-
-    (define (gascity-strip-leading-blank-lines lines)
-      "Return LINES without the blank lines that precede the first non-blank
-line."
-      (cond ((null? lines) '())
-            ((string-null? (car lines))
-             (gascity-strip-leading-blank-lines (cdr lines)))
-            (else lines)))
-
-    (define (gascity-trim-blank-lines lines)
-      "Return LINES without the blank lines that precede the first and follow
-the last non-blank line."
-      (reverse
-       (gascity-strip-leading-blank-lines
-        (reverse (gascity-strip-leading-blank-lines lines)))))
-
-    (define (gascity-cities-toml-merge existing cities)
-      "Return new `cities.toml' text: replace the `[[cities]]' set of EXISTING
-(a string, or #f for an empty file) with CITIES while preserving the raw text
-of every other section, in particular `[[rigs]]' and
-`[[pending_city_requests]]'."
-      (let* ((sections (gascity-toml-sections (or existing "")))
-             (kept (filter (lambda (section)
-                             (not (equal? (car section)
-                                          (cons 'array "cities"))))
-                           sections))
-             (body (gascity-trim-blank-lines (append-map cdr kept)))
-             (cities-lines (gascity-cities->toml-lines cities)))
-        (cond
-         ((and (null? body) (null? cities-lines)) "")
-         ((null? cities-lines)
-          (string-append (string-join body "\n") "\n"))
-         (else
-          (string-append
-           (string-join (if (null? body)
-                            cities-lines
-                            (append body (list "") cities-lines))
-                        "\n")
-           "\n")))))))
-
-(for-each (lambda (form)
-            (eval form (current-module)))
-          gascity-cities-toml-merge-forms)
-
-
-;;;
-;;; Bringing a running city up to date.
-;;;
-;;; The activation and the provision program share these: GC is the `gc'
-;;; executable, DIRECTORY the city root and LOG a `format'-style procedure.
-;;; Neither ever fails its caller: the generated files are correct on disk
-;;; either way, and `gc' applies them on its next reload or start.
-
-(define gascity-city-sync-forms
-  '((define (gascity-sync-packs gc directory log)
-      "Make the installed imports of the city in DIRECTORY match its
-declaration: run `gc import install' when `gc import check' reports drift.
-Return true when the imports are in sync."
-      (or (zero? (system* gc "import" "check" "--city" directory))
-          (begin
-            (log "imports of ~a differ from the declaration; running gc \
-import install" directory)
-            (or (zero? (system* gc "import" "install" "--city" directory))
-                (begin
-                  (log "gc import install failed for ~a; the city keeps its \
-previous configuration until the next attempt" directory)
-                  #f)))))
-
-    (define (gascity-soft-reload gc directory log)
-      "Ask the controller of the city in DIRECTORY to reload its
-configuration and to accept the config drift of its open sessions instead of
-draining them.  Return true when the controller accepted the request."
-      ;; `--async' returns once the controller accepted the request (gc
-      ;; refuses it together with `--timeout').
-      (or (zero? (system* gc "reload" "--soft" "--async" directory))
-          (begin
-            (log "gc reload --soft of ~a did not complete (no running \
-controller?); it picks the change up when it next loads" directory)
-            #f)))))
-
-(for-each (lambda (form)
-            (eval form (current-module)))
-          gascity-city-sync-forms)
-
+;;; The transform and the `gc import check'/`gc reload' helpers live in
+;;; `(r0man guix services gascity script)' because the activation and
+;;; provision programs run them too and cannot import this module (it pulls
+;;; in the whole Guix package graph); this module imports and re-exports them.
 
 ;;;
 ;;; `.gc/site.toml'.
@@ -3885,61 +3902,33 @@ would be invisible and genesis would fail (§2.5)."
 `<state-directory>/tmp', which the provision one-shot creates 0700."
   (string-append (gascity-supervisor-state-directory config) "/tmp"))
 
-(define %gascity-ca-environment
-  ;; A gexp lowering to the CA bundle variables, resolved where the service
-  ;; starts: the variable Shepherd itself was started with, otherwise the
-  ;; system bundle when it exists.  git, gh, curl and Go read different ones.
+(define %gascity-resolved-environment
+  ;; A gexp lowering to the ordered alist of (NAME . VALUE) pairs that cannot
+  ;; be known before a process starts and must therefore be resolved there:
+  ;; the CA bundle variables (Shepherd's own value wins, otherwise the system
+  ;; bundle; git, gh, curl and Go each read a different one) and GUIX_LOCPATH
+  ;; (the system locale, when present).  The Shepherd environment list below
+  ;; and the `setenv' calls of the activation and provision programs both
+  ;; consume this one definition, so the supervisor and the programs that
+  ;; provision it cannot drift apart.
   #~(let* ((bundle "/etc/ssl/certs/ca-certificates.crt")
            (file (or (getenv "SSL_CERT_FILE")
                      (and (file-exists? bundle) bundle)))
            (directory (or (getenv "SSL_CERT_DIR")
                           (and (file-exists? "/etc/ssl/certs")
-                               "/etc/ssl/certs"))))
-      (append (if file
-                  (list (string-append "SSL_CERT_FILE=" file)
-                        (string-append "GIT_SSL_CAINFO=" file))
-                  '())
-              (if directory
-                  (list (string-append "SSL_CERT_DIR=" directory))
-                  '()))))
-
-(define (gascity-supervisor-environment config)
-  "Return a gexp lowering to the Shepherd environment-variables list of the
-supervisor instance CONFIG: HOME, DOLT_ROOT_PATH (pinned to the state
-directory, the account's home, so Dolt reads the activation-materialized
-`<state-directory>/.dolt/config_global.json' author identity), GC_HOME,
-XDG_RUNTIME_DIR (pinned to `gc-home' so an isolated supervisor never touches
-the host socket, §16.2), GC_SUPERVISOR_PRESERVE_SESSIONS_ON_SIGNAL, PATH, a
-private TMPDIR, GIT_TERMINAL_PROMPT=0 (a git that wants a password fails
-instead of hanging an agent), the CA bundle variables, GIT_CONFIG_GLOBAL when
-`git-config' is set, and the operator's non-secret `environment-variables'."
-  (let ((home (gascity-supervisor-state-directory config))
-        (gc-home (gascity-supervisor-gc-home config))
-        (packages (gascity-supervisor-path-packages config))
-        (git-config (gascity-supervisor-configuration-git-config config))
-        (extra (gascity-supervisor-configuration-environment-variables config)))
-    #~(append
-       (list (string-append "HOME=" #$home)
-             (string-append "DOLT_ROOT_PATH=" #$home)
-             (string-append "GC_HOME=" #$gc-home)
-             (string-append "XDG_RUNTIME_DIR=" #$gc-home)
-             "GC_SUPERVISOR_PRESERVE_SESSIONS_ON_SIGNAL=1"
-             (string-append "PATH="
-                            (string-join
-                             (list #$@(map (lambda (package)
-                                             (file-append package "/bin"))
-                                           packages))
-                             ":"))
-             (string-append "TMPDIR="
-                            #$(gascity-supervisor-tmp-directory config))
-             "GIT_TERMINAL_PROMPT=0")
-       #$%gascity-ca-environment
-       #$(if (eq? git-config 'unset)
-             #~'()
-             #~(list (string-append "GIT_CONFIG_GLOBAL="
-                                    #$(gascity-supervisor-git-config-file
-                                       config))))
-       (list #$@extra))))
+                               "/etc/ssl/certs")))
+           (locale "/run/current-system/locale"))
+      (append
+       (if file
+           (list (cons "SSL_CERT_FILE" file)
+                 (cons "GIT_SSL_CAINFO" file))
+           '())
+       (if directory
+           (list (cons "SSL_CERT_DIR" directory))
+           '())
+       (if (and (not (getenv "GUIX_LOCPATH")) (file-exists? locale))
+           (list (cons "GUIX_LOCPATH" locale))
+           '()))))
 
 (define %gascity-git-config-defaults
   ;; Settings `gc' writes to the global git configuration when they are
@@ -3965,54 +3954,89 @@ plus the settings `gc' would otherwise try to write there."
          (gascity-git-config-text
           (gascity-supervisor-configuration-git-config config))))
 
-(define (gascity-supervisor-program-environment config)
-  "Return a gexp that sets up, in the program running it, the environment
-the supervisor instance CONFIG runs `gc' with: HOME, DOLT_ROOT_PATH, GC_HOME,
-XDG_RUNTIME_DIR, PATH, the CA bundle, GIT_TERMINAL_PROMPT, GIT_CONFIG_GLOBAL,
-a private TMPDIR (created 0700) and GUIX_LOCPATH."
-  (let ((state-directory (gascity-supervisor-state-directory config))
+(define (gascity-supervisor-static-environment config)
+  "Return the ordered alist of the non-secret environment variables of the
+supervisor instance CONFIG whose values are known when the service is built:
+(NAME . VALUE) pairs, VALUE a string, a gexp or a file-like object.
+`gascity-supervisor-environment' (the Shepherd environment) and
+`gascity-supervisor-program-environment' (the `setenv' calls of the activation
+and provision programs) both render this alist and
+`%gascity-resolved-environment', so the supervisor and the programs that
+provision it always agree."
+  (let ((home (gascity-supervisor-home-directory config))
+        (state (gascity-supervisor-state-directory config))
         (gc-home (gascity-supervisor-gc-home config))
         (packages (gascity-supervisor-path-packages config))
+        (tmp (gascity-supervisor-tmp-directory config))
         (git-config (gascity-supervisor-configuration-git-config config)))
-    #~(begin
-        (setenv "HOME" #$state-directory)
-        ;; Pin Dolt's global configuration root to the account's home (the
-        ;; state directory) so `gc init' reads the author identity the
-        ;; activation materialized as `<state>/.dolt/config_global.json'.
-        (setenv "DOLT_ROOT_PATH" #$state-directory)
-        (setenv "GC_HOME" #$gc-home)
-        (setenv "XDG_RUNTIME_DIR" #$gc-home)
-        (setenv "PATH"
-                (string-join
-                 (list #$@(map (lambda (package)
-                                 (file-append package "/bin"))
-                               packages))
-                 ":"))
-        (when (and (not (getenv "SSL_CERT_DIR"))
-                   (file-exists? "/etc/ssl/certs"))
-          (setenv "SSL_CERT_DIR" "/etc/ssl/certs"))
-        (when (and (not (getenv "SSL_CERT_FILE"))
-                   (file-exists? "/etc/ssl/certs/ca-certificates.crt"))
-          (setenv "SSL_CERT_FILE" "/etc/ssl/certs/ca-certificates.crt"))
-        (when (and (not (getenv "GIT_SSL_CAINFO"))
-                   (getenv "SSL_CERT_FILE"))
-          (setenv "GIT_SSL_CAINFO" (getenv "SSL_CERT_FILE")))
-        (setenv "GIT_TERMINAL_PROMPT" "0")
-        #$@(if (eq? git-config 'unset)
-               '()
-               (list #~(setenv "GIT_CONFIG_GLOBAL"
-                               #$(gascity-supervisor-git-config-file config))))
-        ;; A private TMPDIR, so the agents' temporary files never land in
-        ;; the shared /tmp.  The supervisor's environment points at it.
-        (let ((tmp #$(gascity-supervisor-tmp-directory config)))
-          (mkdir-p tmp)
-          (chmod tmp #o700)
-          (setenv "TMPDIR" tmp))
-        (when (and (not (getenv "GUIX_LOCPATH"))
-                   (file-exists? "/run/current-system/locale"))
-          (setenv "GUIX_LOCPATH" "/run/current-system/locale")))))
+    `(("HOME" . ,home)
+      ;; Dolt reads its global configuration (the commit author identity the
+      ;; activation materializes) from `$DOLT_ROOT_PATH/.dolt', so the
+      ;; variable stays pinned to the state directory even when the
+      ;; supervisor's HOME is that of the user it runs for.
+      ("DOLT_ROOT_PATH" . ,state)
+      ("GC_HOME" . ,gc-home)
+      ;; Pin XDG_RUNTIME_DIR to `gc-home' so an isolated supervisor never
+      ;; touches the host socket (§16.2).
+      ("XDG_RUNTIME_DIR" . ,gc-home)
+      ("GC_SUPERVISOR_PRESERVE_SESSIONS_ON_SIGNAL" . "1")
+      ("PATH" . ,#~(string-join
+                    (list #$@(map (lambda (package)
+                                    (file-append package "/bin"))
+                                  packages))
+                    ":"))
+      ("TMPDIR" . ,tmp)
+      ;; A git that wants a password fails instead of hanging an agent.
+      ("GIT_TERMINAL_PROMPT" . "0")
+      ,@(if (eq? git-config 'unset)
+            '()
+            `(("GIT_CONFIG_GLOBAL"
+               . ,(gascity-supervisor-git-config-file config)))))))
 
+(define (gascity-supervisor-environment-entry entry)
+  "Return ENTRY, a (NAME . VALUE) pair of `gascity-supervisor-static-environment',
+as a gexp lowering to the `NAME=value' string the Shepherd environment wants."
+  (let ((name (car entry))
+        (value (cdr entry)))
+    (if (string? value)
+        (string-append name "=" value)
+        #~(string-append #$name "=" #$value))))
 
+(define (gascity-supervisor-environment config)
+  "Return a gexp lowering to the Shepherd environment-variables list of the
+supervisor instance CONFIG: the entries of
+`gascity-supervisor-static-environment' (HOME, DOLT_ROOT_PATH, GC_HOME,
+XDG_RUNTIME_DIR, GC_SUPERVISOR_PRESERVE_SESSIONS_ON_SIGNAL, PATH, a private
+TMPDIR, GIT_TERMINAL_PROMPT=0 and GIT_CONFIG_GLOBAL when `git-config' is set),
+the entries resolved at startup (`%gascity-resolved-environment': the CA
+bundle variables and GUIX_LOCPATH), and the operator's non-secret
+`environment-variables'."
+  (let ((extra (gascity-supervisor-configuration-environment-variables config)))
+    #~(append
+       (list #$@(map gascity-supervisor-environment-entry
+                     (gascity-supervisor-static-environment config)))
+       (map (lambda (entry)
+              (string-append (car entry) "=" (cdr entry)))
+            #$%gascity-resolved-environment)
+       (list #$@extra))))
+
+(define (gascity-supervisor-program-environment config)
+  "Return a gexp that sets up, in the program running it, the same
+environment `gascity-supervisor-environment' hands the supervisor: the
+entries of `gascity-supervisor-static-environment', the entries resolved at
+startup (`%gascity-resolved-environment') and a private TMPDIR created 0700."
+  #~(begin
+      #$@(map (lambda (entry)
+                #~(setenv #$(car entry) #$(cdr entry)))
+              (gascity-supervisor-static-environment config))
+      (for-each (lambda (entry)
+                  (setenv (car entry) (cdr entry)))
+                #$%gascity-resolved-environment)
+      ;; A private TMPDIR, so the agents' temporary files never land in the
+      ;; shared /tmp.  The supervisor's environment points at it.
+      (let ((tmp #$(gascity-supervisor-tmp-directory config)))
+        (mkdir-p tmp)
+        (chmod tmp #o700))))
 ;;;
 ;;; Programs.
 ;;;
@@ -4058,20 +4082,19 @@ environment, so it writes everything in-process."
         (cities (gascity-supervisor-cities config)))
     (program-file
      "gascity-activation"
-     (with-imported-modules '((guix build utils))
+     (with-imported-modules '((guix build utils)
+                              (r0man guix services gascity script))
        #~(begin
            (use-modules (guix build utils)
                         (ice-9 binary-ports)
+                        (ice-9 ftw)
                         (ice-9 match)
                         (ice-9 textual-ports)
+                        (r0man guix services gascity script)
                         (srfi srfi-1))
 
            (define user #$user)
            (define group #$group)
-
-           (for-each (lambda (form)
-                       (eval form (current-module)))
-                     '#$gascity-city-sync-forms)
 
            ;; The `gc' executable, bound once.
            (define gc #$(file-append (gascity-supervisor-configuration-package
@@ -4317,16 +4340,41 @@ environment, so it writes everything in-process."
                (when soft-reload?
                  (gascity-soft-reload gc directory warn))))
 
+           (define (prune-tmp-directory directory)
+             ;; Remove what the agents left in the private TMPDIR more than
+             ;; a week ago, so it does not grow without bound on a machine
+             ;; that never reboots /tmp.  A younger file is never touched,
+             ;; and a failure to remove one is not fatal.
+             (define cutoff (- (current-time) (* 7 24 60 60)))
+             (when (directory? directory)
+               (for-each
+                (lambda (name)
+                  (let* ((file (string-append directory "/" name))
+                         (st (false-if-exception (lstat file))))
+                    (when (and st (< (stat:mtime st) cutoff))
+                      (false-if-exception
+                       (if (eq? 'directory (stat:type st))
+                           (delete-file-recursively file)
+                           (delete-file file))))))
+                (scandir directory
+                         (lambda (name)
+                           (not (member name '("." ".."))))))))
+
            (define (materialize)
              (ensure-directory #$gc-home)
+             ;; The private TMPDIR and its aging, as the service user (the
+             ;; provision one-shot creates it too, but the activation owns
+             ;; the state directory and must not depend on genesis).
+             (ensure-directory #$(gascity-supervisor-tmp-directory config))
+             (prune-tmp-directory #$(gascity-supervisor-tmp-directory config))
 
              (install-file (string-append #$gc-home "/supervisor.toml")
                            #$supervisor-toml #o600)
 
              ;; Dolt requires a commit author identity, and `gc init' of a
              ;; managed bd store fails at genesis without one.  It reads
-             ;; `$HOME/.dolt/config_global.json' (the service user's home is
-             ;; the state directory).  The same decision as
+             ;; `$DOLT_ROOT_PATH/.dolt/config_global.json' (pinned to the
+             ;; state directory).  The same decision as
              ;; `gascity-supervisor-dolt-config-global': an explicit operator
              ;; identity always wins, while the default identity is written
              ;; only when no file exists yet, so an operator- or
@@ -4484,7 +4532,8 @@ to touch it" directory (stat:type st))))
                               (setgid gid)
                               (setuid uid)
                               (umask #o077)
-                              (setenv "HOME" #$state-directory)
+                              (setenv "HOME" #$(gascity-supervisor-home-directory
+                                                  config))
                               (thunk)
                               (primitive-exit 0))
                             (lambda args
@@ -4553,23 +4602,19 @@ earlier generation (with no stamp yet) upgrades without a spurious failure."
     (program-file
      "gascity-provision"
      (with-imported-modules '((guix build utils)
-                              (guix build syscalls))
+                              (guix build syscalls)
+                              (r0man guix services gascity script))
        #~(begin
            (use-modules (guix build utils)
                         (guix build syscalls)
                         (ice-9 textual-ports)
+                        ;; The registry merge and the import/reload helpers,
+                        ;; shared with the top level.  This program cannot
+                        ;; import (r0man guix services gascity), which pulls
+                        ;; in the whole Guix package graph.
+                        (r0man guix services gascity script)
                         (srfi srfi-1)
                         (srfi srfi-13))
-
-           ;; Define the registry merge in this program's module: the pure
-           ;; forms are shared with the top level (see
-           ;; `gascity-cities-toml-merge-forms').  This module cannot import
-           ;; (r0man guix services gascity), which pulls in the whole Guix
-           ;; package graph.
-           (for-each (lambda (form)
-                       (eval form (current-module)))
-                     '(#$@gascity-cities-toml-merge-forms
-                       #$@gascity-city-sync-forms))
 
            ;; The `gc' executable, bound once.
            (define gc #$gc)

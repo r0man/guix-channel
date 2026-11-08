@@ -91,11 +91,13 @@ user):
 - The write is compare-and-write, so an unchanged reconfigure does not touch
   the file.
 
-The service user's home is the state directory, so =$HOME= and
-=$DOLT_ROOT_PATH= both point at it; the provision one-shot and the supervisor
-environment pin =DOLT_ROOT_PATH= explicitly.  This is service configuration,
-not a Gas City TOML key: it is never emitted into =city.toml= or
-=supervisor.toml=.
+The provision one-shot and the supervisor environment pin =DOLT_ROOT_PATH=
+explicitly to the state directory, which is where the identity file lives; the
+supervisor's =HOME= is =home-directory= (the state directory for a system
+instance, the user's real =$HOME= for a Home instance), so a Home supervisor
+can use the user's own git configuration and credentials without losing the
+service-owned Dolt identity.  This is service configuration, not a Gas City
+TOML key: it is never emitted into =city.toml= or =supervisor.toml=.
 
 ** Multiple cities
 
@@ -167,6 +169,7 @@ account, the directories and the paths.  Its =settings= field owns the
 | =create-account?= | =gascity-supervisor-configuration-create-account?= | declare the user and its groups (system only; default =#t=); see below |
 | =gc-home= | =gascity-supervisor-configuration-gc-home= | =GC_HOME=/=XDG_RUNTIME_DIR= (default =<state-directory>/.gc=) |
 | =state-directory= | =gascity-supervisor-configuration-state-directory= | account home and parent of derived city dirs |
+| =home-directory= | =gascity-supervisor-configuration-home-directory= | the supervisor's =HOME= (default: =state-directory= for the system service, the real =$HOME= for the Home service) |
 | =log-directory= | =gascity-supervisor-configuration-log-directory= | supervisor and provision logs (root-owned for system; see [[*Lifecycle and ownership]]) |
 | =bind= | =gascity-supervisor-configuration-bind= | API bind (default =127.0.0.1=) |
 | =port= | =gascity-supervisor-configuration-port= | API port (required when >1 instance; else 8372) |
@@ -245,8 +248,6 @@ fields (emitted):
 |-------+----------+----------|
 | =name= | =gascity-city-configuration-name= | no (registry name; required) |
 | =directory= | =gascity-city-configuration-directory= | no (default =<state-directory>/<name>=) |
-| =package= | =gascity-city-configuration-package= | no (default: the instance package) |
-| =user= | =gascity-city-configuration-user= | no (default: the instance user) |
 | =enabled?= | =gascity-city-configuration-enabled?= | no (default =#t=) |
 | =genesis?= | =gascity-city-configuration-genesis?= | no (default =#t=) |
 | =install-packs?= | =gascity-city-configuration-install-packs?= | no (default =#f=) |
@@ -582,9 +583,13 @@ share a =gc-home= or a =(bind, port)=, evaluation fails with a =formatted-messag
 #+end_src
 
 The Home defaults: =state-directory= and =log-directory= under
-=$XDG_STATE_HOME/gascity=, =gc-home= under =$HOME/.gc=.  The =user=, =group=
-and =create-account?= fields are ignored: a Home environment has no system
-accounts, and the supervisor runs as the user who owns it.  Adding a system
+=$XDG_STATE_HOME/gascity=, =home-directory= to the user's real =$HOME= and
+=gc-home= under =$HOME/.gc=.  The =user=, =group= and =create-account?= fields
+are ignored: a Home environment has no system accounts, and the supervisor
+runs as the user who owns it.  Because =HOME= is the real home, the agents see
+that user's own =~/.ssh=, =~/.config/gh=, =~/.gitconfig= and (unless
+=git-config= overrides it) =~/.config/git/config=; a system instance keeps the
+isolated state-directory home unless =home-directory= says otherwise.  Adding a system
 =gascity-service-type= configuration to a Home environment maps to
 =home-gascity-service-type= via
 =define-service-type-mapping=.
@@ -829,18 +834,16 @@ declared rig's beads yet).  It does not call the Anthropic API itself.
 
 ** Container workarounds
 
-=guix home container= leaves two gaps the wrapper/example close so agent
-sessions actually start:
+=guix home container= leaves one gap the wrapper closes so agent sessions
+actually start: =devpts= is mounted with =ptmxmode=000=, so =/dev/ptmx= is
+unopenable and tmux cannot allocate a PTY ("create window failed: fork
+failed: Permission denied").  A remount needs =CAP_SYS_ADMIN=, which the
+unprivileged container lacks, but the container user owns the node, so the
+wrapper =chmod=s =/dev/pts/ptmx= to =0666=.
 
-- =devpts= is mounted with =ptmxmode=000=, so =/dev/ptmx= is unopenable and
-tmux cannot allocate a PTY ("create window failed: fork failed: Permission
-denied").  A remount needs =CAP_SYS_ADMIN=, which the unprivileged container
-lacks, but the container user owns the node, so the wrapper =chmod=s
-=/dev/pts/ptmx= to =0666=.
-- The supervisor's =HOME= is the state directory, not the user's home, so
-claude misses the shared =~/.claude= ("Not logged in") and =~/.claude.json=
-(and hangs at the first-run theme prompt).  The example's Home activation
-links both into the state home before the supervisor starts.
+Claude Code's state needs no workaround: the Home service runs the supervisor
+with the user's real =$HOME= (see =home-directory=), so the shared
+=~/.claude= and =~/.claude.json= are read directly.
 
 ** What the container shares
 
@@ -1611,6 +1614,30 @@ The supervisor itself is reloaded (=gc supervisor reload=) only when the
 registry or supervisor settings changed; a =port=/=bind= change restarts it
 instead.  All of this is non-fatal, and none of it touches the network unless
 =install-packs?= asks for an import install.
+
+** Logs and the private TMPDIR
+
+Each instance writes =supervisor.log= (or =supervisor-<id>.log=) and
+=supervisor-<id>-provision.log= below its =log-directory=.  The supervisor
+log is the agents' output, so it grows with the swarm: rotate it with Guix's
+log rotation service, pointing it at the external log files (the service does
+not own them, ==gc= does):
+
+#+begin_src scheme
+(use-modules (gnu services admin))
+
+(service log-rotation-service-type
+         (log-rotation-configuration
+          (external-log-files '("/var/log/gascity/*.log"))
+          ;; Delete a rotated file after two weeks (seconds); the default
+          ;; calendar event rotates once a week, compressed with zstd.
+          (expiry (* 14 24 60 60))))
+#+end_src
+
+The private =TMPDIR= of an instance is =<state-directory>/tmp= (=0700=,
+owned by the service user), so agent temporaries never land in the shared
+=/tmp=.  The activation prunes what has been sitting there for more than a
+week on every reconfigure and boot; anything younger is left alone.
 
 * Migrating from burningswell
 

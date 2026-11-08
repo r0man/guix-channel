@@ -1,6 +1,10 @@
 # Design: a world-class Gas City service for Guix System and Guix Home
 
-Status: **plan / not implemented**
+Status: **implemented** (phases 1–4; this document is the design record.  The
+record/serializer surface, the system and home service types, the activation
+and provision programs, the generated leaf records and the schema drift check
+are in `modules/r0man/guix/services/{gascity,gascity/records,gascity/script}.scm`
+and `modules/r0man/guix/home/services/gascity.scm`.)
 Author: agent session
 Last updated: 2026-07-15
 Target module tree: `modules/r0man/guix/{services,home/services}/gascity.scm`
@@ -1696,10 +1700,11 @@ returning the JSON text to write, or `#f` to leave the file alone.
 
 - The file is `<state-directory>/.dolt/config_global.json`, mode `0600`,
   owned by the service user (system activation chowns; Home activation writes
-  as the user, §16.4). The service user's home is the state directory, so
-  `$HOME` and `$DOLT_ROOT_PATH` both resolve to it; the provision one-shot sets
-  `DOLT_ROOT_PATH` explicitly, and the supervisor environment pins it too, so
-  the identity reaches agent sessions that commit.
+  as the user, §16.4). `$DOLT_ROOT_PATH` is pinned to the state directory by
+  the provision one-shot and by the supervisor environment, so the identity
+  reaches agent sessions that commit.  `$HOME` is a separate field
+  (`home-directory`): the state directory for the system service, the user's
+  real home for the Home service.
 - Setting **either** field is explicit intent: the activation writes the file
   even if one already exists, filling the unset field with the default identity
   (the default is documented, not a hard error).

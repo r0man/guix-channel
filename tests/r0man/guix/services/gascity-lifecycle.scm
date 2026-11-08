@@ -230,6 +230,23 @@ status.  Its output goes to the test log when it fails."
     (list (activate (supervisor #:soft-reload? #f #:rig-path (path "rig4")))
           (gc-calls)))
 
+  (test-equal "the private TMPDIR is created 0700"
+    #o700
+    (begin
+      (activate (supervisor #:install-packs? #t #:rig-path (path "rig6")))
+      (stat:perms (stat (path "state/tmp")))))
+
+  (test-assert "agent temporaries older than a week are pruned from TMPDIR"
+    (let ((old (path "state/tmp/stale"))
+          (fresh (path "state/tmp/fresh")))
+      (call-with-output-file old (lambda (port) (display "old" port)))
+      (call-with-output-file fresh (lambda (port) (display "new" port)))
+      ;; Eight days ago, the cutoff the activation uses.
+      (utime old 0 (- (current-time) (* 8 24 60 60)))
+      (activate (supervisor #:install-packs? #t #:rig-path (path "rig7")))
+      (and (not (file-exists? old))
+           (file-exists? fresh))))
+
   (test-equal "a failing gc never fails the activation"
     0
     (begin

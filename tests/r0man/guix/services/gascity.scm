@@ -584,6 +584,135 @@ without extra-config"
 
 
 ;;;
+;;; Service-level field validation.
+;;;
+;;; A typo in a field the service itself consumes (a string port, a relative
+;;; directory, a literal secret in the environment) must fail at evaluation,
+;;; not produce an unparseable `supervisor.toml' or a broken supervisor at
+;;; boot.
+;;;
+
+(test-group "service-level validation"
+  (define (rejected? thunk)
+    "Return #t when THUNK raises a `formatted-message'."
+    (guard (condition ((formatted-message? condition) #t))
+      (thunk)
+      #f))
+
+  ;; `define-record-type*' expands its field specifiers at compile time, so
+  ;; the helpers are macros rather than procedures.
+  (define-syntax supervisor
+    (syntax-rules ()
+      ((_ field ...)
+       (gascity-supervisor-configurations
+        (list (gascity-supervisor-configuration field ...))))))
+
+  (define-syntax city
+    (syntax-rules ()
+      ((_ field ...)
+       (supervisor (cities (list (gascity-city-configuration field ...)))))))
+
+  (test-assert "a lone instance with the defaults is accepted"
+    (supervisor))
+
+  (test-assert "a string port is rejected"
+    (rejected? (lambda () (supervisor (port "8372")))))
+
+  (test-assert "a port below 1 is rejected"
+    (rejected? (lambda () (supervisor (port 0)))))
+
+  (test-assert "a port above 65535 is rejected"
+    (rejected? (lambda () (supervisor (port 70000)))))
+
+  (test-assert "an inexact port is rejected"
+    (rejected? (lambda () (supervisor (port 8372.0)))))
+
+  (test-assert "an empty bind is rejected"
+    (rejected? (lambda () (supervisor (bind "")))))
+
+  (test-assert "a relative state-directory is rejected"
+    (rejected? (lambda () (supervisor (state-directory "state")))))
+
+  (test-assert "a relative gc-home is rejected"
+    (rejected? (lambda () (supervisor (gc-home ".gc")))))
+
+  (test-assert "a relative log-directory is rejected"
+    (rejected? (lambda () (supervisor (log-directory "log")))))
+
+  (test-assert "a relative secrets-file is rejected"
+    (rejected? (lambda () (supervisor (secrets-file "secrets.env")))))
+
+  (test-assert "a file-like secrets-file is accepted"
+    (supervisor (secrets-file (plain-file "secrets.env" "A=b\n"))))
+
+  (test-assert "a packages entry that is not a file-like is rejected"
+    (rejected? (lambda () (supervisor (packages (list "git"))))))
+
+  (test-assert "a city that is not a record is rejected"
+    (rejected? (lambda () (supervisor (cities (list "town"))))))
+
+  (test-assert "a city name with a slash is rejected"
+    (rejected? (lambda () (city (name "a/b")))))
+
+  (test-assert "an empty city name is rejected"
+    (rejected? (lambda () (city (name "")))))
+
+  (test-assert "a relative city directory is rejected"
+    (rejected? (lambda () (city (name "town") (directory "town")))))
+
+  (test-assert "a non-boolean genesis? is rejected"
+    (rejected? (lambda () (city (name "town") (genesis? 'yes)))))
+
+  (test-assert "a rig that is not a record is rejected"
+    (rejected? (lambda () (city (name "town") (rigs (list 'not-a-rig))))))
+
+  (test-assert "a relative rig path is rejected"
+    (rejected? (lambda ()
+                 (city (name "town")
+                       (rigs (list (gascity-rig-configuration
+                                    (name "app")
+                                    (path "app"))))))))
+
+  (test-assert "an absolute rig path is accepted"
+    (city (name "town")
+          (rigs (list (gascity-rig-configuration
+                       (name "app")
+                       (path "/srv/app"))))))
+
+  (test-assert "a well-formed environment entry is accepted"
+    (supervisor (environment-variables
+                 '("ANTHROPIC_API_KEY=$ANTHROPIC_API_KEY" "GC_DEBUG=1"))))
+
+  (test-assert "an environment entry without '=' is rejected"
+    (rejected? (lambda () (supervisor (environment-variables '("NOPE"))))))
+
+  (test-assert "an environment entry with an invalid name is rejected"
+    (rejected? (lambda ()
+                 (supervisor (environment-variables '("1BAD=x"))))))
+
+  (test-assert "a literal secret in environment-variables is rejected"
+    (string-contains
+     (guard (condition ((formatted-message? condition)
+                        (apply format #f (formatted-message-string condition)
+                               (formatted-message-arguments condition))))
+       (supervisor (environment-variables
+                    '("ANTHROPIC_API_KEY=sk-ant-api03-abcdefghijklmnop")))
+       "")
+     "secrets-file"))
+
+  (test-assert "a literal secret in a raw extra-toml string is rejected"
+    (rejected? (lambda ()
+                 (city (name "town")
+                       (extra-toml "token = \"ghp_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"\n")))))
+
+  (test-assert "an absolute `files' destination is rejected"
+    (rejected? (lambda ()
+                 (city (name "town")
+                       (files (list (cons "/abs" (plain-file "x" "x"))))))))
+
+  )
+
+;;;
 ;;; `cities.toml' locked read-merge-write (Phase 3, §16.3, §16.8).
 ;;;
 
@@ -794,24 +923,41 @@ without extra-config"
 
   (let ((source (environment (gascity-supervisor-configuration))))
     (test-assert "the environment exports the CA bundle variables"
-      (and (string-contains source "SSL_CERT_FILE=")
-           (string-contains source "SSL_CERT_DIR=")
-           (string-contains source "GIT_SSL_CAINFO=")
+      (and (string-contains source "SSL_CERT_FILE")
+           (string-contains source "SSL_CERT_DIR")
+           (string-contains source "GIT_SSL_CAINFO")
            (string-contains source "/etc/ssl/certs/ca-certificates.crt")))
     (test-assert "the environment has a private TMPDIR"
-      (string-contains source "TMPDIR=\" \"/var/lib/gascity/tmp"))
+      (string-contains source "TMPDIR=/var/lib/gascity/tmp"))
     (test-assert "git never prompts"
       (string-contains source "GIT_TERMINAL_PROMPT=0"))
+    (test-assert "the environment resolves GUIX_LOCPATH where the process starts"
+      (string-contains source "GUIX_LOCPATH"))
+    (test-assert "HOME defaults to the state directory"
+      (string-contains source "HOME=/var/lib/gascity"))
     (test-assert "no GIT_CONFIG_GLOBAL without git-config"
       (not (string-contains source "GIT_CONFIG_GLOBAL"))))
+
+  (test-assert "an explicit home-directory becomes HOME"
+    (string-contains
+     (environment (gascity-supervisor-configuration
+                   (home-directory "/home/agent")))
+     "HOME=/home/agent"))
+
+  (test-assert "DOLT_ROOT_PATH stays on the state directory"
+    (string-contains
+     (environment (gascity-supervisor-configuration
+                   (home-directory "/home/agent")
+                   (state-directory "/var/lib/agent")))
+     "DOLT_ROOT_PATH=/var/lib/agent"))
 
   (test-assert "git-config is exported as GIT_CONFIG_GLOBAL"
     (string-contains
      (environment (gascity-supervisor-configuration
                    (git-config (plain-file "gitconfig" "[user]\n"))))
-     "GIT_CONFIG_GLOBAL="))
+     "GIT_CONFIG_GLOBAL"))
 
-  (test-assert "the provision program creates TMPDIR and pins git"
+  (test-assert "the provision program sets the same environment as the supervisor"
     (let ((source (format #f "~s"
                           (approximate-deeply
                            (program-file-gexp
@@ -819,6 +965,9 @@ without extra-config"
                              (gascity-supervisor-configuration
                               (git-config "/etc/gascity/gitconfig"))))))))
       (and (string-contains source "/var/lib/gascity/tmp")
+           (string-contains source "TMPDIR")
+           (string-contains source "DOLT_ROOT_PATH")
+           (string-contains source "GUIX_LOCPATH")
            (string-contains source "GIT_TERMINAL_PROMPT")
            (string-contains source "GIT_CONFIG_GLOBAL"))))
 

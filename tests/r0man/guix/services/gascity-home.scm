@@ -98,6 +98,7 @@ A #f VALUE unsets NAME.  The previous environment is restored afterwards."
 (test-equal "home defaults fill the unset paths of a configuration"
   '("/home/alice/.local/state/gascity"
     "/home/alice/.local/state/gascity"
+    "/home/alice"
     "/home/alice/.gc")
   (with-environment '(("XDG_STATE_HOME" . #f) ("HOME" . "/home/alice"))
     (lambda ()
@@ -105,7 +106,35 @@ A #f VALUE unsets NAME.  The previous environment is restored afterwards."
                      (gascity-supervisor-configuration))))
         (list (gascity-supervisor-state-directory config)
               (gascity-supervisor-log-directory config)
+              (gascity-supervisor-home-directory config)
               (gascity-supervisor-gc-home config))))))
+
+(test-equal "the home service's supervisor HOME is the real HOME"
+  "/home/alice"
+  (with-environment '(("HOME" . "/home/alice"))
+    (lambda ()
+      (gascity-supervisor-home-directory
+       (home-gascity-supervisor-configuration
+        (gascity-supervisor-configuration))))))
+
+(test-equal "an explicit home-directory is not overridden by the home default"
+  "/scratch/home"
+  (with-environment '(("HOME" . "/home/alice"))
+    (lambda ()
+      (gascity-supervisor-home-directory
+       (home-gascity-supervisor-configuration
+        (gascity-supervisor-configuration
+         (home-directory "/scratch/home")))))))
+
+(test-assert "the home supervisor environment uses the real HOME"
+  (with-environment '(("HOME" . "/home/alice"))
+    (lambda ()
+      (string-contains
+       (approximate-string
+        (gascity-supervisor-environment
+         (home-gascity-supervisor-configuration
+          (gascity-supervisor-configuration))))
+       "HOME=/home/alice"))))
 
 (test-equal "an explicit state directory is not overridden by the home default"
   "/scratch/state"

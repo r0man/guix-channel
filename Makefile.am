@@ -65,6 +65,7 @@ SOURCES = \
   modules/r0man/guix/packages/wm.scm \
   modules/r0man/guix/services/gascity.scm \
   modules/r0man/guix/services/gascity/records.scm \
+  modules/r0man/guix/services/gascity/script.scm \
   modules/r0man/guix/services/github-actions.scm \
   modules/r0man/guix/services/github-actions-vm.scm \
   modules/r0man/guix/services/github-actions-vm-mint.scm \
@@ -101,6 +102,12 @@ SYSTEM_TEST_FILES = \
 
 TESTS = $(UNIT_TESTS)
 
+# `make check' also guards the generated record module against schema drift:
+# `records.scm' is a pure function of docs/reference/schema/*.json, and a
+# stale copy would silently expose fields the service no longer has (or miss
+# new ones).  The check is cheap (no build, no network).
+check-local: check-gascity-records
+
 TEST_EXTENSIONS = .scm
 SCM_LOG_DRIVER =                                                \
   $(top_builddir)/pre-inst-env                                  \
@@ -126,6 +133,7 @@ EXTRA_DIST =					\
   examples/gascity/home.scm			\
   examples/gascity/system.scm			\
   scripts/gascity-container-smoke-test		\
+  tests/r0man/guix/services/gascity-container.scm	\
   tests/r0man/guix/services/gascity-parity-home.scm	\
   scripts/gascity-home-container			\
   scripts/gascity-system-container		\

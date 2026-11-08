@@ -57,9 +57,8 @@
 
 (define github-token-credential-forms
   ;; The credential helper's logic, as forms evaluated both inside the store
-  ;; program and by the unit tests (like `gascity-cities-toml-merge-forms').
-  ;; It needs Guile core plus (ice-9 rdelim), (ice-9 textual-ports),
-  ;; (srfi srfi-1), (srfi srfi-13) and (srfi srfi-19).
+  ;; program and by the unit tests.  It needs Guile core plus (ice-9 rdelim),
+  ;; (ice-9 textual-ports), (srfi srfi-1), (srfi srfi-13) and (srfi srfi-19).
   '((define (github-token-read-attributes port)
       ;; Read git's `key=value' lines up to a blank line or end of file.
       (let loop ((attributes '()))

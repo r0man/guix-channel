@@ -42,8 +42,10 @@
  (packages
   (list claude-code git sed gawk))
  (services
-  (append
-   (list
+  ;; The Home service's supervisor runs with the user's real HOME, so no
+  ;; extra service is needed for claude to find the shared host ~/.claude
+  ;; and ~/.claude.json.
+  (cons
     (service home-gascity-service-type
              (gascity-service-config
               ;; Dolt requires a commit author identity for managed bd
@@ -109,31 +111,4 @@
                                     (toml-field 'retention_ttl "24h"))
                         (toml-table 'api
                                     (toml-field 'bind "127.0.0.1")))))))))
-    ;; The supervisor runs with HOME=$XDG_STATE_HOME/gascity, so claude would
-    ;; look for its config there and miss the shared host ~/.claude and
-    ;; ~/.claude.json: sessions then hang at the first-run theme prompt and
-    ;; the session start times out.  Link the shared files into the state home
-    ;; before the supervisor starts; the links are ephemeral, like the rest of
-    ;; the demo.
-    (simple-service 'gascity-share-claude-config
-                    home-activation-service-type
-                    #~(begin
-                        (use-modules (guix build utils))
-                        (let* ((home (getenv "HOME"))
-                               (state (string-append
-                                       (or (getenv "XDG_STATE_HOME")
-                                           (string-append home "/.local/state"))
-                                       "/gascity")))
-                          (mkdir-p state)
-                          (for-each
-                           (lambda (entry)
-                             (let ((source (car entry))
-                                   (target (cdr entry)))
-                               (when (file-exists? source)
-                                 (false-if-exception (delete-file target))
-                                 (symlink source target))))
-                           (list (cons (string-append home "/.claude")
-                                       (string-append state "/.claude"))
-                                 (cons (string-append home "/.claude.json")
-                                       (string-append state "/.claude.json"))))))))
    %base-home-services)))
