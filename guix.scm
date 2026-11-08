@@ -1,11 +1,32 @@
+;;; guix.scm --- the development environment of this channel
+;;;
+;;; Run the test suite from a self-contained (pure) environment built from
+;;; this file:
+;;;
+;;;   guix shell -D -f ./guix.scm -- make check
+;;;
+;;; Note the leading `./': with a bare `guix.scm' argument, `guix shell'
+;;; treats the file as a manifest of packages to install instead of as the
+;;; package whose development inputs to assemble, and the environment then
+;;; lacks guile and GUILE_LOAD_PATH.
+;;;
+;;; The file returns one package, `guile-r0man-channel', whose development
+;;; inputs are the whole environment: guile-next, guix and the nonguix
+;;; modules (so the modules of this channel and of the modules it imports
+;;; resolve), the autotools and texinfo, and the tools the tests drive
+;;; (coreutils, git, util-linux).
+
 (use-modules
  ((guix licenses) #:prefix license:)
  (gnu packages autotools)
+ (gnu packages base)
  (gnu packages gettext)
  (gnu packages guile)
+ (gnu packages linux)
  (gnu packages package-management)
  (gnu packages pkg-config)
  (gnu packages texinfo)
+ (gnu packages version-control)
  (guix build-system copy)
  (guix build-system gnu)
  (guix gexp)
@@ -40,6 +61,11 @@
          '(("nonguix"     "share/guile/site/3.0/nonguix")
            ("nongnu"      "share/guile/site/3.0/nongnu")
            ("nonguix.scm" "share/guile/site/3.0/nonguix.scm"))))
+      ;; Declare the Guile search path this package installs into, so a
+      ;; profile that contains it (a `guix shell -D' development profile,
+      ;; for example) puts the modules on GUILE_LOAD_PATH instead of
+      ;; requiring the host's channel installation.
+      (native-search-paths (package-native-search-paths guile-3.0))
       (synopsis "nonguix channel modules as a Guix package")
       (description "Provides the @code{(nonguix …)} and @code{(nongnu …)}
 Guile modules from the nonguix channel, packaged for use as a dev-shell
@@ -61,15 +87,25 @@ input where the channel mechanism isn't available — for example inside
         (not (any (lambda (s) (string-contains file s))
                   (list ".git" ".dir-locals.el" "guix.scm"))))))
     (build-system gnu-build-system)
+    ;; Installing the package (rather than only its development inputs) puts
+    ;; the channel's own modules on GUILE_LOAD_PATH.
+    (native-search-paths (package-native-search-paths guile-next))
     (native-inputs
      (list autoconf
            automake
+           ;; The test suite shells out to coreutils, and drives git and
+           ;; (for the root activation scenarios, inside an unprivileged
+           ;; user namespace) unshare/mount, none of which the development
+           ;; inputs otherwise provide under `guix shell --pure'.
+           coreutils
+           git
            gnu-gettext
            guile-next
            guile-nonguix
            guix
            pkg-config
-           texinfo))
+           texinfo
+           util-linux))
     (inputs (list guile-next))
     (synopsis "r0man Guix channel")
     (description "Personal Guix channel by r0man.")

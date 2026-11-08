@@ -1,0 +1,38 @@
+# Build every module and run the unit tests (including the schema drift check
+# that `make check' performs) in the channel's own development environment.
+#
+# The job needs a runner with GNU Guix installed: the test suite imports
+# (guix ...) and (nonguix ...) modules and the environment comes from
+# ./guix.scm.  The runners behind the other workflows in this repository are
+# VM runners without Guix, so this workflow is manual-only until a
+# Guix-enabled runner (or a Guix container image) is registered.  Trigger it
+# with:
+#
+#   gh workflow run check.yml
+#
+# Once a Guix runner exists, add `push: branches: [main]` and
+# `pull_request: {}` to the `on` section below.
+name: check
+'on':
+  workflow_dispatch: {}
+jobs:
+  check:
+    name: make check
+    runs-on: [self-hosted, guix]
+    concurrency:
+      group: check-${{ github.ref }}
+      cancel-in-progress: true
+    steps:
+      - name: Check out the channel
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: Guix version
+        run: guix --version
+      - name: Build and test (bootstrap, configure, make check)
+        run: |
+          guix shell -D -f ./guix.scm -- sh -c '
+            ./bootstrap &&
+            ./configure &&
+            make check
+          '

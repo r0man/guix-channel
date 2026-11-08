@@ -21,6 +21,26 @@ Add this channel to =~/.config/guix/channels.scm=
          %default-channels)
 #+end_src
 
+* Development
+
+The development environment is the one this file's =guix.scm= describes.
+Build and test from a pure shell (the leading =./= matters, see the header
+of =guix.scm=):
+
+#+begin_src sh
+  guix shell -D -f ./guix.scm -- make check
+#+end_src
+
+=make check= builds every module and runs the SRFI-64 unit tests, including
+the Gas City records, activation, provision and home-service tests, and the
+check that the generated Gas City record module has not drifted from the
+committed JSON schemas.  The root-activation tests run the activation program
+inside an unprivileged user namespace (=unshare=) and are skipped when it is
+unavailable.
+
+=.github/workflows/check.yml= runs the same command on a runner that has GNU
+Guix; it is manual-only (the repository's other runners have no Guix).
+
 * Services
 
 - [[file:docs/gascity-service.org][Gas City service]] --- run one or more
