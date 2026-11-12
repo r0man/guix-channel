@@ -366,41 +366,6 @@ utilities.")
 ccgo-generated code.")
     (license license:bsd-3)))
 
-(define-public go-modernc-org-sqlite
-  (package
-    (name "go-modernc-org-sqlite")
-    (version "1.38.2")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://gitlab.com/cznic/sqlite")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "0579vip4vn488jppjpadryxyimkw2jr8ywr4j0piqcm2zs40h509"))))
-    (build-system go-build-system)
-    (arguments
-     (list
-      #:import-path "modernc.org/sqlite"
-      #:unpack-path "modernc.org/sqlite"
-      #:tests? #f))  ; Tests require special setup
-    (propagated-inputs
-     (list go-github-com-dustin-go-humanize
-           go-github-com-google-uuid
-           go-github-com-ncruces-go-strftime
-           go-github-com-remyoudompheng-bigfft
-           go-golang-org-x-sys
-           go-modernc-org-libc
-           go-modernc-org-mathutil
-           go-modernc-org-memory))
-    (home-page "https://modernc.org/sqlite")
-    (synopsis "CGo-free port of SQLite")
-    (description
-     "Package sqlite is a CGo-free port of SQLite.  It is a drop-in
-replacement for mattn/go-sqlite3.")
-    (license license:bsd-3)))
-
 (define-public go-github-com-catppuccin-go
   (package
     (name "go-github-com-catppuccin-go")
