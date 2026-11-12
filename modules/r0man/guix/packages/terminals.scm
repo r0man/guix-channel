@@ -55,7 +55,6 @@
            #:zig-build-flags
            #~(list "-Dcpu=baseline"
                    "-Drenderer=opengl"
-                   "--prefix" "."
                    "--system"
                    (string-append (getenv "TMPDIR") "/source/zig-cache")
                    "--search-prefix"
@@ -67,6 +66,7 @@
                    "-fno-sys=oniguruma")
            #:modules
            '((guix build zig-build-system)
+             (guix build gremlin)
              (guix build utils)
              (ice-9 match))
            #:phases
@@ -78,14 +78,32 @@
                     (string-append #$(this-package-input "bzip2")
                                    "/lib/libbz2.so")
                     "bzip2/lib/libbzip2.so")))
-               (add-after 'install 'fix-desktop-file
+               (add-after 'strip 'strip-unneeded-runpath
                  (lambda _
+                   ;; Linking against the private bzip2 search prefix above
+                   ;; leaks a bogus build-tree entry into the RUNPATH.  Drop
+                   ;; every entry that is not needed by a recorded DT_NEEDED
+                   ;; library.
+                   (for-each (lambda (directory)
+                               (when (directory-exists? directory)
+                                 (for-each strip-runpath
+                                           (find-files
+                                            directory
+                                            (lambda (file stat)
+                                              (elf-file? file))))))
+                             (list (string-append #$output "/bin")
+                                   (string-append #$output "/lib")))))
+               (add-after 'strip 'fix-desktop-file
+                 (lambda _
+                   ;; Older zig-build-systems install relative to an empty
+                   ;; prefix, yielding Exec=/bin/ghostty.  Point the desktop
+                   ;; file at the store path instead.
                    (let ((desktop (string-append
                                    #$output
                                    "/share/applications/com.mitchellh.ghostty.desktop")))
                      (when (file-exists? desktop)
                        (substitute* desktop
-                         (("(TryExec|Exec)=\\./bin/ghostty" _ key)
+                         (("(TryExec|Exec)=\\.?/bin/ghostty" _ key)
                           (string-append key "=" #$output "/bin/ghostty")))))))
                (add-after 'unpack 'unpack-zig
                  (lambda _
@@ -461,7 +479,6 @@ native UIs.  Ghostty provides all three.")
                      "-Drenderer=opengl"
                      "-Dgtk-x11=false"
                      "-Dgtk-wayland=true"
-                     "--prefix" "."
                      "--system" (string-append (getenv "TMPDIR") "/source/zig-cache")
                      "--search-prefix" #$(this-package-input "libadwaita")
                      "--search-prefix" #$(this-package-input "gtk4-layer-shell")
@@ -469,6 +486,7 @@ native UIs.  Ghostty provides all three.")
                      "-fno-sys=oniguruma")
              #:modules
              '((guix build zig-build-system)
+               (guix build gremlin)
                (guix build utils)
                (ice-9 match))
              #:phases
@@ -480,14 +498,32 @@ native UIs.  Ghostty provides all three.")
                       (string-append #$(this-package-input "bzip2")
                                      "/lib/libbz2.so")
                       "bzip2/lib/libbzip2.so")))
-                 (add-after 'install 'fix-desktop-file
+                 (add-after 'strip 'strip-unneeded-runpath
                    (lambda _
+                     ;; Linking against the private bzip2 search prefix above
+                     ;; leaks a bogus build-tree entry into the RUNPATH.  Drop
+                     ;; every entry that is not needed by a recorded DT_NEEDED
+                     ;; library.
+                     (for-each (lambda (directory)
+                                 (when (directory-exists? directory)
+                                   (for-each strip-runpath
+                                             (find-files
+                                              directory
+                                              (lambda (file stat)
+                                                (elf-file? file))))))
+                               (list (string-append #$output "/bin")
+                                     (string-append #$output "/lib")))))
+                 (add-after 'strip 'fix-desktop-file
+                   (lambda _
+                     ;; Older zig-build-systems install relative to an empty
+                     ;; prefix, yielding Exec=/bin/ghostty.  Point the desktop
+                     ;; file at the store path instead.
                      (let ((desktop (string-append
                                      #$output
                                      "/share/applications/com.mitchellh.ghostty.desktop")))
                        (when (file-exists? desktop)
                          (substitute* desktop
-                           (("(TryExec|Exec)=\\./bin/ghostty" _ key)
+                           (("(TryExec|Exec)=\\.?/bin/ghostty" _ key)
                             (string-append key "=" #$output "/bin/ghostty")))))))
                  (add-after 'unpack 'unpack-zig
                    (lambda _
