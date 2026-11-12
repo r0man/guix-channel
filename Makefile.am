@@ -59,6 +59,7 @@ SOURCES = \
   modules/r0man/guix/packages/opencode.scm \
   modules/r0man/guix/packages/pi.scm \
   modules/r0man/guix/packages/task-management.scm \
+  modules/r0man/guix/packages/terminals.scm \
   modules/r0man/guix/packages/wm.scm \
   modules/r0man/guix/services/github-actions.scm \
   modules/r0man/guix/services/github-actions-vm.scm \
