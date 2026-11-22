@@ -1,4 +1,15 @@
 (define-module (r0man guix packages golang-dolthub)
+  ;; Several Go packages are exported under the same name by (r0man guix
+  ;; packages golang-xyz) and by (gnu packages golang-web) or (gnu packages
+  ;; golang-xyz), and the set changes with every Guix revision, so it cannot
+  ;; be kept in #:hide lists (hiding a name the module lacks is an error).
+  ;; Guile's default policy takes the binding of the last import, but an
+  ;; interpreted `define-module' appends the imports that carry #:hide,
+  ;; #:select or #:prefix a second time, so "last" can differ between a
+  ;; source and a compiled load.  Import the channel's module first and take
+  ;; the first binding: the channel's package then wins either way.
+  #:duplicates (replace first)
+  #:use-module (r0man guix packages golang-xyz)
   #:use-module ((guix licenses) #:prefix license:)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages icu4c)
@@ -8,16 +19,17 @@
   #:use-module (gnu packages golang-compression)
   #:use-module (gnu packages golang-crypto)
   #:use-module (gnu packages golang-maths)
-  #:use-module (gnu packages golang-web)
+  ;; golang-xyz before golang-web: the one name both export
+  ;; (go-github-com-ugorji-go-codec) keeps resolving to golang-xyz.
   #:use-module (gnu packages golang-xyz)
+  #:use-module (gnu packages golang-web)
   #:use-module (gnu packages prometheus)
   #:use-module (gnu packages serialization)
   #:use-module (guix build-system go)
   #:use-module (guix gexp)
   #:use-module (guix git-download)
   #:use-module (guix packages)
-  #:use-module (guix utils)
-  #:use-module (r0man guix packages golang-xyz))
+  #:use-module (guix utils))
 
 ;; Google Cloud Go packages for Dolt storage support
 

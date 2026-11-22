@@ -1,4 +1,19 @@
 (define-module (r0man guix packages task-management)
+  ;; Many Go packages are exported under the same name by a channel module
+  ;; and by (gnu packages golang-web) or (gnu packages golang-xyz), and the
+  ;; set changes with every Guix revision, so it cannot be kept in #:hide
+  ;; lists (hiding a name the module lacks is an error).  Guile's default
+  ;; policy takes the binding of the last import, but an interpreted
+  ;; `define-module' appends the imports that carry #:hide or #:select a
+  ;; second time, so upstream won when this file was loaded from source and
+  ;; the channel won when it was loaded compiled.  Import the channel's
+  ;; modules first and take the first binding: the channel's package then
+  ;; wins either way.
+  #:duplicates (replace first)
+  #:use-module (r0man guix packages golang-xyz)
+  #:use-module (r0man guix packages golang-web)
+  #:use-module (r0man guix packages golang-dolthub)
+  #:use-module (r0man guix packages golang-charm)
   #:use-module ((guix licenses)
                 #:prefix license:)
   #:use-module (gnu packages golang)
@@ -44,11 +59,7 @@
   #:use-module (guix gexp)
   #:use-module (guix git-download)
   #:use-module (guix packages)
-  #:use-module (guix utils)
-  #:use-module (r0man guix packages golang-charm)
-  #:use-module (r0man guix packages golang-dolthub)
-  #:use-module (r0man guix packages golang-web)
-  #:use-module (r0man guix packages golang-xyz))
+  #:use-module (guix utils))
 
 (define-public beads
   (package
@@ -289,6 +300,35 @@ and utility functions needed to interact with Beads databases.")
        (prepend go-github-com-dolthub-driver-v2
                 go-github-com-dolthub-eventkit)))))
 
+(define-public beads-for-gascity-next
+  ;; The beads release the main branch of Gas City pins (BD_VERSION in its
+  ;; deps.env and the library version in its go.mod).  Upstream wants the bd
+  ;; on PATH and the linked library to be the same beads, so gascity-next
+  ;; propagates this instead of the stable beads package, which stays at
+  ;; 1.3.2 together with the stable gascity release.
+  (package
+    (inherit beads)
+    (name "beads-for-gascity-next")
+    (version "1.3.4")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/gastownhall/beads")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name "beads" version))
+       (sha256
+        (base32 "1ap909d3jw4b7mi24iyi99wmvf8x8ly2yav93q3l767axa2c1wwx"))))))
+
+(define-public go-github-com-steveyegge-beads-for-gascity-next
+  ;; Library variant of beads-for-gascity-next, linked into gascity-next.
+  ;; The library linked into the stable gascity release stays at 1.3.2.
+  (package
+    (inherit go-github-com-steveyegge-beads-next)
+    (name "go-github-com-steveyegge-beads-for-gascity-next")
+    (version (package-version beads-for-gascity-next))
+    (source (package-source beads-for-gascity-next))))
+
 (define-public gastown-next
   (package
     (name "gastown-next")
@@ -488,16 +528,16 @@ through the Go module system instead of vendoring checked-in copies.")
   (package
     (inherit go-github-com-gastownhall-gascity-packs)
     (name "go-github-com-gastownhall-gascity-packs-next")
-    (version "0.3.1-0.20261023052836-66c672b5ed00")
+    (version "0.3.1-0.20261102001238-66897e7132c9")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
              (url "https://github.com/gastownhall/gascity-packs")
-             (commit "66c672b5ed00af143158b4eac960523c56b977ee")))
+             (commit "66897e7132c9d1160509ee47dd1b935bbd3b9664")))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "153g9q0xdg0w6gybp8p8f749fpcznpm8b2llyw5sc52iwjxnz16c"))))))
+        (base32 "0gdmc2kix5rn59d6margy621877qkrisy4x695303wpkqlldmh0q"))))))
 
 (define-public python-for-gascity
   ;; Gas City's gate runner (internal/convergence/condition.go) executes
@@ -754,8 +794,8 @@ runtime backends including tmux, subprocess, exec, ACP, and Kubernetes.")
 
 (define-public gascity-next
   ;; Tracks the main branch of Gas City.
-  (let ((commit "a1ff5e2ade785882a414bcdc71f5be32b599f094")
-        (revision "0"))
+  (let ((commit "37b7b762edba99b21e62b6d73af109e40fd563c8")
+        (revision "1"))
     (package
       (inherit gascity)
       (name "gascity-next")
@@ -768,16 +808,26 @@ runtime backends including tmux, subprocess, exec, ACP, and Kubernetes.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "1f747jqwrs7vrlflndpj33jvcj0ss4p24d28yz5ampdqjc3gldwp"))))
+          (base32 "0nd1zxb3ddzckksfasydywv4k3apf582dwgcx8w0swl2il49kzqs"))))
       (native-inputs
        (modify-inputs (package-native-inputs gascity)
-         ;; Main pins the October 2026 pack content; the stable release embeds
-         ;; the June 2026 content, so each line gets its own pack package.
+         ;; Main pins the November 2026 pack content; the stable release
+         ;; embeds the June 2026 content, so each line gets its own pack
+         ;; package.
          (delete "go-github-com-gastownhall-gascity-packs")
-         (prepend go-github-com-gastownhall-gascity-packs-next)))
+         ;; Main links beads 1.3.4; the stable release links 1.3.2.
+         (delete "go-github-com-steveyegge-beads-next")
+         (prepend go-github-com-gastownhall-gascity-packs-next
+                  go-github-com-steveyegge-beads-for-gascity-next
+                  ;; internal/genshell interprets generated shell scripts
+                  ;; and jq filters in-process.
+                  go-github-com-itchyny-gojq
+                  go-mvdan-cc-sh-v3)))
       (propagated-inputs
        (modify-inputs (package-propagated-inputs gascity)
          ;; Main requires dolt 2.6.0 or later; the stable release still works
          ;; with the 2.4.2 CLI shared with the beads library line.
          (delete "dolt")
-         (prepend dolt-next))))))
+         ;; Keep the bd on PATH at the beads release the binary links.
+         (delete "beads")
+         (prepend beads-for-gascity-next dolt-next))))))
